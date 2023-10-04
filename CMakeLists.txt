@@ -4,7 +4,7 @@ project(BlockA)
 
 add_subdirectory("External/glfw")
 
-add_executable(BlockA
+add_library(BlockA
 External/glad/glad/gl.c
 
 External/imgui/imgui.cpp
