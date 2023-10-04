@@ -41,9 +41,9 @@ namespace BlockA
         void setFloat(const char* name, float value);
 
     private:
-        unsigned int m_ID;
+        GLuint shaderProgram;
 
-        void checkCompileErrors(unsigned int shader, const char* type);
+        void checkCompileErrors(GLuint shader, const char* type);
     };
 	    
 	class Window

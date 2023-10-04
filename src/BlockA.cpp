@@ -106,11 +106,11 @@ namespace BlockA
         checkCompileErrors(fragmentShader, "FRAGMENT");
 
         // Link the shader program
-        m_ID = glCreateProgram();
-        glAttachShader(m_ID, vertexShader);
-        glAttachShader(m_ID, fragmentShader);
-        glLinkProgram(m_ID);
-        checkCompileErrors(m_ID, "PROGRAM");
+        shaderProgram = glCreateProgram();
+        glAttachShader(shaderProgram, vertexShader);
+        glAttachShader(shaderProgram, fragmentShader);
+        glLinkProgram(shaderProgram);
+        checkCompileErrors(shaderProgram, "PROGRAM");
 
         // Delete the shaders
         glDeleteShader(vertexShader);
@@ -118,22 +118,22 @@ namespace BlockA
     }
 
     Shader::~Shader() {
-        glDeleteProgram(m_ID);
+        glDeleteProgram(shaderProgram);
     }
 
     void Shader::use() {
-        glUseProgram(m_ID);
+        glUseProgram(shaderProgram);
     }
 
     void Shader::setInt(const char* name, int value) {
-        glUniform1i(glGetUniformLocation(m_ID, name), value);
+        glUniform1i(glGetUniformLocation(shaderProgram, name), value);
     }
 
     void Shader::setFloat(const char* name, float value) {
-        glUniform1f(glGetUniformLocation(m_ID, name), value);
+        glUniform1f(glGetUniformLocation(shaderProgram, name), value);
     }
 
-    void Shader::checkCompileErrors(unsigned int shader, const char* type) {
+    void Shader::checkCompileErrors(GLuint shader, const char* type) {
         int success;
         char infoLog[1024];
         if (strcmp(type, "PROGRAM") != 0) {
