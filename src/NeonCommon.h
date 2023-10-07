@@ -1,5 +1,7 @@
 #pragma once
 
+#pragma warning(disable : 4819)
+
 #include <algorithm>
 #include <chrono>
 #include <filesystem>
@@ -25,6 +27,9 @@ using namespace std;
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
+void _CheckGLError(const char* file, int line);
+#define CheckGLError() _CheckGLError(__FILE__, __LINE__)
+
 #define SAFE_DELETE(x) if(x != nullptr) { delete x; x = nullptr; }
 
 using namespace std::chrono;
@@ -46,13 +51,17 @@ namespace Neon
 
 
 		Time(const string& name);
+		~Time();
 		void Touch();
 		void Stop();
 
 	protected:
+		bool stoped = false;
 		string name;
 		time_point<high_resolution_clock> startedTime;
 		int touchCount = 0;
 		time_point<high_resolution_clock> touchedTime;
 	};
+
+	unsigned int NextPowerOf2(unsigned int n);
 }

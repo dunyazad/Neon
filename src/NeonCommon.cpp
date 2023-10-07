@@ -1,5 +1,27 @@
 #include "NeonCommon.h"
 
+void _CheckGLError(const char* file, int line)
+{
+	GLenum err(glGetError());
+
+	while (err != GL_NO_ERROR)
+	{
+		std::string error;
+		switch (err)
+		{
+		case GL_INVALID_OPERATION:  error = "INVALID_OPERATION";      break;
+		case GL_INVALID_ENUM:       error = "INVALID_ENUM";           break;
+		case GL_INVALID_VALUE:      error = "INVALID_VALUE";          break;
+		case GL_OUT_OF_MEMORY:      error = "OUT_OF_MEMORY";          break;
+		case GL_INVALID_FRAMEBUFFER_OPERATION:  error = "INVALID_FRAMEBUFFER_OPERATION";  break;
+		}
+		std::cout << "GL_" << error.c_str() << " - " << file << ":" << line << std::endl;
+		err = glGetError();
+	}
+
+	return;
+}
+
 namespace Neon
 {
 	time_point<high_resolution_clock> Time::Now()
@@ -44,13 +66,22 @@ namespace Neon
 		touchedTime = startedTime;
 	}
 
+	Time::~Time()
+	{
+		Stop();
+	}
+
 	void Time::Stop()
 	{
-		if (name.empty() == false)
+		if (stoped == false)
 		{
-			cout << "[" << name << "] ";
+			if (name.empty() == false)
+			{
+				cout << "[" << name << "] ";
+			}
+			cout << DeltaMili(startedTime) << " miliseconds" << endl;
+			stoped = true;
 		}
-		cout << DeltaMili(startedTime) << " miliseconds" << endl;
 	}
 
 	void Time::Touch()
@@ -69,5 +100,17 @@ namespace Neon
 		cout << DeltaMili(touchedTime, now) << " miliseconds" << endl;
 
 		touchedTime = now;
+	}
+
+	unsigned int NextPowerOf2(unsigned int n)
+	{
+		unsigned int p = 1;
+		if (n && !(n & (n - 1)))
+			return n;
+
+		while (p < n)
+			p <<= 1;
+
+		return p;
 	}
 }

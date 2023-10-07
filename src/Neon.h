@@ -3,6 +3,8 @@
 #include "NeonCommon.h"
 #include "NeonWindow.h"
 #include "NeonShader.h"
+#include "NeonVertexArrayObject.h"
+#include "NeonVertexBufferObject.hpp"
 
 namespace Neon
 {

@@ -28,6 +28,11 @@ src/NeonWindow.h
 src/NeonWindow.cpp
 src/NeonShader.h
 src/NeonShader.cpp
+src/NeonImage.h
+src/NeonImage.cpp
+src/NeonVertexArrayObject.h
+src/NeonVertexArrayObject.cpp
+src/NeonVertexBufferObject.hpp
 src/main.cpp)
 
 target_include_directories(Neon PUBLIC "External/glad")
