@@ -21,8 +21,13 @@ External/imgui/backends/imgui_impl_opengl3.cpp
 External/imgui/backends/imgui_impl_glfw.cpp
 
 src/NeonCommon.h
+src/NeonCommon.cpp
 src/Neon.h
 src/Neon.cpp
+src/NeonWindow.h
+src/NeonWindow.cpp
+src/NeonShader.h
+src/NeonShader.cpp
 src/main.cpp)
 
 target_include_directories(Neon PUBLIC "External/glad")

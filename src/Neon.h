@@ -1,75 +1,11 @@
 #pragma once
 
 #include "NeonCommon.h"
-
-using namespace std::chrono;
+#include "NeonWindow.h"
+#include "NeonShader.h"
 
 namespace Neon
 {
-	class Time
-	{
-	public:
-		static time_point<high_resolution_clock> Now();
-		static double DeltaNano(const time_point<high_resolution_clock>& t);
-		static double DeltaNano(const time_point<high_resolution_clock>& t0, const time_point<high_resolution_clock>& t1);
-
-		static double DeltaMicro(const time_point<high_resolution_clock>& t);
-		static double DeltaMicro(const time_point<high_resolution_clock>& t0, const time_point<high_resolution_clock>& t1);
-
-		static double DeltaMili(const time_point<high_resolution_clock>& t);
-		static double DeltaMili(const time_point<high_resolution_clock>& t0, const time_point<high_resolution_clock>& t1);
-
-
-		Time(const string& name);
-		void Touch();
-		void Stop();
-
-	protected:
-		string name;
-		time_point<high_resolution_clock> startedTime;
-		int touchCount = 0;
-		time_point<high_resolution_clock> touchedTime;
-	};
-
-    class Shader {
-    public:
-        Shader(const char* vertexPath, const char* fragmentPath);
-        ~Shader();
-
-        void use();
-        void setInt(const char* name, int value);
-        void setFloat(const char* name, float value);
-
-    private:
-        GLuint shaderProgram;
-
-        void checkCompileErrors(GLuint shader, const char* type);
-    };
-	    
-	class Window
-	{
-	public:
-		Window(int width, int height, const string& title, Window* sharingWindow = nullptr);
-		~Window();
-
-		bool ShouldClose();
-		void MakeCurrent();
-		void ProcessEvents();
-		void Update(float timeDelta);
-		void SwapBuffers();
-
-		inline GLFWwindow* GetGLFWWindow() { return glfwWindow; }
-		inline void UseVSync(bool use) { vSync = use; glfwSwapInterval(use ? 1 : 0); }
-		inline bool IsUsingVSync() const { return vSync; }
-
-		inline ImGuiIO* GetIO() { return io; }
-	private:
-		GLFWwindow* glfwWindow = nullptr;
-		bool vSync = true;
-
-		ImGuiIO* io = nullptr;
-	};
-
 	class Application
 	{
 	public:
