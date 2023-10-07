@@ -1,6 +1,6 @@
-#include "BlockA.h"
+#include "Neon.h"
 
-namespace BlockA
+namespace Neon
 {
 	time_point<high_resolution_clock> Time::Now()
 	{
@@ -75,7 +75,7 @@ namespace BlockA
         // Load the vertex shader from file
         std::ifstream vertexFile(vertexPath);
         if (!vertexFile) {
-            std::cout << "Failed to open vertex shader file" << std::endl;
+            std::cout << "Failed to open vertex shader file : " << vertexPath << std::endl;
             exit(EXIT_FAILURE);
         }
         std::stringstream vertexStream;
@@ -86,7 +86,7 @@ namespace BlockA
         // Load the fragment shader from file
         std::ifstream fragmentFile(fragmentPath);
         if (!fragmentFile) {
-            std::cout << "Failed to open fragment shader file" << std::endl;
+            std::cout << "Failed to open fragment shader file : " << fragmentPath << std::endl;
             exit(EXIT_FAILURE);
         }
         std::stringstream fragmentStream;
@@ -251,6 +251,8 @@ namespace BlockA
 
 	Application::Application(int width, int height, const string& windowTitle)
 	{
+        resourceRoot = std::filesystem::current_path().string();
+
 		window = new Window(width, height, windowTitle);
 	}
 

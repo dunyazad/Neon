@@ -1,10 +1,15 @@
 cmake_minimum_required(VERSION 3.1)
 
-project(BlockA)
+project(Neon)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_subdirectory("External/glfw")
 
-add_library(BlockA
+#add_library(Neon
+add_executable(Neon
 External/glad/glad/gl.c
 
 External/imgui/imgui.cpp
@@ -15,12 +20,12 @@ External/imgui/imgui_widgets.cpp
 External/imgui/backends/imgui_impl_opengl3.cpp
 External/imgui/backends/imgui_impl_glfw.cpp
 
-src/BlockA_Common.h
-src/BlockA.h
-src/BlockA.cpp
+src/NeonCommon.h
+src/Neon.h
+src/Neon.cpp
 src/main.cpp)
 
-target_include_directories(BlockA PUBLIC "External/glad")
-target_include_directories(BlockA PUBLIC "External/imgui")
+target_include_directories(Neon PUBLIC "External/glad")
+target_include_directories(Neon PUBLIC "External/imgui")
 
-target_link_libraries(BlockA glfw)
+target_link_libraries(Neon glfw)

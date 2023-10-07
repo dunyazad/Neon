@@ -1,10 +1,10 @@
 #pragma once
 
-#include "BlockA_Common.h"
+#include "NeonCommon.h"
 
 using namespace std::chrono;
 
-namespace BlockA
+namespace Neon
 {
 	class Time
 	{
@@ -73,7 +73,7 @@ namespace BlockA
 	class Application
 	{
 	public:
-		Application(int width = 1024, int height = 768, const string& windowTitle = "BlockA");
+		Application(int width = 1024, int height = 768, const string& windowTitle = "Neon");
 		~Application();
 
 		void OnInitialize(function<void()> onInitialize);

@@ -1,16 +1,16 @@
 #include <iostream>
 
-#include "BlockA.h"
+#include "Neon.h"
 
 int main()
 {
-    BlockA::Window* window = nullptr;
-    BlockA::Shader* shader = nullptr;
+    Neon::Window* window = nullptr;
+    Neon::Shader* shader = nullptr;
     
     unsigned int VBO, VAO;
 
-    BlockA::Application app;
-    app.SetResourceRoot("C:/Workspace/Blocks/BlockA/res");
+    Neon::Application app;
+    app.SetResourceRoot(filesystem::current_path().string() + "/../res");
 
     app.OnInitialize([&]() {
         {
@@ -37,7 +37,7 @@ int main()
             glEnableVertexAttribArray(0);
 
             //// Create the shader program
-            shader = new BlockA::Shader((app.GetResourceRoot() + "/shader/vertexShader.glsl").c_str(), (app.GetResourceRoot() + "/shader/fragmentShader.glsl").c_str());
+            shader = new Neon::Shader((app.GetResourceRoot() + "/shader/vertexShader.glsl").c_str(), (app.GetResourceRoot() + "/shader/fragmentShader.glsl").c_str());
         }
         });
 
