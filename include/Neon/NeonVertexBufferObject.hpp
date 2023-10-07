@@ -1,4 +1,4 @@
-#include "NeonCommon.h"
+#include <Neon/NeonCommon.h>
 
 namespace Neon
 {
@@ -9,18 +9,8 @@ namespace Neon
 		enum BufferType { VERTEX_BUFFER, NORMAL_BUFFER, INDEX_BUFFER, COLOR_BUFFER, UV_BUFFER };
 
 	public:
-		VertexBufferObject(BufferType bufferType)
+		VertexBufferObject(BufferType bufferType, unsigned int attributeIndex)
 			: bufferType(bufferType)
-		{
-		}
-
-		~VertexBufferObject()
-		{
-		}
-
-		inline unsigned int ID() { return id; }
-
-		void Initialize(unsigned int attributeIndex)
 		{
 			this->attributeIndex = attributeIndex;
 
@@ -29,12 +19,14 @@ namespace Neon
 			CheckGLError();
 		}
 
-		void Terminate()
+		~VertexBufferObject()
 		{
 			glDeleteBuffers(1, &id);
 
 			CheckGLError();
 		}
+
+		inline unsigned int ID() { return id; }
 
 		void Bind()
 		{

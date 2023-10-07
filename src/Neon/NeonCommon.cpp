@@ -1,4 +1,4 @@
-#include "NeonCommon.h"
+#include <Neon/NeonCommon.h>
 
 void _CheckGLError(const char* file, int line)
 {

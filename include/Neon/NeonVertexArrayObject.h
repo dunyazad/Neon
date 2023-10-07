@@ -1,6 +1,6 @@
 #pragma once
 
-#include "NeonCommon.h"
+#include <Neon/NeonCommon.h>
 
 namespace Neon
 {
@@ -12,8 +12,6 @@ namespace Neon
 
 		inline unsigned int ID() { return id; }
 
-		virtual void Initialize();
-		virtual void Terminate();
 		void Bind();
 		void Unbind();
 

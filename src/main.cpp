@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "Neon.h"
+#include <Neon/Neon.h>
 
 int main()
 {
@@ -18,10 +18,8 @@ int main()
 		auto t = Neon::Time("Initialize");
 
 		pVAO = new Neon::VertexArrayObject();
-		pVAO->Initialize();
 
-		pVBOA = new Neon::VertexBufferObject<float>(Neon::VertexBufferObject<float>::VERTEX_BUFFER);
-		pVBOA->Initialize(0);
+		pVBOA = new Neon::VertexBufferObject<float>(Neon::VertexBufferObject<float>::VERTEX_BUFFER, 0);
 		pVBOA->AddElement(0.0f);
 		pVBOA->AddElement(0.5f);
 		pVBOA->AddElement(0.0f);
@@ -93,10 +91,8 @@ int main()
 	app.OnTerminate([&]() {
 		auto t = Neon::Time("Terminate");
 
-		pVBOA->Terminate();
 		SAFE_DELETE(pVBOA);
 
-		pVAO->Terminate();
 		SAFE_DELETE(pVAO);
 
 		SAFE_DELETE(shader);

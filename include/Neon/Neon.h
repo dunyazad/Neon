@@ -1,10 +1,10 @@
 #pragma once
 
-#include "NeonCommon.h"
-#include "NeonWindow.h"
-#include "NeonShader.h"
-#include "NeonVertexArrayObject.h"
-#include "NeonVertexBufferObject.hpp"
+#include <Neon/NeonCommon.h>
+#include <Neon/NeonWindow.h>
+#include <Neon/NeonShader.h>
+#include <Neon/NeonVertexArrayObject.h>
+#include <Neon/NeonVertexBufferObject.hpp>
 
 namespace Neon
 {

@@ -1,10 +1,20 @@
-#include "NeonImage.h"
+#include <Neon/NeonImage.h>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
+
+//#define __STDC_LIB_EXT1__
+#define STBI_MSC_SECURE_CRT
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb/stb_image_write.h>
 
 namespace Neon
 {
 	Image::Image(const string& name, const string& filename, bool verticalFlip)
 		: filename(filename), verticalFlip(verticalFlip)
 	{
+		stbi_set_flip_vertically_on_load(verticalFlip);
+		data = stbi_load(filename.c_str(), &width, &height, &nrChannels, bits);
 	}
 
 	Image::~Image()
@@ -12,12 +22,6 @@ namespace Neon
 		if (data != nullptr) {
 			stbi_image_free(data);
 		}
-	}
-
-	void Image::Initialize()
-	{
-		stbi_set_flip_vertically_on_load(verticalFlip);
-		data = stbi_load(filename.c_str(), &width, &height, &nrChannels, bits);
 	}
 
 	void Image::Write(const string& outputFilename, bool verticalFlip)

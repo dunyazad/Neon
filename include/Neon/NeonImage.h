@@ -1,6 +1,6 @@
 #pragma once
 
-#include "NeonCommon.h"
+#include <Neon/NeonCommon.h>
 
 namespace Neon
 {
@@ -9,8 +9,6 @@ namespace Neon
 	public:
 		Image(const string& name, const string& filename, bool verticalFlip = true);
 		~Image();
-
-		void Initialize();
 
 		void Write(const string& outputFilename, bool verticalFlip = true);
 

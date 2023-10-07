@@ -1,6 +1,6 @@
 #pragma once
 
-#include "NeonCommon.h"
+#include <Neon/NeonCommon.h>
 
 namespace Neon
 {

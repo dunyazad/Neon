@@ -1,4 +1,4 @@
-#include "NeonWindow.h"
+#include <Neon/NeonWindow.h>
 
 namespace Neon
 {

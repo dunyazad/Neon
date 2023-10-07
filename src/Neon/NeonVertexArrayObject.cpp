@@ -1,23 +1,15 @@
-#include "NeonVertexArrayObject.h"
+#include <Neon/NeonVertexArrayObject.h>
 
 namespace Neon
 {
 	VertexArrayObject::VertexArrayObject()
-	{
-	}
-
-	VertexArrayObject::~VertexArrayObject()
-	{
-	}
-
-	void VertexArrayObject::Initialize()
 	{
 		glGenVertexArrays(1, &id);
 
 		CheckGLError();
 	}
 
-	void VertexArrayObject::Terminate()
+	VertexArrayObject::~VertexArrayObject()
 	{
 		glDeleteVertexArrays(1, &id);
 
