@@ -3,11 +3,8 @@
 namespace Neon
 {
 	template <class T>
-	class VertexBufferObject
+	class VertexBufferObject : public VertexBufferObjectBase
 	{
-	public:
-		enum BufferType { VERTEX_BUFFER, NORMAL_BUFFER, INDEX_BUFFER, COLOR_BUFFER, UV_BUFFER };
-
 	public:
 		VertexBufferObject(BufferType bufferType, unsigned int attributeIndex)
 			: bufferType(bufferType)
@@ -28,7 +25,7 @@ namespace Neon
 
 		inline unsigned int ID() { return id; }
 
-		void Bind()
+		virtual void Bind()
 		{
 			if (bufferType == INDEX_BUFFER)
 			{
@@ -48,7 +45,7 @@ namespace Neon
 			CheckGLError();
 		}
 
-		void Unbind()
+		virtual void Unbind()
 		{
 			if (bufferType == INDEX_BUFFER)
 			{
@@ -100,60 +97,63 @@ namespace Neon
 			memcpy(&elements[0], &input[0], sizeof(T) * input.size());
 		}
 
-		void Upload()
+		virtual void Upload()
 		{
 			if (elements.size() == 0)
 				return;
 
-			if (bufferType == VERTEX_BUFFER)
+			if (dirty)
 			{
-				glBufferData(GL_ARRAY_BUFFER, sizeof(T) * elements.size(), &elements[0], GL_STATIC_DRAW);
-				CheckGLError();
+				if (bufferType == VERTEX_BUFFER)
+				{
+					glBufferData(GL_ARRAY_BUFFER, sizeof(T) * elements.size(), &elements[0], GL_STATIC_DRAW);
+					CheckGLError();
 
-				glVertexAttribPointer(attributeIndex, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-				CheckGLError();
+					glVertexAttribPointer(attributeIndex, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+					CheckGLError();
 
-				glEnableVertexAttribArray(attributeIndex);
-				CheckGLError();
-			}
-			else if (bufferType == INDEX_BUFFER)
-			{
-				glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(T) * elements.size(), &elements[0], GL_STATIC_DRAW);
+					glEnableVertexAttribArray(attributeIndex);
+					CheckGLError();
+				}
+				else if (bufferType == INDEX_BUFFER)
+				{
+					glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(T) * elements.size(), &elements[0], GL_STATIC_DRAW);
 
-				CheckGLError();
-			}
-			if (bufferType == COLOR_BUFFER)
-			{
-				glBufferData(GL_ARRAY_BUFFER, sizeof(T) * elements.size(), &elements[0], GL_STATIC_DRAW);
-				CheckGLError();
+					CheckGLError();
+				}
+				if (bufferType == COLOR_BUFFER)
+				{
+					glBufferData(GL_ARRAY_BUFFER, sizeof(T) * elements.size(), &elements[0], GL_STATIC_DRAW);
+					CheckGLError();
 
-				glVertexAttribPointer(attributeIndex, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
-				CheckGLError();
+					glVertexAttribPointer(attributeIndex, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
+					CheckGLError();
 
-				glEnableVertexAttribArray(attributeIndex);
-				CheckGLError();
-			}
-			else if (bufferType == UV_BUFFER)
-			{
-				glBufferData(GL_ARRAY_BUFFER, sizeof(T) * elements.size(), &elements[0], GL_STATIC_DRAW);
-				CheckGLError();
+					glEnableVertexAttribArray(attributeIndex);
+					CheckGLError();
+				}
+				else if (bufferType == UV_BUFFER)
+				{
+					glBufferData(GL_ARRAY_BUFFER, sizeof(T) * elements.size(), &elements[0], GL_STATIC_DRAW);
+					CheckGLError();
 
-				glVertexAttribPointer(attributeIndex, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-				CheckGLError();
+					glVertexAttribPointer(attributeIndex, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+					CheckGLError();
 
-				glEnableVertexAttribArray(attributeIndex);
-				CheckGLError();
-			}
-			else if (bufferType == NORMAL_BUFFER)
-			{
-				glBufferData(GL_ARRAY_BUFFER, sizeof(T) * elements.size(), &elements[0], GL_STATIC_DRAW);
-				CheckGLError();
+					glEnableVertexAttribArray(attributeIndex);
+					CheckGLError();
+				}
+				else if (bufferType == NORMAL_BUFFER)
+				{
+					glBufferData(GL_ARRAY_BUFFER, sizeof(T) * elements.size(), &elements[0], GL_STATIC_DRAW);
+					CheckGLError();
 
-				glVertexAttribPointer(attributeIndex, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-				CheckGLError();
+					glVertexAttribPointer(attributeIndex, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+					CheckGLError();
 
-				glEnableVertexAttribArray(attributeIndex);
-				CheckGLError();
+					glEnableVertexAttribArray(attributeIndex);
+					CheckGLError();
+				}
 			}
 		}
 

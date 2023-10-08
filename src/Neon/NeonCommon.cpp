@@ -113,4 +113,7 @@ namespace Neon
 
 		return p;
 	}
+
+	VertexBufferObjectBase::VertexBufferObjectBase() {}
+	VertexBufferObjectBase::~VertexBufferObjectBase() {}
 }

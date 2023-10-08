@@ -7,6 +7,7 @@
 #include <Neon/NeonVertexBufferObject.hpp>
 #include <Neon/NeonImage.h>
 #include <Neon/NeonTexture.h>
+#include <Neon/NeonRenderData.h>
 
 namespace Neon
 {

@@ -23,11 +23,13 @@ include/Neon/NeonImage.h
 src/Neon/NeonImage.cpp
 include/Neon/NeonTexture.h
 src/Neon/NeonTexture.cpp
-include/Neon/NeonVertexArrayObject.h
-src/Neon/NeonVertexArrayObject.cpp
 include/Neon/NeonFrameBufferObject.h
 src/Neon/NeonFrameBufferObject.cpp
+include/Neon/NeonVertexArrayObject.h
+src/Neon/NeonVertexArrayObject.cpp
 include/Neon/NeonVertexBufferObject.hpp
+include/Neon/NeonRenderData.h
+src/Neon/NeonRenderData.cpp
 )
 
 #add_library(Neon

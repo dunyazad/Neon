@@ -65,4 +65,17 @@ namespace Neon
 	};
 
 	unsigned int NextPowerOf2(unsigned int n);
+
+	class VertexBufferObjectBase
+	{
+	public:
+		VertexBufferObjectBase();
+		~VertexBufferObjectBase();
+
+		enum BufferType { VERTEX_BUFFER, NORMAL_BUFFER, INDEX_BUFFER, COLOR_BUFFER, UV_BUFFER };
+
+		virtual void Bind() = 0;
+		virtual void Unbind() = 0;
+		virtual void Upload() = 0;
+	};
 }
