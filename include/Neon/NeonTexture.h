@@ -1,24 +1,46 @@
 #pragma once
 
-#include "NeonCommon.h"
+#include <Neon/NeonCommon.h>
 
 namespace Neon
 {
-    class Shader {
-    public:
-        Shader(const char* vertexPath, const char* fragmentPath);
-        ~Shader();
+	class Image;
 
-        void use();
-        void setInt(const char* name, int value);
-        void setFloat1(const char* name, float value);
-		void setFloat2(const char* name, float values[2]);
-		void setFloat3(const char* name, float values[3]);
-		void setFloat4(const char* name, float values[4]);
+	class Texture
+	{
+	public:
+		Texture(const string& name, Image* image);
+		Texture(const string& name, int width, int height);
+		~Texture();
 
-    private:
-        GLuint shaderProgram;
+		void Bind(GLenum textureSlot = GL_TEXTURE0);
+		void Unbind();
 
-        void checkCompileErrors(GLuint shader, const char* type);
-    };
+		virtual void Resize(int width, int height);
+
+		inline Image* GetImage() const { return image; }
+
+		inline GLenum GetTarget() { return textureTarget; }
+		inline GLuint GetTextureID() { return textureID; }
+
+		inline GLsizei GetWidth() { return width; }
+		inline GLsizei GetHeight() { return height; }
+
+		inline bool HasAlpha() { return withAlpha; }
+
+	protected:
+		Image* image = nullptr;
+
+		bool withAlpha = true;
+		GLuint textureID = -1;
+		GLenum textureTarget = GL_TEXTURE_2D; // GL_TEXTURE_2D, GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_CUBE_MAP
+		GLenum format = GL_RGBA;
+		GLsizei width = 0;
+		GLsizei height = 0;
+		GLenum dataType = GL_UNSIGNED_BYTE;
+		unsigned char* textureData = nullptr;
+
+	public:
+		friend class HeGraphics;
+	};
 }

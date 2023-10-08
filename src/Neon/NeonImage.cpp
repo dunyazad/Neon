@@ -13,6 +13,12 @@ namespace Neon
 	Image::Image(const string& name, const string& filename, bool verticalFlip)
 		: filename(filename), verticalFlip(verticalFlip)
 	{
+		std::ifstream imageFile(filename);
+		if (!imageFile) {
+			std::cout << "Failed to open image file : " << filename << std::endl;
+			exit(EXIT_FAILURE);
+		}
+
 		stbi_set_flip_vertically_on_load(verticalFlip);
 		data = stbi_load(filename.c_str(), &width, &height, &nrChannels, bits);
 	}

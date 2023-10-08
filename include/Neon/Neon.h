@@ -5,6 +5,8 @@
 #include <Neon/NeonShader.h>
 #include <Neon/NeonVertexArrayObject.h>
 #include <Neon/NeonVertexBufferObject.hpp>
+#include <Neon/NeonImage.h>
+#include <Neon/NeonTexture.h>
 
 namespace Neon
 {

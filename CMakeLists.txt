@@ -21,8 +21,12 @@ include/Neon/NeonShader.h
 src/Neon/NeonShader.cpp
 include/Neon/NeonImage.h
 src/Neon/NeonImage.cpp
+include/Neon/NeonTexture.h
+src/Neon/NeonTexture.cpp
 include/Neon/NeonVertexArrayObject.h
 src/Neon/NeonVertexArrayObject.cpp
+include/Neon/NeonFrameBufferObject.h
+src/Neon/NeonFrameBufferObject.cpp
 include/Neon/NeonVertexBufferObject.hpp
 )
 

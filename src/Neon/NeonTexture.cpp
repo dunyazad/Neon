@@ -1,101 +1,159 @@
-#include "NeonShader.h"
+#include <Neon/NeonTexture.h>
+#include <Neon/NeonImage.h>
 
 namespace Neon
 {
-    Shader::Shader(const char* vertexPath, const char* fragmentPath) {
-        // Load the vertex shader from file
-        std::ifstream vertexFile(vertexPath);
-        if (!vertexFile) {
-            std::cout << "Failed to open vertex shader file : " << vertexPath << std::endl;
-            exit(EXIT_FAILURE);
-        }
-        std::stringstream vertexStream;
-        vertexStream << vertexFile.rdbuf();
-        std::string vertexSource = vertexStream.str();
-        const char* vertexSourcePtr = vertexSource.c_str();
+	Texture::Texture(const string& name, Image* image)
+		: image(image)
+	{
+		if (image != nullptr)
+		{
+			width = image->GetWidth();
+			height = image->GetHeight();
+			withAlpha = image->GetChannels() == 4;
 
-        // Load the fragment shader from file
-        std::ifstream fragmentFile(fragmentPath);
-        if (!fragmentFile) {
-            std::cout << "Failed to open fragment shader file : " << fragmentPath << std::endl;
-            exit(EXIT_FAILURE);
-        }
-        std::stringstream fragmentStream;
-        fragmentStream << fragmentFile.rdbuf();
-        std::string fragmentSource = fragmentStream.str();
-        const char* fragmentSourcePtr = fragmentSource.c_str();
+			if (width != 0 && height != 0)
+			{
+				textureData = new unsigned char[width * height * image->GetChannels()];
+				memset(textureData, 255, width * height * image->GetChannels());
+				if (image->Data() != nullptr)
+				{
+					memcpy(textureData, image->Data(), width * height * image->GetChannels());
+				}
+			}
+		}
 
-        // Compile the shaders
-        unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertexShader, 1, &vertexSourcePtr, NULL);
-        glCompileShader(vertexShader);
-        checkCompileErrors(vertexShader, "VERTEX");
+		glGenTextures(1, &textureID);
 
-        unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentShader, 1, &fragmentSourcePtr, NULL);
-        glCompileShader(fragmentShader);
-        checkCompileErrors(fragmentShader, "FRAGMENT");
+		glBindTexture(textureTarget, textureID);
 
-        // Link the shader program
-        shaderProgram = glCreateProgram();
-        glAttachShader(shaderProgram, vertexShader);
-        glAttachShader(shaderProgram, fragmentShader);
-        glLinkProgram(shaderProgram);
-        checkCompileErrors(shaderProgram, "PROGRAM");
+		glTexParameterf(textureTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameterf(textureTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(textureTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(textureTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-        // Delete the shaders
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
-    }
+		GLfloat borderColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+		glTexParameterfv(textureTarget, GL_TEXTURE_BORDER_COLOR, borderColor);
 
-    Shader::~Shader() {
-        glDeleteProgram(shaderProgram);
-    }
+		if (image == nullptr)
+		{
+			glTexImage2D(textureTarget, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+		}
+		else
+		{
+			if (textureData != nullptr)
+			{
+				if (withAlpha)
+				{
+					glTexImage2D(textureTarget, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureData);
+				}
+				else
+				{
+					glTexImage2D(textureTarget, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
+				}
+			}
+		}
+	}
 
-    void Shader::use() {
-        glUseProgram(shaderProgram);
-    }
+	Texture::Texture(const string& name, int width, int height)
+		: width(width), height(height)
+	{
+		glGenTextures(1, &textureID);
 
-    void Shader::setInt(const char* name, int value) {
-        glUniform1i(glGetUniformLocation(shaderProgram, name), value);
-    }
+		glBindTexture(textureTarget, textureID);
 
-    void Shader::setFloat1(const char* name, float value) {
-        glUniform1f(glGetUniformLocation(shaderProgram, name), value);
-    }
+		glTexParameterf(textureTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameterf(textureTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(textureTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(textureTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    void Shader::setFloat2(const char* name, float values[2]) {
-        glUniform2f(glGetUniformLocation(shaderProgram, name), values[0], values[1]);
-    }
+		GLfloat borderColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+		glTexParameterfv(textureTarget, GL_TEXTURE_BORDER_COLOR, borderColor);
 
-    void Shader::setFloat3(const char* name, float values[3]) {
-        glUniform3f(glGetUniformLocation(shaderProgram, name), values[0], values[1], values[2]);
-    }
+		if (image == nullptr)
+		{
+			glTexImage2D(textureTarget, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+		}
+		else
+		{
+			if (textureData != nullptr)
+			{
+				if (withAlpha)
+				{
+					glTexImage2D(textureTarget, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureData);
+				}
+				else
+				{
+					glTexImage2D(textureTarget, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
+				}
+			}
+		}
+	}
 
-    void Shader::setFloat4(const char* name, float values[4]) {
-        glUniform4f(glGetUniformLocation(shaderProgram, name), values[0], values[1], values[2], values[3]);
-    }
+	Texture::~Texture()
+	{
+		if (textureID != -1)
+		{
+			glDeleteTextures(1, &textureID);
+		}
 
-    void Shader::checkCompileErrors(GLuint shader, const char* type) {
-        int success;
-        char infoLog[1024];
-        if (strcmp(type, "PROGRAM") != 0) {
-            glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-            if (!success) {
-                glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-                std::cout << "Failed to compile shader of type " << type << std::endl;
-                std::cout << infoLog << std::endl;
-                exit(EXIT_FAILURE);
-            }
-        }
-        else {
-            glGetProgramiv(shader, GL_LINK_STATUS, &success);
-            if (!success) {
-                glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-                std::cout << "Failed to link shader program" << std::endl;
-                std::cout << infoLog << std::endl;
-                exit(EXIT_FAILURE);
-            }
-        }
-    }
+		if (textureData != nullptr) {
+			delete textureData;
+			textureData = nullptr;
+		}
+	}
+
+	void Texture::Bind(GLenum textureSlot)
+	{
+		glActiveTexture(textureSlot);
+		CheckGLError();
+
+		glBindTexture(textureTarget, textureID);
+		CheckGLError();
+	}
+
+	void Texture::Unbind()
+	{
+		glBindTexture(textureTarget, 0);
+	}
+
+	void Texture::Resize(int width, int height)
+	{
+		this->width = width;
+		this->height = height;
+
+		if (width != 0 && height != 0)
+		{
+			if (textureData != nullptr)
+			{
+				delete textureData;
+				textureData = nullptr;
+			}
+
+			if (image != nullptr)
+			{
+				textureData = new unsigned char[width * height * image->GetChannels()];
+				memset(textureData, 255, width * height * image->GetChannels());
+				memcpy(textureData, image->Data(), width * height * image->GetChannels());
+			}
+		}
+
+		glBindTexture(textureTarget, textureID);
+
+		if (image == nullptr)
+		{
+			glTexImage2D(textureTarget, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+		}
+		else
+		{
+			if (textureData != nullptr) {
+				if (withAlpha) {
+					glTexImage2D(textureTarget, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureData);
+				}
+				else {
+					glTexImage2D(textureTarget, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
+				}
+			}
+		}
+	}
 }
