@@ -4,6 +4,9 @@
 
 int main()
 {
+	Neon::Application app(1920, 1080);
+	app.SetResourceRoot(filesystem::current_path().string() + "/../res");
+
 	Neon::Shader* shaderA = nullptr;
 	Neon::Shader* shaderB = nullptr;
 
@@ -12,16 +15,41 @@ int main()
 	Neon::Texture* textureB = nullptr;
 	Neon::Texture* textureC = nullptr;
 
-
-	Neon::Application app(1920, 1080);
-	app.SetResourceRoot(filesystem::current_path().string() + "/../res");
-
 	Neon::RenderData triangle;
 	Neon::RenderData owl;
 	Neon::RenderData lion;
 	
+	Neon::RenderData frame;
+	Neon::Texture* textureFrame = nullptr;
+	Neon::FrameBufferObject* fbo = nullptr;
+
 	app.OnInitialize([&]() {
 		auto t = Neon::Time("Initialize");
+
+		{
+			frame.AddVertex(-0.5f, -0.5f, 0.0f);
+			frame.AddVertex(0.5f, -0.5f, 0.0f);
+			frame.AddVertex(0.5f, 0.5f, 0.0f);
+			frame.AddVertex(-0.5f, 0.5f, 0.0f);
+
+			frame.AddIndex(0);
+			frame.AddIndex(1);
+			frame.AddIndex(2);
+
+			frame.AddIndex(0);
+			frame.AddIndex(2);
+			frame.AddIndex(3);
+
+			frame.AddUV(0.0f, 0.0f);
+			frame.AddUV(1.0f, 0.0f);
+			frame.AddUV(1.0f, 1.0f);
+			frame.AddUV(0.0f, 1.0f);
+
+			textureFrame = new Neon::Texture("frame", 1920, 1080);
+			fbo = new Neon::FrameBufferObject("frame", textureFrame);
+
+			frame.AddTexture(textureFrame);
+		}
 
 		{
 			triangle.AddVertex(-0.125f, 0.0f, 0.0f);
@@ -95,6 +123,24 @@ int main()
 	app.OnUpdate([&](float timeDelta) {
 		//auto t = Neon::Time("Update");
 
+		fbo->Bind();
+
+		glClearColor(0.9f, 0.7f, 0.5f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		shaderA->use();
+		triangle.Bind();
+		glDrawElements(GL_TRIANGLES, (GLsizei)triangle.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+
+		shaderB->use();
+		owl.Bind();
+		glDrawElements(GL_TRIANGLES, (GLsizei)owl.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+
+		lion.Bind();
+		glDrawElements(GL_TRIANGLES, (GLsizei)lion.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+
+		fbo->Unbind();
+
 		glClearColor(0.3f, 0.5f, 0.7f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -108,6 +154,9 @@ int main()
 
 		lion.Bind();
 		glDrawElements(GL_TRIANGLES, (GLsizei)lion.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+
+		frame.Bind();
+		glDrawElements(GL_TRIANGLES, (GLsizei)frame.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
 		});
 
 

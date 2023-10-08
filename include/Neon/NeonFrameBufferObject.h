@@ -9,6 +9,10 @@ namespace Neon
 	class FrameBufferObject
 	{
 	public:
+		FrameBufferObject(const string& name, int width, int height);
+		FrameBufferObject(const string& name, Texture* texture);
+		~FrameBufferObject();
+
 		void Bind();
 		void Unbind();
 
@@ -21,10 +25,6 @@ namespace Neon
 		inline int GetHeight() { return height; }
 
 	protected:
-		FrameBufferObject(const string& name, int width, int height);
-		FrameBufferObject(const string& name, Texture* texture);
-		~FrameBufferObject();
-
 		GLuint fboID = -1;
 		GLuint depthBufferID = -1;
 		int width = 512;
