@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Neon/NeonCommon.h>
+#include <Neon/NeonComponent.h>
 
 namespace Neon
 {
@@ -11,7 +12,7 @@ namespace Neon
 	class Shader;
 	class Texture;
 
-	class RenderData
+	class RenderData : public ComponentBase
 	{
 	public:
 		RenderData();

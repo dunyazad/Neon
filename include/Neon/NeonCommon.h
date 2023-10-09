@@ -17,6 +17,7 @@
 #include <stack>
 #include <string>
 #include <thread>
+#include <typeinfo>
 #include <vector>
 using namespace std;
 
@@ -37,6 +38,10 @@ using namespace std::chrono;
 
 namespace Neon
 {
+	typedef unsigned long ID;
+
+	
+
 	class Time
 	{
 	public:

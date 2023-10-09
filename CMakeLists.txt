@@ -30,6 +30,12 @@ src/Neon/NeonVertexArrayObject.cpp
 include/Neon/NeonVertexBufferObject.hpp
 include/Neon/NeonRenderData.h
 src/Neon/NeonRenderData.cpp
+include/Neon/NeonEntity.h
+src/Neon/NeonEntity.cpp
+include/Neon/NeonComponent.h
+src/Neon/NeonComponent.cpp
+include/Neon/NeonSystem.h
+src/Neon/NeonSystem.cpp
 )
 
 #add_library(Neon

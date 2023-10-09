@@ -3,7 +3,7 @@
 #include <Neon/Neon.h>
 
 int main()
-{
+{	
 	Neon::Application app(1920, 1080);
 	app.SetResourceRoot(filesystem::current_path().string() + "/../res");
 
@@ -25,6 +25,23 @@ int main()
 
 	app.OnInitialize([&]() {
 		auto t = Neon::Time("Initialize");
+
+		shaderA = new Neon::Shader((app.GetResourceRoot() + "/shader/fixedColor.vs").c_str(), (app.GetResourceRoot() + "/shader/fixedColor.fs").c_str());
+		shaderB = new Neon::Shader((app.GetResourceRoot() + "/shader/texture.vs").c_str(), (app.GetResourceRoot() + "/shader/texture.fs").c_str());
+
+
+		{
+			auto renderData = app.CreateComponent<Neon::RenderData>();
+			renderData->AddVertex(-0.125f, 0.0f, 0.0f);
+			renderData->AddVertex(0.0f, -0.5f, 0.0f);
+			renderData->AddVertex(0.125f, 0.0f, 0.0f);
+
+			renderData->AddIndex(0);
+			renderData->AddIndex(1);
+			renderData->AddIndex(2);
+
+			renderData->AddShader(shaderA);
+		}
 
 		{
 			frame.AddVertex(-0.5f, -0.5f, 0.0f);
@@ -111,9 +128,6 @@ int main()
 			lion.AddTexture(textureC);
 		}
 
-		shaderA = new Neon::Shader((app.GetResourceRoot() + "/shader/fixedColor.vs").c_str(), (app.GetResourceRoot() + "/shader/fixedColor.fs").c_str());
-		shaderB = new Neon::Shader((app.GetResourceRoot() + "/shader/texture.vs").c_str(), (app.GetResourceRoot() + "/shader/texture.fs").c_str());
-
 		});
 
 
@@ -123,23 +137,23 @@ int main()
 	app.OnUpdate([&](float timeDelta) {
 		//auto t = Neon::Time("Update");
 
-		fbo->Bind();
+		//fbo->Bind();
 
-		glClearColor(0.9f, 0.7f, 0.5f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		//glClearColor(0.9f, 0.7f, 0.5f, 1.0f);
+		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		shaderA->use();
-		triangle.Bind();
-		glDrawElements(GL_TRIANGLES, (GLsizei)triangle.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+		//shaderA->use();
+		//triangle.Bind();
+		//glDrawElements(GL_TRIANGLES, (GLsizei)triangle.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
 
-		shaderB->use();
-		owl.Bind();
-		glDrawElements(GL_TRIANGLES, (GLsizei)owl.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+		//shaderB->use();
+		//owl.Bind();
+		//glDrawElements(GL_TRIANGLES, (GLsizei)owl.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
 
-		lion.Bind();
-		glDrawElements(GL_TRIANGLES, (GLsizei)lion.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+		//lion.Bind();
+		//glDrawElements(GL_TRIANGLES, (GLsizei)lion.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
 
-		fbo->Unbind();
+		//fbo->Unbind();
 
 		glClearColor(0.3f, 0.5f, 0.7f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -155,8 +169,8 @@ int main()
 		lion.Bind();
 		glDrawElements(GL_TRIANGLES, (GLsizei)lion.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
 
-		frame.Bind();
-		glDrawElements(GL_TRIANGLES, (GLsizei)frame.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+		//frame.Bind();
+		//glDrawElements(GL_TRIANGLES, (GLsizei)frame.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
 		});
 
 

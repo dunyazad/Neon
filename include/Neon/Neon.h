@@ -10,8 +10,22 @@
 #include <Neon/NeonFrameBufferObject.h>
 #include <Neon/NeonRenderData.h>
 
+#include <Neon/NeonEntity.h>
+#include <Neon/NeonComponent.h>
+#include <Neon/NeonSystem.h>
+
 namespace Neon
 {
+	//bool operator<(const type_info& a, const type_info& b)
+	//{
+	//	return int(&a) < int(&b);
+	//}
+
+	//bool operator<(const type_info* a, const type_info* b)
+	//{
+	//	return int(a) < int(b);
+	//}
+
 	class Application
 	{
 	public:
@@ -27,6 +41,20 @@ namespace Neon
 		inline const string& GetResourceRoot() const { return resourceRoot; }
 		inline void SetResourceRoot(const string& root) { resourceRoot = root; }
 
+		Entity* GetEntity(const string& name);
+		Entity* CreateEntity(const string& name);
+
+		template<class T> T* CreateComponent()
+		{
+			auto key = &typeid(T);
+			auto component = new T;
+			components[key].push_back(component);
+			return component;
+		}
+
+		inline const map<string, Entity*>& GetEntities() const { return entities; }
+		template<class T> vector<ComponentBase*>& GetComponents() { return components[&typeid(T)]; }
+
 	protected:
 
 	private:
@@ -37,5 +65,10 @@ namespace Neon
 		Window* window = nullptr;
 
 		string resourceRoot;
+
+		map<string, Entity*> entities;
+		map<const type_info*, vector<ComponentBase*>> components;
+
+		RenderSystem renderSystem;
 	};
 }
