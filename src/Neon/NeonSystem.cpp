@@ -2,6 +2,7 @@
 #include <Neon/NeonEntity.h>
 #include <Neon/NeonScene.h>
 #include <Neon/NeonVertexBufferObject.hpp>
+#include <Neon/Component/NeonCamera.h>
 #include <Neon/Component/NeonMesh.h>
 #include <Neon/Component/NeonShader.h>
 #include <Neon/Component/NeonTexture.h>
@@ -50,6 +51,9 @@ namespace Neon
 
 	void RenderSystem::Frame(float now, float timeDelta)
 	{
+		auto camera = scene->GetMainCamera();
+		camera->OnUpdate(now, timeDelta);
+
 		auto entities = scene->GetEntities();
 		for (auto& kvp : entities)
 		{
@@ -59,6 +63,15 @@ namespace Neon
 			if (nullptr != shader)
 			{
 				shader->Use();
+			}
+
+			if (nullptr != camera)
+			{
+				if (nullptr != shader)
+				{
+					shader->SetUniformFloat4x4("projection", glm::value_ptr(camera->projectionMatrix));
+					shader->SetUniformFloat4x4("view", glm::value_ptr(camera->viewMatrix));
+				}
 			}
 
 			auto transform = entity->GetComponent<Transform>(0);

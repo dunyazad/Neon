@@ -7,6 +7,7 @@ namespace Neon
 {
 	class Entity;
 	class ComponentBase;
+	class Camera;
 
 	class Scene
 	{
@@ -66,11 +67,12 @@ namespace Neon
 			}
 		}
 
-		inline ComponentBase* GetComponent(const string& name)
+		template<class T>
+		T* GetComponent(const string& name)
 		{
 			if (0 != componentNameMapping.count(name))
 			{
-				return componentNameMapping[name];
+				return (T*)componentNameMapping[name];
 			}
 			else
 			{
@@ -83,11 +85,16 @@ namespace Neon
 
 		void Frame(float now, float timeDelta);
 
+		inline Camera* GetMainCamera() { return mainCamera; }
+		inline void SetMainCamera(Camera* camera) { mainCamera = camera; }
+
 	private:
 		string name;
 		map<string, Entity*> entities;
 		map<const type_info*, vector<ComponentBase*>> components;
 		map<string, ComponentBase*> componentNameMapping;
+
+		Camera* mainCamera = nullptr;
 
 		TransformUpdateSystem transformUpdateSystem;
 		RenderSystem renderSystem;

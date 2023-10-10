@@ -9,9 +9,9 @@ namespace Neon
 	{
 	public:
 		Transform(const string& name);
-		~Transform();
+		virtual ~Transform();
 
-		void OnUpdate(float now, float timeDelta);
+		virtual void OnUpdate(float now, float timeDelta);
 
 		glm::vec3 position = glm::zero<glm::vec3>();
 		glm::quat rotation = glm::identity<glm::quat>();

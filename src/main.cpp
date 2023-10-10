@@ -13,22 +13,20 @@ int main()
 	app.OnInitialize([&]() {
 		auto t = Neon::Time("Initialize");
 
-		auto scene = app.CreateScene("Main Scene");
+		auto scene = app.CreateScene("Scene/Main");
 
 		{
-			auto entity = scene->CreateEntity("Main Camera");
-			auto camera = scene->CreateComponent<Neon::Camera>("Main Camera");
-
-			auto transform = scene->CreateComponent<Neon::Transform>("Main Camera Transform");
-
+			auto entity = scene->CreateEntity("Entity/Main Camera");
+			auto camera = scene->CreateComponent<Neon::Camera>("Camera/Main", 1280.0f, 1024.0f);
+			scene->SetMainCamera(camera);
+			
 			entity->AddComponent(camera);
-			entity->AddComponent(transform);
 		}
 
 		{
-			auto entity = scene->CreateEntity("triangleA");
+			auto entity = scene->CreateEntity("Entity/triangleA");
 
-			auto mesh = scene->CreateComponent<Neon::Mesh>("triangleA mesh");
+			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/triangleA mesh");
 			mesh->AddVertex(-0.125f, 0.0f, 0.0f);
 			mesh->AddVertex(0.125f, 0.0f, 0.0f);
 			mesh->AddVertex(0.0f, 0.5f, 0.0f);
@@ -44,9 +42,9 @@ int main()
 		}
 
 		{
-			auto entity = scene->CreateEntity("triangleV");
+			auto entity = scene->CreateEntity("Entity/triangleV");
 
-			auto mesh = scene->CreateComponent<Neon::Mesh>("triangleV mesh");
+			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/triangleV mesh");
 			mesh->AddVertex(-0.125f, 0.0f, 0.0f);
 			mesh->AddVertex(0.0f, -0.5f, 0.0f);
 			mesh->AddVertex(0.125f, 0.0f, 0.0f);
@@ -57,7 +55,7 @@ int main()
 
 			entity->AddComponent(mesh);
 
-			auto transform = scene->CreateComponent<Neon::Transform>("triangleV transform");
+			auto transform = scene->CreateComponent<Neon::Transform>("Transform/triangleV");
 			transform->position = glm::vec3(0, -0.1f, 0.0f);
 			transform->AddUpdateCallback([transform](float now, float timeDelta) {
 				auto angle = now;
@@ -67,7 +65,8 @@ int main()
 
 			entity->AddComponent(transform);
 
-			entity->AddComponent(scene->GetComponent("fixedColor"));
+			auto shader = scene->GetComponent<Neon::Shader>("Shader/fixedColor");
+			entity->AddComponent(shader);
 		}
 
 		//{
@@ -156,7 +155,7 @@ int main()
 
 			entity->AddComponent(mesh);
 			entity->AddComponent(texture);
-			entity->AddComponent(scene->GetComponent("Shader/texture"));
+			entity->AddComponent(scene->GetComponent<Neon::Shader>("Shader/texture"));
 		}
 
 		});

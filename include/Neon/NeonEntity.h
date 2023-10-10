@@ -9,13 +9,16 @@ namespace Neon
 	class Entity
 	{
 	public:
-		Entity();
+		Entity(const string& name);
 		~Entity();
 
 		template<class T>
 		void AddComponent(T* component)
 		{
-			components[&typeid(T)].push_back(component);
+			if (nullptr != component)
+			{
+				components[&typeid(T)].push_back(component);
+			}
 		}
 
 		template<class T>
@@ -32,6 +35,8 @@ namespace Neon
 			else if (index > cv.size() - 1) return nullptr;
 			else return (T*)cv[index];
 		}
+
+		string name;
 
 	private:
 		map<const type_info*, vector<ComponentBase*>> components;

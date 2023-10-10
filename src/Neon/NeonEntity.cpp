@@ -2,7 +2,8 @@
 
 namespace Neon
 {
-	Entity::Entity()
+	Entity::Entity(const string& name)
+		: name(name)
 	{
 	}
 

@@ -8,7 +8,7 @@ namespace Neon
 	{
 	public:
 		ComponentBase(const string& name);
-		~ComponentBase();
+		virtual ~ComponentBase();
 
 	private:
 		string name;
