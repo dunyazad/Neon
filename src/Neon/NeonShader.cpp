@@ -52,27 +52,27 @@ namespace Neon
         glDeleteProgram(shaderProgram);
     }
 
-    void Shader::use() {
+    void Shader::Use() {
         glUseProgram(shaderProgram);
     }
 
-    void Shader::setInt(const char* name, int value) {
+    void Shader::SetInt(const char* name, int value) {
         glUniform1i(glGetUniformLocation(shaderProgram, name), value);
     }
 
-    void Shader::setFloat1(const char* name, float value) {
+    void Shader::SetFloat1(const char* name, float value) {
         glUniform1f(glGetUniformLocation(shaderProgram, name), value);
     }
 
-    void Shader::setFloat2(const char* name, float values[2]) {
+    void Shader::SetFloat2(const char* name, float values[2]) {
         glUniform2f(glGetUniformLocation(shaderProgram, name), values[0], values[1]);
     }
 
-    void Shader::setFloat3(const char* name, float values[3]) {
+    void Shader::SetFloat3(const char* name, float values[3]) {
         glUniform3f(glGetUniformLocation(shaderProgram, name), values[0], values[1], values[2]);
     }
 
-    void Shader::setFloat4(const char* name, float values[4]) {
+    void Shader::SetFloat4(const char* name, float values[4]) {
         glUniform4f(glGetUniformLocation(shaderProgram, name), values[0], values[1], values[2], values[3]);
     }
 

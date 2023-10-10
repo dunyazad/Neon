@@ -25,15 +25,17 @@ namespace Neon
 
 	void RenderSystem::Frame(float timeDelta)
 	{
-		auto components = application->GetComponents<RenderData>();
-
-		for (auto& c : components)
+		auto entities = application->GetEntities();
+		for (auto& kvp : entities)
 		{
-			auto component = (RenderData*)c;
-			(*component->GetShaders().begin())->use();
-
-			component->Bind();
-			glDrawElements(GL_TRIANGLES, (GLsizei)component->GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+			auto components = kvp.second->GetComponents<RenderData>();
+			for (auto& component : components)
+			{
+				auto renderData = (RenderData*)component;
+				(*renderData->GetShaders().begin())->Use();
+				renderData->Bind();
+				glDrawElements(GL_TRIANGLES, (GLsizei)renderData->GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+			}
 		}
 	}
 }

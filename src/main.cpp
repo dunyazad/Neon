@@ -4,7 +4,7 @@
 
 int main()
 {	
-	Neon::Application app(1920, 1080);
+	Neon::Application app(1280, 1024);
 	app.SetResourceRoot(filesystem::current_path().string() + "/../res");
 
 	Neon::Shader* shaderA = nullptr;
@@ -15,10 +15,6 @@ int main()
 	Neon::Texture* textureB = nullptr;
 	Neon::Texture* textureC = nullptr;
 
-	Neon::RenderData triangle;
-	Neon::RenderData owl;
-	Neon::RenderData lion;
-	
 	Neon::RenderData frame;
 	Neon::Texture* textureFrame = nullptr;
 	Neon::FrameBufferObject* fbo = nullptr;
@@ -31,6 +27,8 @@ int main()
 
 
 		{
+			auto entity = app.CreateEntity("triangleV");
+
 			auto renderData = app.CreateComponent<Neon::RenderData>();
 			renderData->AddVertex(-0.125f, 0.0f, 0.0f);
 			renderData->AddVertex(0.0f, -0.5f, 0.0f);
@@ -41,6 +39,8 @@ int main()
 			renderData->AddIndex(2);
 
 			renderData->AddShader(shaderA);
+
+			entity->AddComponent(renderData);
 		}
 
 		{
@@ -69,63 +69,84 @@ int main()
 		}
 
 		{
-			triangle.AddVertex(-0.125f, 0.0f, 0.0f);
-			triangle.AddVertex(0.125f, 0.0f, 0.0f);
-			triangle.AddVertex(0.0f, 0.5f, 0.0f);
+			auto entity = app.CreateEntity("triangleA");
 
-			triangle.AddIndex(0);
-			triangle.AddIndex(1);
-			triangle.AddIndex(2);
+			auto renderData = app.CreateComponent<Neon::RenderData>();
+			renderData->AddVertex(-0.125f, 0.0f, 0.0f);
+			renderData->AddVertex(0.125f, 0.0f, 0.0f);
+			renderData->AddVertex(0.0f, 0.5f, 0.0f);
+
+			renderData->AddIndex(0);
+			renderData->AddIndex(1);
+			renderData->AddIndex(2);
+
+			renderData->AddShader(shaderA);
+
+			entity->AddComponent(renderData);
 		}
 
 		{
-			owl.AddVertex(0.5f, 0.0f, 0.0f);
-			owl.AddVertex(0.75f, 0.0f, 0.0f);
-			owl.AddVertex(0.75f, 0.5f, 0.0f);
-			owl.AddVertex(0.5f, 0.5f, 0.0f);
+			auto entity = app.CreateEntity("owl");
 
-			owl.AddIndex(0);
-			owl.AddIndex(1);
-			owl.AddIndex(2);
+			auto renderData = app.CreateComponent<Neon::RenderData>();
 
-			owl.AddIndex(0);
-			owl.AddIndex(2);
-			owl.AddIndex(3);
+			renderData->AddVertex(0.5f, 0.0f, 0.0f);
+			renderData->AddVertex(0.75f, 0.0f, 0.0f);
+			renderData->AddVertex(0.75f, 0.5f, 0.0f);
+			renderData->AddVertex(0.5f, 0.5f, 0.0f);
 
-			owl.AddUV(0.0f, 0.0f);
-			owl.AddUV(1.0f, 0.0f);
-			owl.AddUV(1.0f, 1.0f);
-			owl.AddUV(0.0f, 1.0f);
+			renderData->AddIndex(0);
+			renderData->AddIndex(1);
+			renderData->AddIndex(2);
+
+			renderData->AddIndex(0);
+			renderData->AddIndex(2);
+			renderData->AddIndex(3);
+
+			renderData->AddUV(0.0f, 0.0f);
+			renderData->AddUV(1.0f, 0.0f);
+			renderData->AddUV(1.0f, 1.0f);
+			renderData->AddUV(0.0f, 1.0f);
 
 			imageB = new Neon::Image("Owl.jpg", app.GetResourceRoot() + "/images/Owl.jpg");
 			textureB = new Neon::Texture("Owl", imageB);
 
-			owl.AddTexture(textureB);
+			renderData->AddTexture(textureB);
+			renderData->AddShader(shaderB);
+
+			entity->AddComponent(renderData);
 		}
 
 		{
-			lion.AddVertex(-0.5f, 0.0f, 0.0f);
-			lion.AddVertex(-0.25f, 0.0f, 0.0f);
-			lion.AddVertex(-0.25f, 0.5f, 0.0f);
-			lion.AddVertex(-0.5f, 0.5f, 0.0f);
+			auto entity = app.CreateEntity("lion");
 
-			lion.AddIndex(0);
-			lion.AddIndex(1);
-			lion.AddIndex(2);
+			auto renderData = app.CreateComponent<Neon::RenderData>();
 
-			lion.AddIndex(0);
-			lion.AddIndex(2);
-			lion.AddIndex(3);
+			renderData->AddVertex(-0.5f, 0.0f, 0.0f);
+			renderData->AddVertex(-0.25f, 0.0f, 0.0f);
+			renderData->AddVertex(-0.25f, 0.5f, 0.0f);
+			renderData->AddVertex(-0.5f, 0.5f, 0.0f);
 
-			lion.AddUV(0.0f, 0.0f);
-			lion.AddUV(1.0f, 0.0f);
-			lion.AddUV(1.0f, 1.0f);
-			lion.AddUV(0.0f, 1.0f);
+			renderData->AddIndex(0);
+			renderData->AddIndex(1);
+			renderData->AddIndex(2);
+
+			renderData->AddIndex(0);
+			renderData->AddIndex(2);
+			renderData->AddIndex(3);
+
+			renderData->AddUV(0.0f, 0.0f);
+			renderData->AddUV(1.0f, 0.0f);
+			renderData->AddUV(1.0f, 1.0f);
+			renderData->AddUV(0.0f, 1.0f);
 
 			imageC = new Neon::Image("Lion", app.GetResourceRoot() + "/images/Lion.png");
 			textureC = new Neon::Texture("Lion", imageC);
 
-			lion.AddTexture(textureC);
+			renderData->AddTexture(textureC);
+			renderData->AddShader(shaderB);
+
+			entity->AddComponent(renderData);
 		}
 
 		});
@@ -158,16 +179,16 @@ int main()
 		glClearColor(0.3f, 0.5f, 0.7f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		shaderA->use();
-		triangle.Bind();
-		glDrawElements(GL_TRIANGLES, (GLsizei)triangle.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+		//shaderA->Use();
+		//triangle.Bind();
+		//glDrawElements(GL_TRIANGLES, (GLsizei)triangle.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
 
-		shaderB->use();
-		owl.Bind();
-		glDrawElements(GL_TRIANGLES, (GLsizei)owl.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+		//shaderB->Use();
+		//owl.Bind();
+		//glDrawElements(GL_TRIANGLES, (GLsizei)owl.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
 
-		lion.Bind();
-		glDrawElements(GL_TRIANGLES, (GLsizei)lion.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+		//lion.Bind();
+		//glDrawElements(GL_TRIANGLES, (GLsizei)lion.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
 
 		//frame.Bind();
 		//glDrawElements(GL_TRIANGLES, (GLsizei)frame.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
