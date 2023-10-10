@@ -79,7 +79,7 @@ namespace Neon
 				texture->Bind();
 			}
 
-			auto renderData = entity->GetComponent<RenderData>(0);
+			auto renderData = entity->GetComponent<Mesh>(0);
 			if (nullptr != renderData)
 			{
 				renderData->Bind();

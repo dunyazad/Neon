@@ -12,11 +12,11 @@ namespace Neon
 	class Shader;
 	class Texture;
 
-	class RenderData : public ComponentBase
+	class Mesh : public ComponentBase
 	{
 	public:
-		RenderData(const string& name);
-		~RenderData();
+		Mesh(const string& name);
+		~Mesh();
 
 		inline VertexArrayObject* GetVAO() { return vao; }
 

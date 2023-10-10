@@ -19,7 +19,7 @@ int main()
 		{
 			auto entity = app.CreateEntity("triangleA");
 
-			auto renderData = app.CreateComponent<Neon::RenderData>("triangleA RenderData");
+			auto renderData = app.CreateComponent<Neon::Mesh>("triangleA RenderData");
 			renderData->AddVertex(-0.125f, 0.0f, 0.0f);
 			renderData->AddVertex(0.125f, 0.0f, 0.0f);
 			renderData->AddVertex(0.0f, 0.5f, 0.0f);
@@ -35,7 +35,7 @@ int main()
 		{
 			auto entity = app.CreateEntity("triangleV");
 
-			auto renderData = app.CreateComponent<Neon::RenderData>("triangleV RenderData");
+			auto renderData = app.CreateComponent<Neon::Mesh>("triangleV RenderData");
 			renderData->AddVertex(-0.125f, 0.0f, 0.0f);
 			renderData->AddVertex(0.0f, -0.5f, 0.0f);
 			renderData->AddVertex(0.125f, 0.0f, 0.0f);
@@ -87,7 +87,7 @@ int main()
 		{
 			auto entity = app.CreateEntity("owl");
 
-			auto renderData = app.CreateComponent<Neon::RenderData>("owl RenderData");
+			auto renderData = app.CreateComponent<Neon::Mesh>("owl RenderData");
 
 			renderData->AddVertex(0.5f, 0.0f, 0.0f);
 			renderData->AddVertex(0.75f, 0.0f, 0.0f);
@@ -118,7 +118,7 @@ int main()
 		{
 			auto entity = app.CreateEntity("lion");
 
-			auto renderData = app.CreateComponent<Neon::RenderData>("lion RenderData");
+			auto renderData = app.CreateComponent<Neon::Mesh>("lion RenderData");
 
 			renderData->AddVertex(-0.5f, 0.0f, 0.0f);
 			renderData->AddVertex(-0.25f, 0.0f, 0.0f);

@@ -1,17 +1,17 @@
 #include <Neon/NeonVertexArrayObject.h>
 #include <Neon/NeonVertexBufferObject.hpp>
-#include <Neon/Component/NeonRenderData.h>
+#include <Neon/Component/NeonMesh.h>
 #include <Neon/Component/NeonTexture.h>
 
 namespace Neon
 {
-	RenderData::RenderData(const string& name)
+	Mesh::Mesh(const string& name)
 		: ComponentBase(name)
 	{
 		vao = new VertexArrayObject();
 	}
 
-	RenderData::~RenderData()
+	Mesh::~Mesh()
 	{
 		for (auto& kvp : bufferObjects)
 		{
@@ -21,7 +21,7 @@ namespace Neon
 		SAFE_DELETE(vao);
 	}
 
-	VertexBufferObject<float>* RenderData::GetVertexBuffer()
+	VertexBufferObject<float>* Mesh::GetVertexBuffer()
 	{
 		if (0 == bufferObjects.count(VertexBufferObjectBase::BufferType::VERTEX_BUFFER))
 		{
@@ -31,7 +31,7 @@ namespace Neon
 		return (VertexBufferObject<float>*)bufferObjects[VertexBufferObjectBase::BufferType::VERTEX_BUFFER];
 	}
 
-	VertexBufferObject<float>* RenderData::GetNormalBuffer()
+	VertexBufferObject<float>* Mesh::GetNormalBuffer()
 	{
 		if (0 == bufferObjects.count(VertexBufferObjectBase::BufferType::NORMAL_BUFFER))
 		{
@@ -42,7 +42,7 @@ namespace Neon
 		return (VertexBufferObject<float>*)bufferObjects[VertexBufferObjectBase::BufferType::NORMAL_BUFFER];
 	}
 
-	VertexBufferObject<GLuint>* RenderData::GetIndexBuffer()
+	VertexBufferObject<GLuint>* Mesh::GetIndexBuffer()
 	{
 		if (0 == bufferObjects.count(VertexBufferObjectBase::BufferType::INDEX_BUFFER))
 		{
@@ -53,7 +53,7 @@ namespace Neon
 		return (VertexBufferObject<GLuint>*)bufferObjects[VertexBufferObjectBase::BufferType::INDEX_BUFFER];
 	}
 
-	VertexBufferObject<float>* RenderData::GetColorBuffer() 
+	VertexBufferObject<float>* Mesh::GetColorBuffer() 
 	{
 		if (0 == bufferObjects.count(VertexBufferObjectBase::BufferType::COLOR_BUFFER))
 		{
@@ -64,7 +64,7 @@ namespace Neon
 		return (VertexBufferObject<float>*)bufferObjects[VertexBufferObjectBase::BufferType::COLOR_BUFFER];
 	}
 
-	VertexBufferObject<float>* RenderData::GetUVBuffer()
+	VertexBufferObject<float>* Mesh::GetUVBuffer()
 	{
 		if (0 == bufferObjects.count(VertexBufferObjectBase::BufferType::UV_BUFFER))
 		{
@@ -75,7 +75,7 @@ namespace Neon
 		return (VertexBufferObject<float>*)bufferObjects[VertexBufferObjectBase::BufferType::UV_BUFFER];
 	}
 
-	void RenderData::AddVertex(float x, float y, float z)
+	void Mesh::AddVertex(float x, float y, float z)
 	{
 		auto buffer = GetVertexBuffer();
 		buffer->AddElement(x);
@@ -83,7 +83,7 @@ namespace Neon
 		buffer->AddElement(z);
 	}
 
-	void RenderData::AddNormal(float x, float y, float z)
+	void Mesh::AddNormal(float x, float y, float z)
 	{
 		auto buffer = GetNormalBuffer();
 		buffer->AddElement(x);
@@ -91,13 +91,13 @@ namespace Neon
 		buffer->AddElement(z);
 	}
 
-	void RenderData::AddIndex(GLuint index)
+	void Mesh::AddIndex(GLuint index)
 	{
 		auto buffer = GetIndexBuffer();
 		buffer->AddElement(index);
 	}
 
-	void RenderData::AddColor(float r, float g, float b, float a)
+	void Mesh::AddColor(float r, float g, float b, float a)
 	{
 		auto buffer = GetColorBuffer();
 		buffer->AddElement(r);
@@ -106,14 +106,14 @@ namespace Neon
 		buffer->AddElement(a);
 	}
 	
-	void RenderData::AddUV(float u, float v)
+	void Mesh::AddUV(float u, float v)
 	{
 		auto buffer = GetUVBuffer();
 		buffer->AddElement(u);
 		buffer->AddElement(v);
 	}
 
-	void RenderData::Bind()
+	void Mesh::Bind()
 	{
 		vao->Bind();
 
@@ -124,7 +124,7 @@ namespace Neon
 		}
 	}
 
-	void RenderData::Unbind()
+	void Mesh::Unbind()
 	{
 		vao->Unbind();
 

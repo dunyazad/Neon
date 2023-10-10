@@ -10,7 +10,7 @@
 #include <Neon/NeonEntity.h>
 
 #include <Neon/Component/NeonComponent.h>
-#include <Neon/Component/NeonRenderData.h>
+#include <Neon/Component/NeonMesh.h>
 #include <Neon/Component/NeonShader.h>
 #include <Neon/Component/NeonTexture.h>
 #include <Neon/Component/NeonTransform.h>
