@@ -9,7 +9,7 @@ namespace Neon
 		: ComponentBase(name)
 	{
 		vao = new VertexArrayObject();
-	}
+	} 
 
 	Mesh::~Mesh()
 	{

@@ -1,10 +1,10 @@
 #include <Neon/Neon.h>
+#include <Neon/NeonScene.h>
 #include <Neon/NeonSystem.h>
 
 namespace Neon
 {
 	Application::Application(int width, int height, const string& windowTitle)
-		: renderSystem(this), transformUpdateSystem(this)
 	{
 		resourceRoot = std::filesystem::current_path().string();
 
@@ -13,20 +13,10 @@ namespace Neon
 
 	Application::~Application()
 	{
-		for (auto& kvp : entities)
+		for (auto& kvp : scenes)
 		{
 			SAFE_DELETE(kvp.second);
 		}
-
-		for (auto& kvp : components)
-		{
-			for (auto& component : kvp.second)
-			{
-				SAFE_DELETE(component);
-			}
-		}
-
-		SAFE_DELETE(window);
 	}
 
 	void Application::OnInitialize(function<void()> onInitialize)
@@ -42,6 +32,20 @@ namespace Neon
 	void Application::OnTerminate(function<void()> onTerminate)
 	{
 		onTerminateFunction = onTerminate;
+	}
+
+	Scene* Application::CreateScene(const string& name)
+	{
+		if (0 == scenes.count(name))
+			scenes[name] = new Scene(name);
+		return scenes[name];
+	}
+
+	Scene* Application::GetScene(const string& name)
+	{
+		if (0 == scenes.count(name))
+			return nullptr;
+		else return scenes[name];
 	}
 
 	void Application::Run()
@@ -82,8 +86,10 @@ namespace Neon
 					onUpdateFunction((float)now, (float)timeDelta);
 				}
 
-				transformUpdateSystem.Frame((float)now, (float)timeDelta);
-				renderSystem.Frame((float)now, (float)timeDelta);
+				for (auto& kvp : scenes)
+				{
+					kvp.second->Frame((float)now, (float)timeDelta);
+				}
 
 				// Start the Dear ImGui frame
 				ImGui_ImplOpenGL3_NewFrame();
@@ -145,32 +151,6 @@ namespace Neon
 		if (onTerminateFunction != nullptr)
 		{
 			onTerminateFunction();
-		}
-	}
-
-	Entity* Application::GetEntity(const string& name)
-	{
-		if (0 != entities.count(name))
-		{
-			return entities[name];
-		}
-		else
-		{
-			return nullptr;
-		}
-	}
-
-	Entity* Application::CreateEntity(const string& name)
-	{
-		if (0 != entities.count(name))
-		{
-			return nullptr;
-		}
-		else
-		{
-			auto entity = new Entity();
-			entities[name] = entity;
-			return entity;
 		}
 	}
 }

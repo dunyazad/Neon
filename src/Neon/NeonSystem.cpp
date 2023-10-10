@@ -1,10 +1,16 @@
 #include <Neon/NeonSystem.h>
-#include <Neon/Neon.h>
+#include <Neon/NeonEntity.h>
+#include <Neon/NeonScene.h>
+#include <Neon/NeonVertexBufferObject.hpp>
+#include <Neon/Component/NeonMesh.h>
+#include <Neon/Component/NeonShader.h>
+#include <Neon/Component/NeonTexture.h>
+#include <Neon/Component/NeonTransform.h>
 
 namespace Neon
 {
-	SystemBase::SystemBase(Application* application)
-		: application(application)
+	SystemBase::SystemBase(Scene* scene)
+		: scene(scene)
 	{
 	}
 
@@ -12,8 +18,8 @@ namespace Neon
 	{
 	}
 
-	TransformUpdateSystem::TransformUpdateSystem(Application* application)
-		: SystemBase(application)
+	TransformUpdateSystem::TransformUpdateSystem(Scene* scene)
+		: SystemBase(scene)
 	{
 	}
 
@@ -23,7 +29,7 @@ namespace Neon
 
 	void TransformUpdateSystem::Frame(float now, float timeDelta)
 	{
-		auto components = application->GetComponents<Transform>();
+		auto components = scene->GetComponents<Transform>();
 		for (auto& component : components)
 		{
 			((Transform*)component)->OnUpdate(now, timeDelta);
@@ -31,8 +37,8 @@ namespace Neon
 	}
 
 
-	RenderSystem::RenderSystem(Application* application)
-		: SystemBase(application)
+	RenderSystem::RenderSystem(Scene* scene)
+		: SystemBase(scene)
 	{
 
 	}
@@ -44,7 +50,7 @@ namespace Neon
 
 	void RenderSystem::Frame(float now, float timeDelta)
 	{
-		auto entities = application->GetEntities();
+		auto entities = scene->GetEntities();
 		for (auto& kvp : entities)
 		{
 			auto entity = kvp.second;
@@ -79,11 +85,11 @@ namespace Neon
 				texture->Bind();
 			}
 
-			auto renderData = entity->GetComponent<Mesh>(0);
-			if (nullptr != renderData)
+			auto mesh = entity->GetComponent<Mesh>(0);
+			if (nullptr != mesh)
 			{
-				renderData->Bind();
-				glDrawElements(GL_TRIANGLES, (GLsizei)renderData->GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+				mesh->Bind();
+				glDrawElements(GL_TRIANGLES, (GLsizei)mesh->GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
 			}
 		}
 	}

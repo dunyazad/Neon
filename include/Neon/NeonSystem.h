@@ -4,22 +4,22 @@
 
 namespace Neon
 {
-	class Application;
+	class Scene;
 
 	class SystemBase
 	{
 	public:
-		SystemBase(Application* application);
+		SystemBase(Scene* scene);
 		~SystemBase();
 
 	protected:
-		Application* application;
+		Scene* scene;
 	};
 
 	class TransformUpdateSystem : public SystemBase
 	{
 	public:
-		TransformUpdateSystem(Application* application);
+		TransformUpdateSystem(Scene* scene);
 		~TransformUpdateSystem();
 
 		void Frame(float now, float timeDelta);
@@ -31,7 +31,7 @@ namespace Neon
 	class RenderSystem : public SystemBase
 	{
 	public:
-		RenderSystem(Application* application);
+		RenderSystem(Scene* scene);
 		~RenderSystem();
 
 		void Frame(float now, float timeDelta);

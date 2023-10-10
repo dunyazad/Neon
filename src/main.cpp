@@ -13,40 +13,51 @@ int main()
 	app.OnInitialize([&]() {
 		auto t = Neon::Time("Initialize");
 
-		auto shaderFixedColor = app.CreateComponent<Neon::Shader>("fixedColor", (app.GetResourceRoot() + "/shader/fixedColor.vs").c_str(), (app.GetResourceRoot() + "/shader/fixedColor.fs").c_str());
-		auto shaderTexture = app.CreateComponent<Neon::Shader>("texture", (app.GetResourceRoot() + "/shader/texture.vs").c_str(), (app.GetResourceRoot() + "/shader/texture.fs").c_str());
+		auto scene = app.CreateScene("Main Scene");
 
 		{
-			auto entity = app.CreateEntity("triangleA");
+			auto entity = scene->CreateEntity("Main Camera");
+			auto camera = scene->CreateComponent<Neon::Camera>("Main Camera");
 
-			auto renderData = app.CreateComponent<Neon::Mesh>("triangleA RenderData");
-			renderData->AddVertex(-0.125f, 0.0f, 0.0f);
-			renderData->AddVertex(0.125f, 0.0f, 0.0f);
-			renderData->AddVertex(0.0f, 0.5f, 0.0f);
+			auto transform = scene->CreateComponent<Neon::Transform>("Main Camera Transform");
 
-			renderData->AddIndex(0);
-			renderData->AddIndex(1);
-			renderData->AddIndex(2);
+			entity->AddComponent(camera);
+			entity->AddComponent(transform);
+		}
 
-			entity->AddComponent(renderData);
+		{
+			auto entity = scene->CreateEntity("triangleA");
+
+			auto mesh = scene->CreateComponent<Neon::Mesh>("triangleA mesh");
+			mesh->AddVertex(-0.125f, 0.0f, 0.0f);
+			mesh->AddVertex(0.125f, 0.0f, 0.0f);
+			mesh->AddVertex(0.0f, 0.5f, 0.0f);
+
+			mesh->AddIndex(0);
+			mesh->AddIndex(1);
+			mesh->AddIndex(2);
+
+			entity->AddComponent(mesh);
+		
+			auto shaderFixedColor = scene->CreateComponent<Neon::Shader>("Shader/fixedColor", (app.GetResourceRoot() + "/shader/fixedColor.vs").c_str(), (app.GetResourceRoot() + "/shader/fixedColor.fs").c_str());
 			entity->AddComponent(shaderFixedColor);
 		}
 
 		{
-			auto entity = app.CreateEntity("triangleV");
+			auto entity = scene->CreateEntity("triangleV");
 
-			auto renderData = app.CreateComponent<Neon::Mesh>("triangleV RenderData");
-			renderData->AddVertex(-0.125f, 0.0f, 0.0f);
-			renderData->AddVertex(0.0f, -0.5f, 0.0f);
-			renderData->AddVertex(0.125f, 0.0f, 0.0f);
+			auto mesh = scene->CreateComponent<Neon::Mesh>("triangleV mesh");
+			mesh->AddVertex(-0.125f, 0.0f, 0.0f);
+			mesh->AddVertex(0.0f, -0.5f, 0.0f);
+			mesh->AddVertex(0.125f, 0.0f, 0.0f);
 
-			renderData->AddIndex(0);
-			renderData->AddIndex(1);
-			renderData->AddIndex(2);
+			mesh->AddIndex(0);
+			mesh->AddIndex(1);
+			mesh->AddIndex(2);
 
-			entity->AddComponent(renderData);
+			entity->AddComponent(mesh);
 
-			auto transform = app.CreateComponent<Neon::Transform>("triangleV transform");
+			auto transform = scene->CreateComponent<Neon::Transform>("triangleV transform");
 			transform->position = glm::vec3(0, -0.1f, 0.0f);
 			transform->AddUpdateCallback([transform](float now, float timeDelta) {
 				auto angle = now;
@@ -56,7 +67,7 @@ int main()
 
 			entity->AddComponent(transform);
 
-			entity->AddComponent(shaderFixedColor);
+			entity->AddComponent(scene->GetComponent("fixedColor"));
 		}
 
 		//{
@@ -85,65 +96,67 @@ int main()
 
 
 		{
-			auto entity = app.CreateEntity("owl");
+			auto entity = scene->CreateEntity("owl");
 
-			auto renderData = app.CreateComponent<Neon::Mesh>("owl RenderData");
+			auto mesh = scene->CreateComponent<Neon::Mesh>("owl mesh");
 
-			renderData->AddVertex(0.5f, 0.0f, 0.0f);
-			renderData->AddVertex(0.75f, 0.0f, 0.0f);
-			renderData->AddVertex(0.75f, 0.5f, 0.0f);
-			renderData->AddVertex(0.5f, 0.5f, 0.0f);
+			mesh->AddVertex(0.5f, 0.0f, 0.0f);
+			mesh->AddVertex(0.75f, 0.0f, 0.0f);
+			mesh->AddVertex(0.75f, 0.5f, 0.0f);
+			mesh->AddVertex(0.5f, 0.5f, 0.0f);
 
-			renderData->AddIndex(0);
-			renderData->AddIndex(1);
-			renderData->AddIndex(2);
+			mesh->AddIndex(0);
+			mesh->AddIndex(1);
+			mesh->AddIndex(2);
 
-			renderData->AddIndex(0);
-			renderData->AddIndex(2);
-			renderData->AddIndex(3);
+			mesh->AddIndex(0);
+			mesh->AddIndex(2);
+			mesh->AddIndex(3);
 
-			renderData->AddUV(0.0f, 0.0f);
-			renderData->AddUV(1.0f, 0.0f);
-			renderData->AddUV(1.0f, 1.0f);
-			renderData->AddUV(0.0f, 1.0f);
+			mesh->AddUV(0.0f, 0.0f);
+			mesh->AddUV(1.0f, 0.0f);
+			mesh->AddUV(1.0f, 1.0f);
+			mesh->AddUV(0.0f, 1.0f);
 
 			imageB = new Neon::Image("Owl.jpg", app.GetResourceRoot() + "/images/Owl.jpg");
 			auto texture = new Neon::Texture("Owl", imageB);
 
-			entity->AddComponent(renderData);
+			entity->AddComponent(mesh);
 			entity->AddComponent(texture);
+
+			auto shaderTexture = scene->CreateComponent<Neon::Shader>("Shader/texture", (app.GetResourceRoot() + "/shader/texture.vs").c_str(), (app.GetResourceRoot() + "/shader/texture.fs").c_str());
 			entity->AddComponent(shaderTexture);
 		}
 
 		{
-			auto entity = app.CreateEntity("lion");
+			auto entity = scene->CreateEntity("lion");
 
-			auto renderData = app.CreateComponent<Neon::Mesh>("lion RenderData");
+			auto mesh = scene->CreateComponent<Neon::Mesh>("lion mesh");
 
-			renderData->AddVertex(-0.5f, 0.0f, 0.0f);
-			renderData->AddVertex(-0.25f, 0.0f, 0.0f);
-			renderData->AddVertex(-0.25f, 0.5f, 0.0f);
-			renderData->AddVertex(-0.5f, 0.5f, 0.0f);
+			mesh->AddVertex(-0.5f, 0.0f, 0.0f);
+			mesh->AddVertex(-0.25f, 0.0f, 0.0f);
+			mesh->AddVertex(-0.25f, 0.5f, 0.0f);
+			mesh->AddVertex(-0.5f, 0.5f, 0.0f);
 
-			renderData->AddIndex(0);
-			renderData->AddIndex(1);
-			renderData->AddIndex(2);
+			mesh->AddIndex(0);
+			mesh->AddIndex(1);
+			mesh->AddIndex(2);
 
-			renderData->AddIndex(0);
-			renderData->AddIndex(2);
-			renderData->AddIndex(3);
+			mesh->AddIndex(0);
+			mesh->AddIndex(2);
+			mesh->AddIndex(3);
 
-			renderData->AddUV(0.0f, 0.0f);
-			renderData->AddUV(1.0f, 0.0f);
-			renderData->AddUV(1.0f, 1.0f);
-			renderData->AddUV(0.0f, 1.0f);
+			mesh->AddUV(0.0f, 0.0f);
+			mesh->AddUV(1.0f, 0.0f);
+			mesh->AddUV(1.0f, 1.0f);
+			mesh->AddUV(0.0f, 1.0f);
 
 			imageC = new Neon::Image("Lion", app.GetResourceRoot() + "/images/Lion.png");
 			auto texture = new Neon::Texture("Lion", imageC);
 
-			entity->AddComponent(renderData);
+			entity->AddComponent(mesh);
 			entity->AddComponent(texture);
-			entity->AddComponent(shaderTexture);
+			entity->AddComponent(scene->GetComponent("Shader/texture"));
 		}
 
 		});
