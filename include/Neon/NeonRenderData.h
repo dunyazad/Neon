@@ -15,7 +15,7 @@ namespace Neon
 	class RenderData : public ComponentBase
 	{
 	public:
-		RenderData();
+		RenderData(const string& name);
 		~RenderData();
 
 		inline VertexArrayObject* GetVAO() { return vao; }

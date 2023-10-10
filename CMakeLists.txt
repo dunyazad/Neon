@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_subdirectory("External/glfw")
+add_subdirectory("External/glm")
 
 set(source_list
 src/main.cpp
@@ -34,6 +35,8 @@ include/Neon/NeonEntity.h
 src/Neon/NeonEntity.cpp
 include/Neon/NeonComponent.h
 src/Neon/NeonComponent.cpp
+include/Neon/NeonTransform.h
+src/Neon/NeonTransform.cpp
 include/Neon/NeonSystem.h
 src/Neon/NeonSystem.cpp
 )
@@ -55,6 +58,7 @@ ${source_list})
 target_include_directories(Neon PUBLIC 
 "External"
 "External/glad"
+"External/glm"
 "External/imgui"
 "include"
 "src"

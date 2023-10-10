@@ -15,21 +15,24 @@ int main()
 	Neon::Texture* textureB = nullptr;
 	Neon::Texture* textureC = nullptr;
 
-	Neon::RenderData frame;
+	Neon::RenderData frame("frame");
 	Neon::Texture* textureFrame = nullptr;
 	Neon::FrameBufferObject* fbo = nullptr;
 
 	app.OnInitialize([&]() {
 		auto t = Neon::Time("Initialize");
 
-		shaderA = new Neon::Shader((app.GetResourceRoot() + "/shader/fixedColor.vs").c_str(), (app.GetResourceRoot() + "/shader/fixedColor.fs").c_str());
-		shaderB = new Neon::Shader((app.GetResourceRoot() + "/shader/texture.vs").c_str(), (app.GetResourceRoot() + "/shader/texture.fs").c_str());
+		auto shaderFixedColor = app.CreateComponent<Neon::Shader>("fixedColor", (app.GetResourceRoot() + "/shader/fixedColor.vs").c_str(), (app.GetResourceRoot() + "/shader/fixedColor.fs").c_str());
+		auto shaderTexture = app.CreateComponent<Neon::Shader>("texture", (app.GetResourceRoot() + "/shader/texture.vs").c_str(), (app.GetResourceRoot() + "/shader/texture.fs").c_str());
+
+		shaderA = new Neon::Shader("fixedColor", (app.GetResourceRoot() + "/shader/fixedColor.vs").c_str(), (app.GetResourceRoot() + "/shader/fixedColor.fs").c_str());
+		shaderB = new Neon::Shader("texture", (app.GetResourceRoot() + "/shader/texture.vs").c_str(), (app.GetResourceRoot() + "/shader/texture.fs").c_str());
 
 
 		{
 			auto entity = app.CreateEntity("triangleV");
 
-			auto renderData = app.CreateComponent<Neon::RenderData>();
+			auto renderData = app.CreateComponent<Neon::RenderData>("triangleV RenderData");
 			renderData->AddVertex(-0.125f, 0.0f, 0.0f);
 			renderData->AddVertex(0.0f, -0.5f, 0.0f);
 			renderData->AddVertex(0.125f, 0.0f, 0.0f);
@@ -71,7 +74,7 @@ int main()
 		{
 			auto entity = app.CreateEntity("triangleA");
 
-			auto renderData = app.CreateComponent<Neon::RenderData>();
+			auto renderData = app.CreateComponent<Neon::RenderData>("triangleA RenderData");
 			renderData->AddVertex(-0.125f, 0.0f, 0.0f);
 			renderData->AddVertex(0.125f, 0.0f, 0.0f);
 			renderData->AddVertex(0.0f, 0.5f, 0.0f);
@@ -88,7 +91,7 @@ int main()
 		{
 			auto entity = app.CreateEntity("owl");
 
-			auto renderData = app.CreateComponent<Neon::RenderData>();
+			auto renderData = app.CreateComponent<Neon::RenderData>("owl RenderData");
 
 			renderData->AddVertex(0.5f, 0.0f, 0.0f);
 			renderData->AddVertex(0.75f, 0.0f, 0.0f);
@@ -120,7 +123,7 @@ int main()
 		{
 			auto entity = app.CreateEntity("lion");
 
-			auto renderData = app.CreateComponent<Neon::RenderData>();
+			auto renderData = app.CreateComponent<Neon::RenderData>("lion RenderData");
 
 			renderData->AddVertex(-0.5f, 0.0f, 0.0f);
 			renderData->AddVertex(-0.25f, 0.0f, 0.0f);

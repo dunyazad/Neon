@@ -21,6 +21,14 @@
 #include <vector>
 using namespace std;
 
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_access.hpp>
+#include <glm/gtx/intersect.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/vector_angle.hpp>
 
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>

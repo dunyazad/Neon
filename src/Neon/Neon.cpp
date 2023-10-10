@@ -13,7 +13,20 @@ namespace Neon
 
 	Application::~Application()
 	{
-		SAFE_DELETE(window)
+		for (auto& kvp : entities)
+		{
+			SAFE_DELETE(kvp.second);
+		}
+
+		for (auto& kvp : components)
+		{
+			for (auto& component : kvp.second)
+			{
+				SAFE_DELETE(component);
+			}
+		}
+
+		SAFE_DELETE(window);
 	}
 
 	void Application::OnInitialize(function<void()> onInitialize)
@@ -71,7 +84,7 @@ namespace Neon
 					onUpdateFunction((float)timeDelta);
 				}
 
-				renderSystem.Frame(timeDelta);
+				renderSystem.Frame((float)timeDelta);
 
 				// Start the Dear ImGui frame
 				ImGui_ImplOpenGL3_NewFrame();

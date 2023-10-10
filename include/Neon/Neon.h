@@ -9,6 +9,7 @@
 #include <Neon/NeonTexture.h>
 #include <Neon/NeonFrameBufferObject.h>
 #include <Neon/NeonRenderData.h>
+#include <Neon/NeonTransform.h>
 
 #include <Neon/NeonEntity.h>
 #include <Neon/NeonComponent.h>
@@ -44,18 +45,70 @@ namespace Neon
 		Entity* GetEntity(const string& name);
 		Entity* CreateEntity(const string& name);
 
-		template<class T> T* CreateComponent()
+		template <class T, typename... Args>
+		T* CreateComponent(const std::string& name, Args... args)
 		{
-			auto key = &typeid(T);
-			auto component = new T;
-			components[key].push_back(component);
-			return component;
+			if (0 == componentNameMapping.count(name))
+			{
+				auto key = &typeid(T);
+				auto component = new T(name, args...);
+				components[key].push_back(component);
+				componentNameMapping[name] = component;
+				return component;
+			}
+			else
+			{
+				return (T*)componentNameMapping[name];
+			}
+		}
+
+		template<class T> T* CreateComponent(const string& name)
+		{
+			if (0 == componentNameMapping.count(name))
+			{
+				auto key = &typeid(T);
+				auto component = new T(name);
+				components[key].push_back(component);
+				componentNameMapping[name] = component;
+				return component;
+			}
+			else
+			{
+				return (T*)componentNameMapping[name];
+			}
+		}
+
+		template <class T, typename FirstArg, typename... RestArgs>
+		T* CreateComponent(const std::string& name, FirstArg firstArg, RestArgs... restArgs) {
+			if (0 == componentNameMapping.count(name))
+			{
+				auto key = &typeid(T);
+				auto component = new T(name, firstArg, restArgs...);
+				components[key].push_back(component);
+				componentNameMapping[name] = component;
+				return component;
+			}
+			else
+			{
+				return (T*)componentNameMapping[name];
+			}
+		}
+
+
+		inline ComponentBase* GetComponent(const string& name)
+		{
+			if (0 != componentNameMapping.count(name))
+			{
+				return componentNameMapping[name];
+			}
+			else
+			{
+				return nullptr;
+			}
 		}
 
 		inline const map<string, Entity*>& GetEntities() const { return entities; }
 		template<class T> vector<ComponentBase*>& GetComponents() { return components[&typeid(T)]; }
-
-	protected:
 
 	private:
 		function<void()> onInitializeFunction;
@@ -68,6 +121,7 @@ namespace Neon
 
 		map<string, Entity*> entities;
 		map<const type_info*, vector<ComponentBase*>> components;
+		map<string, ComponentBase*> componentNameMapping;
 
 		RenderSystem renderSystem;
 	};

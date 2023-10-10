@@ -1,12 +1,13 @@
 #pragma once
 
 #include <Neon/NeonCommon.h>
+#include <Neon/NeonComponent.h>
 
 namespace Neon
 {
 	class Image;
 
-	class Texture
+	class Texture : public ComponentBase
 	{
 	public:
 		Texture(const string& name, Image* image);

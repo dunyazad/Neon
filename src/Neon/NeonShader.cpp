@@ -2,7 +2,9 @@
 
 namespace Neon
 {
-    Shader::Shader(const char* vertexPath, const char* fragmentPath) {
+    Shader::Shader(const string& name, const char* vertexPath, const char* fragmentPath)
+        : ComponentBase(name)
+    {
         // Load the vertex shader from file
         std::ifstream vertexFile(vertexPath);
         if (!vertexFile) {
@@ -56,25 +58,34 @@ namespace Neon
         glUseProgram(shaderProgram);
     }
 
-    void Shader::SetInt(const char* name, int value) {
+    void Shader::SetUniformInt(const char* name, int value) {
         glUniform1i(glGetUniformLocation(shaderProgram, name), value);
     }
 
-    void Shader::SetFloat1(const char* name, float value) {
+    void Shader::SetUniformFloat1(const char* name, float value) {
         glUniform1f(glGetUniformLocation(shaderProgram, name), value);
     }
 
-    void Shader::SetFloat2(const char* name, float values[2]) {
+    void Shader::SetUniformFloat2(const char* name, float values[2]) {
         glUniform2f(glGetUniformLocation(shaderProgram, name), values[0], values[1]);
     }
 
-    void Shader::SetFloat3(const char* name, float values[3]) {
+    void Shader::SetUniformFloat3(const char* name, float values[3]) {
         glUniform3f(glGetUniformLocation(shaderProgram, name), values[0], values[1], values[2]);
     }
 
-    void Shader::SetFloat4(const char* name, float values[4]) {
+    void Shader::SetUniformFloat4(const char* name, float values[4]) {
         glUniform4f(glGetUniformLocation(shaderProgram, name), values[0], values[1], values[2], values[3]);
     }
+
+    void Shader::SetUniformFloat3x3(const char* name, float value[9]) {
+        glUniformMatrix3fv(glGetUniformLocation(shaderProgram, name), 1, false, value);
+    }
+    
+    void Shader::SetUniformFloat4x4(const char* name, float value[16]) {
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, name), 1, false, value);
+    }
+
 
     void Shader::checkCompileErrors(GLuint shader, const char* type) {
         int success;

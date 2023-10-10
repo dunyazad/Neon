@@ -5,7 +5,8 @@
 
 namespace Neon
 {
-	RenderData::RenderData()
+	RenderData::RenderData(const string& name)
+		: ComponentBase(name)
 	{
 		vao = new VertexArrayObject();
 	}

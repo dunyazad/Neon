@@ -28,7 +28,17 @@ namespace Neon
 		auto entities = application->GetEntities();
 		for (auto& kvp : entities)
 		{
-			auto components = kvp.second->GetComponents<RenderData>();
+			auto entity = kvp.second;
+
+			auto shader = entity->GetComponent<Shader>(0);
+			if (nullptr != shader)
+			{
+				shader->Use();
+			}
+
+			auto transform = entity->GetComponent<Transform>(0);
+
+			auto components = entity->GetComponents<RenderData>();
 			for (auto& component : components)
 			{
 				auto renderData = (RenderData*)component;

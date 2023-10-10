@@ -4,7 +4,7 @@
 namespace Neon
 {
 	Texture::Texture(const string& name, Image* image)
-		: image(image)
+		: ComponentBase(name), image(image)
 	{
 		if (image != nullptr)
 		{
@@ -56,7 +56,7 @@ namespace Neon
 	}
 
 	Texture::Texture(const string& name, int width, int height)
-		: width(width), height(height)
+		: ComponentBase(name), width(width), height(height)
 	{
 		glGenTextures(1, &textureID);
 

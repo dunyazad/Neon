@@ -2,19 +2,12 @@
 
 namespace Neon
 {
-	ComponentBase::ComponentBase()
+	ComponentBase::ComponentBase(const string& name)
+		: name(name)
 	{
 	}
 
 	ComponentBase::~ComponentBase()
-	{
-	}
-
-	Component::Component()
-	{
-	}
-
-	Component::~Component()
 	{
 	}
 }

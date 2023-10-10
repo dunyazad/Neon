@@ -7,20 +7,10 @@ namespace Neon
 	class ComponentBase
 	{
 	public:
-		ComponentBase();
+		ComponentBase(const string& name);
 		~ComponentBase();
 
 	private:
-
-	};
-
-	class Component
-	{
-	public:
-		Component();
-		~Component();
-
-	private:
-
+		string name;
 	};
 }
