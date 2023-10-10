@@ -2,17 +2,19 @@
 
 #include <Neon/NeonCommon.h>
 #include <Neon/NeonWindow.h>
-#include <Neon/NeonShader.h>
 #include <Neon/NeonVertexArrayObject.h>
 #include <Neon/NeonVertexBufferObject.hpp>
 #include <Neon/NeonImage.h>
-#include <Neon/NeonTexture.h>
 #include <Neon/NeonFrameBufferObject.h>
-#include <Neon/NeonRenderData.h>
-#include <Neon/NeonTransform.h>
 
 #include <Neon/NeonEntity.h>
-#include <Neon/NeonComponent.h>
+
+#include <Neon/Component/NeonComponent.h>
+#include <Neon/Component/NeonRenderData.h>
+#include <Neon/Component/NeonShader.h>
+#include <Neon/Component/NeonTexture.h>
+#include <Neon/Component/NeonTransform.h>
+
 #include <Neon/NeonSystem.h>
 
 namespace Neon
@@ -34,7 +36,7 @@ namespace Neon
 		~Application();
 
 		void OnInitialize(function<void()> onInitialize);
-		void OnUpdate(function<void(float)> onUpdate);
+		void OnUpdate(function<void(float, float)> onUpdate);
 		void OnTerminate(function<void()> onTerminate);
 
 		void Run();
@@ -112,7 +114,7 @@ namespace Neon
 
 	private:
 		function<void()> onInitializeFunction;
-		function<void(float)> onUpdateFunction;
+		function<void(float, float)> onUpdateFunction;
 		function<void()> onTerminateFunction;
 
 		Window* window = nullptr;
@@ -123,6 +125,7 @@ namespace Neon
 		map<const type_info*, vector<ComponentBase*>> components;
 		map<string, ComponentBase*> componentNameMapping;
 
+		TransformUpdateSystem transformUpdateSystem;
 		RenderSystem renderSystem;
 	};
 }

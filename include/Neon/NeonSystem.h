@@ -16,13 +16,25 @@ namespace Neon
 		Application* application;
 	};
 
+	class TransformUpdateSystem : public SystemBase
+	{
+	public:
+		TransformUpdateSystem(Application* application);
+		~TransformUpdateSystem();
+
+		void Frame(float now, float timeDelta);
+
+	private:
+
+	};
+
 	class RenderSystem : public SystemBase
 	{
 	public:
 		RenderSystem(Application* application);
 		~RenderSystem();
 
-		void Frame(float timeDelta);
+		void Frame(float now, float timeDelta);
 
 	private:
 

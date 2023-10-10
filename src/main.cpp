@@ -3,73 +3,18 @@
 #include <Neon/Neon.h>
 
 int main()
-{	
+{
 	Neon::Application app(1280, 1024);
 	app.SetResourceRoot(filesystem::current_path().string() + "/../res");
 
-	Neon::Shader* shaderA = nullptr;
-	Neon::Shader* shaderB = nullptr;
-
 	Neon::Image* imageB = nullptr;
 	Neon::Image* imageC = nullptr;
-	Neon::Texture* textureB = nullptr;
-	Neon::Texture* textureC = nullptr;
-
-	Neon::RenderData frame("frame");
-	Neon::Texture* textureFrame = nullptr;
-	Neon::FrameBufferObject* fbo = nullptr;
 
 	app.OnInitialize([&]() {
 		auto t = Neon::Time("Initialize");
 
 		auto shaderFixedColor = app.CreateComponent<Neon::Shader>("fixedColor", (app.GetResourceRoot() + "/shader/fixedColor.vs").c_str(), (app.GetResourceRoot() + "/shader/fixedColor.fs").c_str());
 		auto shaderTexture = app.CreateComponent<Neon::Shader>("texture", (app.GetResourceRoot() + "/shader/texture.vs").c_str(), (app.GetResourceRoot() + "/shader/texture.fs").c_str());
-
-		shaderA = new Neon::Shader("fixedColor", (app.GetResourceRoot() + "/shader/fixedColor.vs").c_str(), (app.GetResourceRoot() + "/shader/fixedColor.fs").c_str());
-		shaderB = new Neon::Shader("texture", (app.GetResourceRoot() + "/shader/texture.vs").c_str(), (app.GetResourceRoot() + "/shader/texture.fs").c_str());
-
-
-		{
-			auto entity = app.CreateEntity("triangleV");
-
-			auto renderData = app.CreateComponent<Neon::RenderData>("triangleV RenderData");
-			renderData->AddVertex(-0.125f, 0.0f, 0.0f);
-			renderData->AddVertex(0.0f, -0.5f, 0.0f);
-			renderData->AddVertex(0.125f, 0.0f, 0.0f);
-
-			renderData->AddIndex(0);
-			renderData->AddIndex(1);
-			renderData->AddIndex(2);
-
-			renderData->AddShader(shaderA);
-
-			entity->AddComponent(renderData);
-		}
-
-		{
-			frame.AddVertex(-0.5f, -0.5f, 0.0f);
-			frame.AddVertex(0.5f, -0.5f, 0.0f);
-			frame.AddVertex(0.5f, 0.5f, 0.0f);
-			frame.AddVertex(-0.5f, 0.5f, 0.0f);
-
-			frame.AddIndex(0);
-			frame.AddIndex(1);
-			frame.AddIndex(2);
-
-			frame.AddIndex(0);
-			frame.AddIndex(2);
-			frame.AddIndex(3);
-
-			frame.AddUV(0.0f, 0.0f);
-			frame.AddUV(1.0f, 0.0f);
-			frame.AddUV(1.0f, 1.0f);
-			frame.AddUV(0.0f, 1.0f);
-
-			textureFrame = new Neon::Texture("frame", 1920, 1080);
-			fbo = new Neon::FrameBufferObject("frame", textureFrame);
-
-			frame.AddTexture(textureFrame);
-		}
 
 		{
 			auto entity = app.CreateEntity("triangleA");
@@ -83,10 +28,61 @@ int main()
 			renderData->AddIndex(1);
 			renderData->AddIndex(2);
 
-			renderData->AddShader(shaderA);
+			entity->AddComponent(renderData);
+			entity->AddComponent(shaderFixedColor);
+		}
+
+		{
+			auto entity = app.CreateEntity("triangleV");
+
+			auto renderData = app.CreateComponent<Neon::RenderData>("triangleV RenderData");
+			renderData->AddVertex(-0.125f, 0.0f, 0.0f);
+			renderData->AddVertex(0.0f, -0.5f, 0.0f);
+			renderData->AddVertex(0.125f, 0.0f, 0.0f);
+
+			renderData->AddIndex(0);
+			renderData->AddIndex(1);
+			renderData->AddIndex(2);
 
 			entity->AddComponent(renderData);
+
+			auto transform = app.CreateComponent<Neon::Transform>("triangleV transform");
+			transform->position = glm::vec3(0, -0.1f, 0.0f);
+			transform->AddUpdateCallback([transform](float now, float timeDelta) {
+				auto angle = now;
+				while (angle > 3141.592f) angle -= 3141.592f;
+				transform->position = glm::vec3(0, sinf(angle * 0.0001f), 0.0f);
+				});
+
+			entity->AddComponent(transform);
+
+			entity->AddComponent(shaderFixedColor);
 		}
+
+		//{
+		//	frame.AddVertex(-0.5f, -0.5f, 0.0f);
+		//	frame.AddVertex(0.5f, -0.5f, 0.0f);
+		//	frame.AddVertex(0.5f, 0.5f, 0.0f);
+		//	frame.AddVertex(-0.5f, 0.5f, 0.0f);
+
+		//	frame.AddIndex(0);
+		//	frame.AddIndex(1);
+		//	frame.AddIndex(2);
+
+		//	frame.AddIndex(0);
+		//	frame.AddIndex(2);
+		//	frame.AddIndex(3);
+
+		//	frame.AddUV(0.0f, 0.0f);
+		//	frame.AddUV(1.0f, 0.0f);
+		//	frame.AddUV(1.0f, 1.0f);
+		//	frame.AddUV(0.0f, 1.0f);
+
+		//	textureFrame = new Neon::Texture("frame", 1920, 1080);
+		//	fbo = new Neon::FrameBufferObject("frame", textureFrame);
+		//}
+
+
 
 		{
 			auto entity = app.CreateEntity("owl");
@@ -112,12 +108,11 @@ int main()
 			renderData->AddUV(0.0f, 1.0f);
 
 			imageB = new Neon::Image("Owl.jpg", app.GetResourceRoot() + "/images/Owl.jpg");
-			textureB = new Neon::Texture("Owl", imageB);
-
-			renderData->AddTexture(textureB);
-			renderData->AddShader(shaderB);
+			auto texture = new Neon::Texture("Owl", imageB);
 
 			entity->AddComponent(renderData);
+			entity->AddComponent(texture);
+			entity->AddComponent(shaderTexture);
 		}
 
 		{
@@ -144,12 +139,11 @@ int main()
 			renderData->AddUV(0.0f, 1.0f);
 
 			imageC = new Neon::Image("Lion", app.GetResourceRoot() + "/images/Lion.png");
-			textureC = new Neon::Texture("Lion", imageC);
-
-			renderData->AddTexture(textureC);
-			renderData->AddShader(shaderB);
+			auto texture = new Neon::Texture("Lion", imageC);
 
 			entity->AddComponent(renderData);
+			entity->AddComponent(texture);
+			entity->AddComponent(shaderTexture);
 		}
 
 		});
@@ -158,7 +152,7 @@ int main()
 
 
 
-	app.OnUpdate([&](float timeDelta) {
+	app.OnUpdate([&](float now, float timeDelta) {
 		//auto t = Neon::Time("Update");
 
 		//fbo->Bind();
@@ -208,11 +202,6 @@ int main()
 		SAFE_DELETE(imageB);
 		SAFE_DELETE(imageC);
 
-		SAFE_DELETE(textureB);
-		SAFE_DELETE(textureC);
-
-		SAFE_DELETE(shaderA);
-		SAFE_DELETE(shaderB);
 		});
 
 	app.Run();

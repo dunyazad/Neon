@@ -1,4 +1,4 @@
-#include <Neon/NeonTexture.h>
+#include <Neon/Component/NeonTexture.h>
 #include <Neon/NeonImage.h>
 
 namespace Neon

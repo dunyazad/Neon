@@ -1,4 +1,4 @@
-#include <Neon/NeonShader.h>
+#include <Neon/Component/NeonShader.h>
 
 namespace Neon
 {
@@ -48,6 +48,8 @@ namespace Neon
         // Delete the shaders
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
+
+        
     }
 
     Shader::~Shader() {
@@ -59,33 +61,62 @@ namespace Neon
     }
 
     void Shader::SetUniformInt(const char* name, int value) {
-        glUniform1i(glGetUniformLocation(shaderProgram, name), value);
+        auto location = glGetUniformLocation(shaderProgram, name);
+        if (-1 != location)
+        {
+            glUniform1i(location, value);
+        }
     }
 
     void Shader::SetUniformFloat1(const char* name, float value) {
-        glUniform1f(glGetUniformLocation(shaderProgram, name), value);
+        auto location = glGetUniformLocation(shaderProgram, name);
+        if (-1 != location)
+        {
+            glUniform1f(location, value);
+        }
     }
 
     void Shader::SetUniformFloat2(const char* name, float values[2]) {
-        glUniform2f(glGetUniformLocation(shaderProgram, name), values[0], values[1]);
+        auto location = glGetUniformLocation(shaderProgram, name);
+        if (-1 != location)
+        {
+            glUniform2f(location, values[0], values[1]);
+        }
     }
 
     void Shader::SetUniformFloat3(const char* name, float values[3]) {
-        glUniform3f(glGetUniformLocation(shaderProgram, name), values[0], values[1], values[2]);
+        auto location = glGetUniformLocation(shaderProgram, name);
+        if (-1 != location)
+        {
+            glUniform3f(location, values[0], values[1], values[2]);
+        }
     }
 
     void Shader::SetUniformFloat4(const char* name, float values[4]) {
-        glUniform4f(glGetUniformLocation(shaderProgram, name), values[0], values[1], values[2], values[3]);
+        auto location = glGetUniformLocation(shaderProgram, name);
+        if (-1 != location)
+        {
+            glUniform4f(location, values[0], values[1], values[2], values[3]);
+        }
     }
 
     void Shader::SetUniformFloat3x3(const char* name, float value[9]) {
-        glUniformMatrix3fv(glGetUniformLocation(shaderProgram, name), 1, false, value);
+        auto location = glGetUniformLocation(shaderProgram, name);
+        if (-1 != location)
+        {
+            glUniformMatrix3fv(location, 1, false, (const float*)value);
+        }
     }
     
     void Shader::SetUniformFloat4x4(const char* name, float value[16]) {
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, name), 1, false, value);
-    }
+        auto location = glGetUniformLocation(shaderProgram, name);
+        if (-1 != location)
+        {
+            glUniformMatrix4fv(location, 1, false, (const float*)value);
 
+            //CheckGLError();
+        }
+    }
 
     void Shader::checkCompileErrors(GLuint shader, const char* type) {
         int success;

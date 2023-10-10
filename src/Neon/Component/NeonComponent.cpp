@@ -1,4 +1,4 @@
-#include <Neon/NeonComponent.h>
+#include <Neon/Component/NeonComponent.h>
 
 namespace Neon
 {

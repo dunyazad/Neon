@@ -4,7 +4,7 @@
 namespace Neon
 {
 	Application::Application(int width, int height, const string& windowTitle)
-		: renderSystem(this)
+		: renderSystem(this), transformUpdateSystem(this)
 	{
 		resourceRoot = std::filesystem::current_path().string();
 
@@ -34,7 +34,7 @@ namespace Neon
 		onInitializeFunction = onInitialize;
 	}
 
-	void Application::OnUpdate(function<void(float)> onUpdate)
+	void Application::OnUpdate(function<void(float, float)> onUpdate)
 	{
 		onUpdateFunction = onUpdate;
 	}
@@ -62,14 +62,12 @@ namespace Neon
 			onInitializeFunction();
 		}
 
-		Time time("main");
-		auto now = time.Now();
-		auto lastTime = now;
+		auto lastTime = glfwGetTime() * 1000.0;
 
 		while (appFinisihed == false)
 		{
-			auto now = time.Now();
-			auto timeDelta = time.DeltaMili(lastTime, now);
+			auto now = glfwGetTime() * 1000.0;
+			auto timeDelta = now - lastTime;
 
 			appFinisihed = true;
 			if (window->ShouldClose() == false)
@@ -81,10 +79,11 @@ namespace Neon
 
 				if (onUpdateFunction != nullptr)
 				{
-					onUpdateFunction((float)timeDelta);
+					onUpdateFunction((float)now, (float)timeDelta);
 				}
 
-				renderSystem.Frame((float)timeDelta);
+				transformUpdateSystem.Frame((float)now, (float)timeDelta);
+				renderSystem.Frame((float)now, (float)timeDelta);
 
 				// Start the Dear ImGui frame
 				ImGui_ImplOpenGL3_NewFrame();

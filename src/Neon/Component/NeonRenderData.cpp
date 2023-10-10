@@ -1,7 +1,7 @@
-#include <Neon/NeonRenderData.h>
 #include <Neon/NeonVertexArrayObject.h>
 #include <Neon/NeonVertexBufferObject.hpp>
-#include <Neon/NeonTexture.h>
+#include <Neon/Component/NeonRenderData.h>
+#include <Neon/Component/NeonTexture.h>
 
 namespace Neon
 {
@@ -122,11 +122,6 @@ namespace Neon
 			kvp.second->Bind();
 			kvp.second->Upload();
 		}
-
-		for (size_t i = 0; i < textures.size(); i++)
-		{
-			textures[i]->Bind(GL_TEXTURE0 + i);
-		}
 	}
 
 	void RenderData::Unbind()
@@ -136,11 +131,6 @@ namespace Neon
 		for (auto& kvp : bufferObjects)
 		{
 			kvp.second->Unbind();
-		}
-
-		for (auto& texture : textures)
-		{
-			texture->Unbind();
 		}
 	}
 }

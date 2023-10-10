@@ -15,6 +15,9 @@ namespace Neon
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+        // Anti-aliasing
+        glfwWindowHint(GLFW_SAMPLES, 4);
+
         // Create a GLFW window
         if (sharingWindow != nullptr)
         {

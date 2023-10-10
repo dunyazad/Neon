@@ -1,5 +1,5 @@
 #include <Neon/NeonFrameBufferObject.h>
-#include <Neon/NeonTexture.h>
+#include <Neon/Component/NeonTexture.h>
 
 namespace Neon
 {
