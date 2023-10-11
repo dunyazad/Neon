@@ -33,10 +33,8 @@ int main()
 			camera->centerPosition = glm::vec3(0.0f, 0.0f, 0.0f);
 			scene->SetMainCamera(camera);
 
-			auto eventSubscriber = scene->CreateComponent<Neon::EventSubscriber>("EventSubscriber/Main Camera", entity);
-			entity->AddComponent(eventSubscriber);
-
-			eventSubscriber->SetKeyEventCallback([camera](GLFWwindow* window, int key, int scancode, int action, int mods) {
+			scene->SubscribeKeyEvent(entity);
+			entity->SetKeyEventCallback([camera](GLFWwindow* window, int key, int scancode, int action, int mods) {
 				if (key == GLFW_KEY_LEFT && (action == GLFW_PRESS || action == GLFW_REPEAT))
 				{
 					camera->azimuth -= 1.0f;

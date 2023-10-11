@@ -95,6 +95,18 @@ namespace Neon
 		inline Light* GetMainLight() { return mainLight; }
 		inline void SetMainLight(Light* light) { mainLight = light; }
 
+		inline void SubscribeKeyEvent(Entity* entity) { eventSystem.SubscribeKeyEvent(entity); }
+		inline void UnsubscribeKeyEvent(Entity* entity) { eventSystem.UnsubscribeKeyEvent(entity); }
+
+		inline void SubscribeMouseButtonEvent(Entity* entity) { eventSystem.SubscribeMouseButtonEvent(entity); }
+		inline void UnsubscribeMouseButtonEvent(Entity* entity) { eventSystem.UnsubscribeMouseButtonEvent(entity); }
+
+		inline void SubscribeCursorPosEvent(Entity* entity) { eventSystem.SubscribeCursorPosEvent(entity); }
+		inline void UnsubscribeCursorPosEvent(Entity* entity) { eventSystem.UnsubscribeCursorPosEvent(entity); }
+
+		inline void SubscribeScrollEvent(Entity* entity) { eventSystem.SubscribeScrollEvent(entity); }
+		inline void UnsubscribeScrollEvent(Entity* entity) { eventSystem.UnsubscribeScrollEvent(entity); }
+
 	private:
 		string name;
 		Window* window;
