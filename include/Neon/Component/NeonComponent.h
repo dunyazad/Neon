@@ -10,7 +10,13 @@ namespace Neon
 		ComponentBase(const string& name);
 		virtual ~ComponentBase();
 
-	private:
+		virtual void OnUpdate(float now, float timeDelta);
+
+		inline void AddUpdateCallback(function<void(float, float)> callback) { updateCallbacks.push_back(callback); }
+
+	protected:
 		string name;
+
+		vector<function<void(float, float)>> updateCallbacks;
 	};
 }

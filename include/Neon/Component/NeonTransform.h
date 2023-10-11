@@ -16,10 +16,5 @@ namespace Neon
 		glm::vec3 position = glm::zero<glm::vec3>();
 		glm::quat rotation = glm::identity<glm::quat>();
 		glm::mat4 absoluteTransform = glm::identity<glm::mat4>();
-
-		inline void AddUpdateCallback(function<void(float, float)> callback) { updateCallbacks.push_back(callback); }
-
-	private:
-		vector<function<void(float, float)>> updateCallbacks;
 	};
 }

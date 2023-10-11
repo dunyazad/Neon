@@ -3,6 +3,7 @@
 #include <Neon/NeonScene.h>
 #include <Neon/NeonVertexBufferObject.hpp>
 #include <Neon/Component/NeonCamera.h>
+#include <Neon/Component/NeonLight.h>
 #include <Neon/Component/NeonMesh.h>
 #include <Neon/Component/NeonShader.h>
 #include <Neon/Component/NeonTexture.h>
@@ -54,6 +55,9 @@ namespace Neon
 		auto camera = scene->GetMainCamera();
 		camera->OnUpdate(now, timeDelta);
 
+		auto light = scene->GetMainLight();
+		light->OnUpdate(now, timeDelta);
+
 		auto entities = scene->GetEntities();
 		for (auto& kvp : entities)
 		{
@@ -71,6 +75,23 @@ namespace Neon
 				{
 					shader->SetUniformFloat4x4("projection", glm::value_ptr(camera->projectionMatrix));
 					shader->SetUniformFloat4x4("view", glm::value_ptr(camera->viewMatrix));
+				}
+			}
+
+			if (nullptr != light)
+			{
+				if (nullptr != shader)
+				{
+					if (nullptr != camera)
+					{
+						shader->SetUniformFloat3("cameraPosition", glm::value_ptr(camera->position));
+					}
+					//auto lightDir = glm::vec3(0.0f, 0.0f, 10.0f);
+					shader->SetUniformFloat3("lightPosition", glm::value_ptr(light->position));
+					//shader->SetUniformFloat3("lightPos", glm::value_ptr(lightPos));
+					shader->SetUniformFloat3("lightDirection", glm::value_ptr(light->direction));
+					//shader->SetUniformFloat3("lightDirection", glm::value_ptr(lightDir));
+					shader->SetUniformFloat3("lightColor", glm::value_ptr(light->color));
 				}
 			}
 
@@ -102,7 +123,7 @@ namespace Neon
 			if (nullptr != mesh)
 			{
 				mesh->Bind();
-				glDrawElements(GL_TRIANGLES, (GLsizei)mesh->GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+				glDrawElements(mesh->GetDrawingMode(), (GLsizei)mesh->GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
 			}
 		}
 	}

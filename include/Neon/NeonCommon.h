@@ -11,6 +11,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <ostream>
 #include <queue>
 #include <set>
 #include <sstream>
@@ -46,9 +47,7 @@ using namespace std::chrono;
 
 namespace Neon
 {
-	typedef unsigned long ID;
-
-	
+	typedef unsigned long ID;	
 
 	class Time
 	{
@@ -85,10 +84,21 @@ namespace Neon
 		VertexBufferObjectBase();
 		~VertexBufferObjectBase();
 
-		enum BufferType { VERTEX_BUFFER, NORMAL_BUFFER, INDEX_BUFFER, COLOR_BUFFER, UV_BUFFER };
+		enum BufferType { VERTEX_BUFFER, NORMAL_BUFFER, COLOR_BUFFER, UV_BUFFER, INDEX_BUFFER };
 
 		virtual void Bind() = 0;
 		virtual void Unbind() = 0;
 		virtual void Upload() = 0;
 	};
+
+	ostream& operator << (ostream& o, const glm::vec2& v);
+	ostream& operator << (ostream& o, const glm::vec3& v);
+	ostream& operator << (ostream& o, const glm::vec4& v);
+	ostream& operator << (ostream& o, const glm::mat3& m);
+	ostream& operator << (ostream& o, const glm::mat4& m);
+
+	int safe_stoi(const string& input);
+	float safe_stof(const string& input);
+	
+	vector<string> split(const string& input, const string& delimiters, bool includeEmptyString = false);
 }

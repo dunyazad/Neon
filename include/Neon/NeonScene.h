@@ -8,6 +8,7 @@ namespace Neon
 	class Entity;
 	class ComponentBase;
 	class Camera;
+	class Light;
 
 	class Scene
 	{
@@ -88,6 +89,9 @@ namespace Neon
 		inline Camera* GetMainCamera() { return mainCamera; }
 		inline void SetMainCamera(Camera* camera) { mainCamera = camera; }
 
+		inline Light* GetMainLight() { return mainLight; }
+		inline void SetMainLight(Light* light) { mainLight = light; }
+
 	private:
 		string name;
 		map<string, Entity*> entities;
@@ -95,6 +99,7 @@ namespace Neon
 		map<string, ComponentBase*> componentNameMapping;
 
 		Camera* mainCamera = nullptr;
+		Light* mainLight = nullptr;
 
 		TransformUpdateSystem transformUpdateSystem;
 		RenderSystem renderSystem;

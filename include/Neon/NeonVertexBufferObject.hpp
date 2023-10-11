@@ -154,6 +154,8 @@ namespace Neon
 					glEnableVertexAttribArray(attributeIndex);
 					CheckGLError();
 				}
+
+				dirty = false;
 			}
 		}
 

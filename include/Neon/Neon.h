@@ -11,6 +11,7 @@
 
 #include <Neon/Component/NeonCamera.h>
 #include <Neon/Component/NeonComponent.h>
+#include <Neon/Component/NeonLight.h>
 #include <Neon/Component/NeonMesh.h>
 #include <Neon/Component/NeonShader.h>
 #include <Neon/Component/NeonTexture.h>

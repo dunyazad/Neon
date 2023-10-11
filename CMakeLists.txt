@@ -36,6 +36,8 @@ include/Neon/Component/NeonCamera.h
 src/Neon/Component/NeonCamera.cpp
 include/Neon/Component/NeonComponent.h
 src/Neon/Component/NeonComponent.cpp
+include/Neon/Component/NeonLight.h
+src/Neon/Component/NeonLight.cpp
 include/Neon/Component/NeonMesh.h
 src/Neon/Component/NeonMesh.cpp
 include/Neon/Component/NeonShader.h

@@ -10,4 +10,12 @@ namespace Neon
 	ComponentBase::~ComponentBase()
 	{
 	}
+
+	void ComponentBase::OnUpdate(float now, float timeDelta)
+	{
+		for (auto& callback : updateCallbacks)
+		{
+			callback(now, timeDelta);
+		}
+	}
 }
