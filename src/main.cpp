@@ -24,7 +24,7 @@ int main()
 			entity->AddComponent(camera);
 			camera->AddUpdateCallback([camera](float now, float timeDelta) {
 				//camera->distance = sinf(now * 0.001f);
-				//camera->azimuth += timeDelta * 0.05f;
+				camera->azimuth += timeDelta * 0.05f;
 				//camera->elevation += timeDelta * 0.01f;
 				});
 			camera->distance = 2.0f;

@@ -63,6 +63,8 @@ namespace Neon
 		for (auto& kvp : entities)
 		{
 			auto entity = kvp.second;
+			if (nullptr == entity)
+				continue;
 
 			auto shader = entity->GetComponent<Shader>(0);
 			if (nullptr != shader)
@@ -87,11 +89,8 @@ namespace Neon
 					{
 						shader->SetUniformFloat3("cameraPosition", glm::value_ptr(camera->position));
 					}
-					//auto lightDir = glm::vec3(0.0f, 0.0f, 10.0f);
 					shader->SetUniformFloat3("lightPosition", glm::value_ptr(light->position));
-					//shader->SetUniformFloat3("lightPos", glm::value_ptr(lightPos));
 					shader->SetUniformFloat3("lightDirection", glm::value_ptr(light->direction));
-					//shader->SetUniformFloat3("lightDirection", glm::value_ptr(lightDir));
 					shader->SetUniformFloat3("lightColor", glm::value_ptr(light->color));
 				}
 			}

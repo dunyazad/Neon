@@ -13,9 +13,9 @@ namespace Neon
 
 	void Entity::OnKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
-		cout << "Entity : " << name << endl;
-		cout << "Window : " << window << endl;
-		cout << "key : " << key << endl;
+		//cout << "Entity : " << name << endl;
+		//cout << "Window : " << window << endl;
+		//cout << "key : " << key << endl;
 
 		if (keyEventCallback)
 		{
@@ -25,9 +25,9 @@ namespace Neon
 
 	void Entity::OnMouseButtonEvent(GLFWwindow* window, int button, int action, int mods)
 	{
-		cout << "Entity : " << name << endl;
-		cout << "Window : " << window << endl;
-		cout << "button : " << button << endl;
+		//cout << "Entity : " << name << endl;
+		//cout << "Window : " << window << endl;
+		//cout << "button : " << button << endl;
 
 		if (mouseButtonEventCallback)
 		{
@@ -37,9 +37,9 @@ namespace Neon
 
 	void Entity::OnCursorPosEvent(GLFWwindow* window, double xpos, double ypos)
 	{
-		cout << "Entity : " << name << endl;
-		cout << "Window : " << window << endl;
-		cout << "x : " << xpos << " , y : " << ypos << endl;
+		//cout << "Entity : " << name << endl;
+		//cout << "Window : " << window << endl;
+		//cout << "x : " << xpos << " , y : " << ypos << endl;
 
 		if (cursorPosEventCallback)
 		{
@@ -49,9 +49,9 @@ namespace Neon
 
 	void Entity::OnScrollEvent(GLFWwindow* window, double xoffset, double yoffset)
 	{
-		cout << "Entity : " << name << endl;
-		cout << "Window : " << window << endl;
-		cout << "xoffset : " << xoffset << " , yoffset : " << yoffset << endl;
+		//cout << "Entity : " << name << endl;
+		//cout << "Window : " << window << endl;
+		//cout << "xoffset : " << xoffset << " , yoffset : " << yoffset << endl;
 
 		if (scrollEventCallback)
 		{
