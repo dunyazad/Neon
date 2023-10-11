@@ -24,7 +24,7 @@ int main()
 			entity->AddComponent(camera);
 			camera->AddUpdateCallback([camera](float now, float timeDelta) {
 				//camera->distance = sinf(now * 0.001f);
-				camera->azimuth += timeDelta * 0.05f;
+				//camera->azimuth += timeDelta * 0.05f;
 				//camera->elevation += timeDelta * 0.01f;
 				});
 			camera->distance = 2.0f;
@@ -32,6 +32,20 @@ int main()
 			camera->elevation = -45.0f;
 			camera->centerPosition = glm::vec3(0.0f, 0.0f, 0.0f);
 			scene->SetMainCamera(camera);
+
+			auto eventSubscriber = scene->CreateComponent<Neon::EventSubscriber>("EventSubscriber/Main Camera", entity);
+			entity->AddComponent(eventSubscriber);
+
+			eventSubscriber->SetKeyEventCallback([camera](GLFWwindow* window, int key, int scancode, int action, int mods) {
+				if (key == GLFW_KEY_LEFT && (action == GLFW_PRESS || action == GLFW_REPEAT))
+				{
+					camera->azimuth -= 1.0f;
+				}
+				else if (key == GLFW_KEY_RIGHT && (action == GLFW_PRESS || action == GLFW_REPEAT))
+				{
+					camera->azimuth += 1.0f;
+				}
+				});
 		}
 
 		{

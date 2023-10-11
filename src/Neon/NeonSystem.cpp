@@ -4,6 +4,7 @@
 #include <Neon/NeonVertexBufferObject.hpp>
 #include <Neon/NeonWindow.h>
 #include <Neon/Component/NeonCamera.h>
+#include <Neon/Component/NeonEventSubscriber.h>
 #include <Neon/Component/NeonLight.h>
 #include <Neon/Component/NeonMesh.h>
 #include <Neon/Component/NeonShader.h>
@@ -203,25 +204,41 @@ namespace Neon
 
 	void EventSystem::OnKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
-		cout << "Window : " << window << endl;
-		cout << "key : " << key << endl;
+		auto components = scene->GetComponents<EventSubscriber>();
+		for (auto& component : components)
+		{
+			auto subscriber = (EventSubscriber*)component;
+			subscriber->OnKeyEvent(window, key, scancode, action, mods);
+		}
 	}
 
 	void EventSystem::OnMouseButtonEvent(GLFWwindow* window, int button, int action, int mods)
 	{
-		cout << "Window : " << window << endl;
-		cout << "button : " << button << endl;
+		auto components = scene->GetComponents<EventSubscriber>();
+		for (auto& component : components)
+		{
+			auto subscriber = (EventSubscriber*)component;
+			subscriber->OnMouseButtonEvent(window, button, action, mods);
+		}
 	}
 
 	void EventSystem::OnCursorPosEvent(GLFWwindow* window, double xpos, double ypos)
 	{
-		cout << "Window : " << window << endl;
-		cout << "x : " << xpos << " , y : " << ypos << endl;
+		auto components = scene->GetComponents<EventSubscriber>();
+		for (auto& component : components)
+		{
+			auto subscriber = (EventSubscriber*)component;
+			subscriber->OnCursorPosEvent(window, xpos, ypos);
+		}
 	}
 
 	void EventSystem::OnScrollEvent(GLFWwindow* window, double xoffset, double yoffset)
 	{
-		cout << "Window : " << window << endl;
-		cout << "xoffset : " << xoffset << " , yoffset : " << yoffset << endl;
+		auto components = scene->GetComponents<EventSubscriber>();
+		for (auto& component : components)
+		{
+			auto subscriber = (EventSubscriber*)component;
+			subscriber->OnScrollEvent(window, xoffset, yoffset);
+		}
 	}
 }

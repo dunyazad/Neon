@@ -36,9 +36,11 @@ namespace Neon
 			else return (T*)cv[index];
 		}
 
+		inline const string& GetName() const { return name; }
+
+	protected:
 		string name;
 
-	private:
 		map<const type_info*, vector<ComponentBase*>> components;
 	};
 }
