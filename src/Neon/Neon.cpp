@@ -37,7 +37,7 @@ namespace Neon
 	Scene* Application::CreateScene(const string& name)
 	{
 		if (0 == scenes.count(name))
-			scenes[name] = new Scene(name);
+			scenes[name] = new Scene(name, window);
 		return scenes[name];
 	}
 

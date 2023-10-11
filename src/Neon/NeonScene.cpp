@@ -9,8 +9,8 @@
 
 namespace Neon
 {
-	Scene::Scene(const string& name)
-		: name(name), transformUpdateSystem(this), renderSystem(this)
+	Scene::Scene(const string& name, Window* window)
+		: name(name), window(window), transformUpdateSystem(this), renderSystem(this), eventSystem(this)
 	{
 	}
 

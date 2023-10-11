@@ -5,6 +5,7 @@
 
 namespace Neon
 {
+	class Window;
 	class Entity;
 	class ComponentBase;
 	class Camera;
@@ -13,7 +14,7 @@ namespace Neon
 	class Scene
 	{
 	public:
-		Scene(const string& name);
+		Scene(const string& name, Window* window);
 		~Scene();
 
 		Entity* GetEntity(const string& name);
@@ -86,6 +87,8 @@ namespace Neon
 
 		void Frame(float now, float timeDelta);
 
+		inline Window* GetWindow() { return window; }
+
 		inline Camera* GetMainCamera() { return mainCamera; }
 		inline void SetMainCamera(Camera* camera) { mainCamera = camera; }
 
@@ -94,6 +97,7 @@ namespace Neon
 
 	private:
 		string name;
+		Window* window;
 		map<string, Entity*> entities;
 		map<const type_info*, vector<ComponentBase*>> components;
 		map<string, ComponentBase*> componentNameMapping;
@@ -103,5 +107,6 @@ namespace Neon
 
 		TransformUpdateSystem transformUpdateSystem;
 		RenderSystem renderSystem;
+		EventSystem eventSystem;
 	};
 }

@@ -2,6 +2,7 @@
 #include <Neon/NeonEntity.h>
 #include <Neon/NeonScene.h>
 #include <Neon/NeonVertexBufferObject.hpp>
+#include <Neon/NeonWindow.h>
 #include <Neon/Component/NeonCamera.h>
 #include <Neon/Component/NeonLight.h>
 #include <Neon/Component/NeonMesh.h>
@@ -128,17 +129,99 @@ namespace Neon
 		}
 	}
 
+	set<EventSystem*> EventSystem::instances;
+
 	EventSystem::EventSystem(Scene* scene)
 		: SystemBase(scene)
 	{
+		if (0 == instances.size())
+		{
+			//struct {
+			//	GLFWwindowposfun          pos;
+			//	GLFWwindowsizefun         size;
+			//	GLFWwindowclosefun        close;
+			//	GLFWwindowrefreshfun      refresh;
+			//	GLFWwindowfocusfun        focus;
+			//	GLFWwindowiconifyfun      iconify;
+			//	GLFWwindowmaximizefun     maximize;
+			//	GLFWframebuffersizefun    fbsize;
+			//	GLFWwindowcontentscalefun scale;
+			//	GLFWmousebuttonfun        mouseButton;
+			//	GLFWcursorposfun          cursorPos;
+			//	GLFWcursorenterfun        cursorEnter;
+			//	GLFWscrollfun             scroll;
+			//	GLFWkeyfun                key;
+			//	GLFWcharfun               character;
+			//	GLFWcharmodsfun           charmods;
+			//	GLFWdropfun               drop;
+			//} callbacks;
+
+			glfwSetKeyCallback(scene->GetWindow()->GetGLFWWindow(), EventSystem::KeyCallback);
+			glfwSetMouseButtonCallback(scene->GetWindow()->GetGLFWWindow(), EventSystem::MouseButtonCallback);
+			glfwSetCursorPosCallback(scene->GetWindow()->GetGLFWWindow(), EventSystem::CursorPosCallback);
+			glfwSetScrollCallback(scene->GetWindow()->GetGLFWWindow(), EventSystem::ScrollCallback);
+		}
+
+		instances.insert(this);
 	}
 
 	EventSystem::~EventSystem()
 	{
 	}
 
-	void EventSystem::Event()
+	void EventSystem::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
+		for (auto& instance : instances)
+		{
+			instance->OnKeyEvent(window, key, scancode, action, mods);
+		}
+	}
 
+	void EventSystem::MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+	{
+		for (auto& instance : instances)
+		{
+			instance->OnMouseButtonEvent(window, button, action, mods);
+		}
+	}
+
+	void EventSystem::CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
+	{
+		for (auto& instance : instances)
+		{
+			instance->OnCursorPosEvent(window, xpos, ypos);
+		}
+	}
+
+	void EventSystem::ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
+	{
+		for (auto& instance : instances)
+		{
+			instance->OnScrollEvent(window, xoffset, yoffset);
+		}
+	}
+
+	void EventSystem::OnKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
+	{
+		cout << "Window : " << window << endl;
+		cout << "key : " << key << endl;
+	}
+
+	void EventSystem::OnMouseButtonEvent(GLFWwindow* window, int button, int action, int mods)
+	{
+		cout << "Window : " << window << endl;
+		cout << "button : " << button << endl;
+	}
+
+	void EventSystem::OnCursorPosEvent(GLFWwindow* window, double xpos, double ypos)
+	{
+		cout << "Window : " << window << endl;
+		cout << "x : " << xpos << " , y : " << ypos << endl;
+	}
+
+	void EventSystem::OnScrollEvent(GLFWwindow* window, double xoffset, double yoffset)
+	{
+		cout << "Window : " << window << endl;
+		cout << "xoffset : " << xoffset << " , yoffset : " << yoffset << endl;
 	}
 }
