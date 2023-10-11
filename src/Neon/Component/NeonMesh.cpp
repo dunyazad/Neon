@@ -13,6 +13,8 @@ namespace Neon
 
 	Mesh::~Mesh()
 	{
+		Unbind();
+
 		for (auto& kvp : bufferObjects)
 		{
 			SAFE_DELETE(kvp.second);

@@ -13,10 +13,6 @@ namespace Neon
 
 	Application::~Application()
 	{
-		for (auto& kvp : scenes)
-		{
-			SAFE_DELETE(kvp.second);
-		}
 	}
 
 	void Application::OnInitialize(function<void()> onInitialize)
@@ -87,6 +83,7 @@ namespace Neon
 					kvp.second->Frame((float)now, (float)timeDelta);
 				}
 
+#pragma region imgui
 				// Start the Dear ImGui frame
 				ImGui_ImplOpenGL3_NewFrame();
 				ImGui_ImplGlfw_NewFrame();
@@ -137,6 +134,8 @@ namespace Neon
 				//glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
 				//glClear(GL_COLOR_BUFFER_BIT);
 				ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+#pragma endregion
+
 			}
 
 			window->SwapBuffers();
@@ -148,5 +147,12 @@ namespace Neon
 		{
 			onTerminateFunction();
 		}
+
+		for (auto& kvp : scenes)
+		{
+			SAFE_DELETE(kvp.second);
+		}
+
+		glfwTerminate();
 	}
 }
