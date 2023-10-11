@@ -48,8 +48,6 @@ namespace Neon
         // Delete the shaders
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
-
-        
     }
 
     Shader::~Shader() {

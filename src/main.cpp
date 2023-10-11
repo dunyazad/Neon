@@ -90,7 +90,7 @@ int main()
 			mesh->FromSTLFile(app.GetResourceRoot() + "/stl/mx.stl", 0.01f, 0.01f, 0.01f);
 			auto nov = mesh->GetVertexBuffer()->Size() / 3;
 			auto rotation = glm::angleAxis(-glm::half_pi<float>(), glm::vec3(1.0f, 0.0f, 0.0f));
-			for (size_t i = 0; i < nov; i++)
+			for (int i = 0; i < nov; i++)
 			{
 				mesh->AddColor(1.0f, 1.0f, 1.0f, 1.0f);
 

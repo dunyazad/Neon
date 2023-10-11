@@ -268,7 +268,7 @@ namespace Neon
 	void Mesh::RecalculateFaceNormal()
 	{
 		auto noi = GetIndexBuffer()->Size();
-		for (size_t i = 0; i < noi / 3; i++)
+		for (int i = 0; i < noi / 3; i++)
 		{
 			glm::vec3 v0, v1, v2;
 			GetVertex(i * 3 + 0, v0.x, v0.y, v0.z);
