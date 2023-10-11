@@ -39,4 +39,14 @@ namespace Neon
 	private:
 
 	};
+
+	class EventSystem : public SystemBase
+	{
+	public:
+		EventSystem(Scene* scene);
+		~EventSystem();
+
+		void Event();
+
+	};
 }

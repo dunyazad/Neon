@@ -18,6 +18,8 @@ include/Neon/NeonCommon.h
 src/Neon/NeonCommon.cpp
 include/Neon/NeonEntity.h
 src/Neon/NeonEntity.cpp
+include/Neon/NeonEvent.h
+src/Neon/NeonEvent.cpp
 include/Neon/NeonFrameBufferObject.h
 src/Neon/NeonFrameBufferObject.cpp
 include/Neon/NeonImage.h
@@ -36,6 +38,8 @@ include/Neon/Component/NeonCamera.h
 src/Neon/Component/NeonCamera.cpp
 include/Neon/Component/NeonComponent.h
 src/Neon/Component/NeonComponent.cpp
+include/Neon/Component/NeonEventSubscriber.h
+src/Neon/Component/NeonEventSubscriber.cpp
 include/Neon/Component/NeonLight.h
 src/Neon/Component/NeonLight.cpp
 include/Neon/Component/NeonMesh.h

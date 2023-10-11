@@ -127,4 +127,18 @@ namespace Neon
 			}
 		}
 	}
+
+	EventSystem::EventSystem(Scene* scene)
+		: SystemBase(scene)
+	{
+	}
+
+	EventSystem::~EventSystem()
+	{
+	}
+
+	void EventSystem::Event()
+	{
+
+	}
 }

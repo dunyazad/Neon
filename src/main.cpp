@@ -82,10 +82,12 @@ int main()
 		}
 
 		{
+			auto t = Neon::Time("Mesh Loading");
+
 			auto entity = scene->CreateEntity("Entity/Mesh");
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Mesh");
 			entity->AddComponent(mesh);
-			mesh->FromSTLFile(app.GetResourceRoot() + "/stl/teapot.stl", 0.01f, 0.01f, 0.01f);
+			mesh->FromSTLFile(app.GetResourceRoot() + "/stl/mx.stl", 0.01f, 0.01f, 0.01f);
 			auto nov = mesh->GetVertexBuffer()->Size() / 3;
 			auto rotation = glm::angleAxis(-glm::half_pi<float>(), glm::vec3(1.0f, 0.0f, 0.0f));
 			for (size_t i = 0; i < nov; i++)
@@ -119,52 +121,6 @@ int main()
 				});
 		}
 
-		{
-			auto entity = scene->CreateEntity("Entity/triangleA");
-
-			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/triangleA mesh");
-			entity->AddComponent(mesh);
-		
-			mesh->AddVertex(-0.125f, 0.0f, 0.0f);
-			mesh->AddVertex(0.125f, 0.0f, 0.0f);
-			mesh->AddVertex(0.0f, 0.5f, 0.0f);
-
-			mesh->AddIndex(0);
-			mesh->AddIndex(1);
-			mesh->AddIndex(2);
-		
-			auto shader = scene->GetComponent<Neon::Shader>("Shader/Color");
-			entity->AddComponent(shader);
-		}
-
-		{
-			auto entity = scene->CreateEntity("Entity/triangleV");
-
-			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/triangleV mesh");
-			entity->AddComponent(mesh);
-
-			mesh->AddVertex(-0.125f, 0.0f, 0.0f);
-			mesh->AddVertex(0.0f, -0.5f, 0.0f);
-			mesh->AddVertex(0.125f, 0.0f, 0.0f);
-
-			mesh->AddIndex(0);
-			mesh->AddIndex(1);
-			mesh->AddIndex(2);
-
-			auto transform = scene->CreateComponent<Neon::Transform>("Transform/triangleV");
-			entity->AddComponent(transform);
-
-			transform->position = glm::vec3(0, -0.1f, 0.0f);
-			transform->AddUpdateCallback([transform](float now, float timeDelta) {
-				auto angle = now;
-				while (angle > 3141.592f) angle -= 3141.592f;
-				transform->position = glm::vec3(0, sinf(angle * 0.0001f), 0.0f);
-				});
-
-			auto shader = scene->GetComponent<Neon::Shader>("Shader/Color");
-			entity->AddComponent(shader);
-		}
-
 		//{
 		//	frame.AddVertex(-0.5f, -0.5f, 0.0f);
 		//	frame.AddVertex(0.5f, -0.5f, 0.0f);
@@ -187,71 +143,6 @@ int main()
 		//	textureFrame = new Neon::Texture("frame", 1920, 1080);
 		//	fbo = new Neon::FrameBufferObject("frame", textureFrame);
 		//}
-
-
-
-		{
-			auto entity = scene->CreateEntity("owl");
-
-			auto mesh = scene->CreateComponent<Neon::Mesh>("owl mesh");
-			entity->AddComponent(mesh);
-
-			mesh->AddVertex(0.5f, 0.0f, 0.0f);
-			mesh->AddVertex(0.75f, 0.0f, 0.0f);
-			mesh->AddVertex(0.75f, 0.5f, 0.0f);
-			mesh->AddVertex(0.5f, 0.5f, 0.0f);
-
-			mesh->AddIndex(0);
-			mesh->AddIndex(1);
-			mesh->AddIndex(2);
-
-			mesh->AddIndex(0);
-			mesh->AddIndex(2);
-			mesh->AddIndex(3);
-
-			mesh->AddUV(0.0f, 0.0f);
-			mesh->AddUV(1.0f, 0.0f);
-			mesh->AddUV(1.0f, 1.0f);
-			mesh->AddUV(0.0f, 1.0f);
-
-			imageB = new Neon::Image("Owl.jpg", app.GetResourceRoot() + "/images/Owl.jpg");
-			auto texture = scene->CreateComponent<Neon::Texture>("Owl", imageB);
-			entity->AddComponent(texture);
-
-			auto shaderTexture = scene->CreateComponent<Neon::Shader>("Shader/texture", (app.GetResourceRoot() + "/shader/texture.vs").c_str(), (app.GetResourceRoot() + "/shader/texture.fs").c_str());
-			entity->AddComponent(shaderTexture);
-		}
-
-		{
-			auto entity = scene->CreateEntity("lion");
-
-			auto mesh = scene->CreateComponent<Neon::Mesh>("lion mesh");
-			entity->AddComponent(mesh);
-
-			mesh->AddVertex(-0.5f, 0.0f, 0.0f);
-			mesh->AddVertex(-0.25f, 0.0f, 0.0f);
-			mesh->AddVertex(-0.25f, 0.5f, 0.0f);
-			mesh->AddVertex(-0.5f, 0.5f, 0.0f);
-
-			mesh->AddIndex(0);
-			mesh->AddIndex(1);
-			mesh->AddIndex(2);
-
-			mesh->AddIndex(0);
-			mesh->AddIndex(2);
-			mesh->AddIndex(3);
-
-			mesh->AddUV(0.0f, 0.0f);
-			mesh->AddUV(1.0f, 0.0f);
-			mesh->AddUV(1.0f, 1.0f);
-			mesh->AddUV(0.0f, 1.0f);
-
-			imageC = new Neon::Image("Lion", app.GetResourceRoot() + "/images/Lion.png");
-			auto texture = scene->CreateComponent<Neon::Texture>("Lion", imageC);
-			entity->AddComponent(texture);
-
-			entity->AddComponent(scene->GetComponent<Neon::Shader>("Shader/texture"));
-		}
 
 		});
 
