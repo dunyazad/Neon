@@ -96,7 +96,21 @@ namespace Neon
 			if (nullptr != mesh)
 			{
 				mesh->Bind();
-				glDrawElements(mesh->GetDrawingMode(), (GLsizei)mesh->GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+				if (mesh->GetDrawingMode() == Mesh::Lines)
+				{
+					glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+				}
+				else if (mesh->GetDrawingMode() == Mesh::Points)
+				{
+					glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+				}
+				
+				glDrawElements(GL_TRIANGLES, (GLsizei)mesh->GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+
+				if (mesh->GetDrawingMode() != Mesh::Triangles)
+				{
+					glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+				}
 			}
 		}
 	}

@@ -29,7 +29,7 @@ int main()
 				});
 			camera->distance = 2.0f;
 			camera->angleH = 30.0f;
-			camera->angleV = 0.0f;
+			camera->angleV = 30.0f;
 			camera->centerPosition = glm::vec3(0.0f, 0.0f, 0.0f);
 			scene->SetMainCamera(camera);
 
@@ -73,7 +73,7 @@ int main()
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Axes");
 			entity->AddComponent(mesh);
 			
-			mesh->SetDrawingMode(GL_LINES);
+			mesh->SetDrawingMode(Neon::Mesh::Lines);
 			mesh->AddVertex(0.0f, 0.0f, 0.0f);
 			mesh->AddVertex(10.0f, 0.0f, 0.0f);
 			mesh->AddVertex(0.0f, 0.0f, 0.0f);
@@ -111,7 +111,7 @@ int main()
 			for (int i = 0; i < nov; i++)
 			{
 				mesh->AddColor(1.0f, 1.0f, 1.0f, 1.0f);
-
+				
 				{
 					float x, y, z;
 					mesh->GetVertex(i, x, y, z);
@@ -136,6 +136,21 @@ int main()
 			entity->AddComponent(transform);
 			transform->SetUpdateCallback([transform](float now, float timeDelta) {
 				transform->rotation = glm::angleAxis(glm::radians(now * 0.01f), glm::vec3(0.0f, 1.0f, 0.0f));
+				});
+
+			entity->SetKeyEventCallback([mesh](GLFWwindow* window, int key, int scancode, int action, int mods) {
+				if (GLFW_KEY_1 == key)
+				{
+					mesh->SetDrawingMode(Neon::Mesh::Triangles);
+				}
+				else if (GLFW_KEY_2 == key)
+				{
+					mesh->SetDrawingMode(Neon::Mesh::Lines);
+				}
+				else if (GLFW_KEY_3 == key)
+				{
+					mesh->SetDrawingMode(Neon::Mesh::Points);
+				}
 				});
 		}
 

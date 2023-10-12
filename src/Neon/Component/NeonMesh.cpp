@@ -55,7 +55,7 @@ namespace Neon
 		return (VertexBufferObject<GLuint>*)bufferObjects[VertexBufferObjectBase::BufferType::INDEX_BUFFER];
 	}
 
-	VertexBufferObject<float>* Mesh::GetColorBuffer() 
+	VertexBufferObject<float>* Mesh::GetColorBuffer()
 	{
 		if (0 == bufferObjects.count(VertexBufferObjectBase::BufferType::COLOR_BUFFER))
 		{
@@ -139,7 +139,7 @@ namespace Neon
 		buffer->AddElement(b);
 		buffer->AddElement(a);
 	}
-	
+		
 	void Mesh::AddUV(float u, float v)
 	{
 		auto buffer = GetUVBuffer();

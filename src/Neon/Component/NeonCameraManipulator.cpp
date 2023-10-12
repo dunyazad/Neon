@@ -83,8 +83,8 @@ namespace Neon
 
 		if (isRButtonPressed)
 		{
-			camera->angleH -= dx;
-			camera->angleV += dy;
+			camera->angleH -= float(dx);
+			camera->angleV += float(dy);
 		}
 
 		if (isMButtonPressed)
