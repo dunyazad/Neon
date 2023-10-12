@@ -60,7 +60,7 @@ int main()
 				});
 
 			light->SetMouseButtonEventCallback([](GLFWwindow* window, int button, int action, int mods) {
-				cout << "Button" << endl;
+				cout << "Button : " << button << " , action : " << action << endl;
 				});
 
 			//light->position = glm::vec3(0.0f, 0.0f, 10.0f);

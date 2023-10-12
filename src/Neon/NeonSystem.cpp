@@ -210,9 +210,46 @@ namespace Neon
 
 	void EventSystem::OnMouseButtonEvent(GLFWwindow* window, int button, int action, int mods)
 	{
+		auto now = glfwGetTime();
+
+		bool doubleClicked = false;
+		if (action == GLFW_RELEASE)
+		{
+			if (button == GLFW_MOUSE_BUTTON_1)
+			{
+				auto delta = now - lastLButtonReleaseTime;
+				if (delta < doubleClickInterval)
+				{
+					doubleClicked = true;
+				}
+
+				lastLButtonReleaseTime = now;
+			}
+			else if (button == GLFW_MOUSE_BUTTON_2)
+			{
+				auto delta = now - lastRButtonReleaseTime;
+				if (delta < doubleClickInterval)
+				{
+					doubleClicked = true;
+				}
+
+				lastRButtonReleaseTime = now;
+			}
+			else if (button == GLFW_MOUSE_BUTTON_3)
+			{
+				auto delta = now - lastMButtonReleaseTime;
+				if (delta < doubleClickInterval)
+				{
+					doubleClicked = true;
+				}
+
+				lastMButtonReleaseTime = now;
+			}
+		}
+
 		for (auto& kvp : scene->GetEntities())
 		{
-			kvp.second->OnMouseButtonEvent(window, button, action, mods);
+			kvp.second->OnMouseButtonEvent(window, button, doubleClicked ? GLFW_DOUBLE_ACTION : action, mods);
 		}
 	}
 

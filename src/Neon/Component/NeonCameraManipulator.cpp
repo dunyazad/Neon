@@ -87,6 +87,17 @@ namespace Neon
 			camera->angleV += dy;
 		}
 
+		if (isMButtonPressed)
+		{
+			auto xAxis = glm::vec3(glm::row(camera->viewMatrix, 0));
+			auto yAxis = glm::vec3(glm::row(camera->viewMatrix, 1));
+
+			camera->position += glm::normalize(xAxis) * (float)-dx * 0.001f;
+			camera->centerPosition += glm::normalize(xAxis) * (float)-dx * 0.001f;
+			camera->position += glm::normalize(yAxis) * (float)dy * 0.001f;
+			camera->centerPosition += glm::normalize(yAxis) * (float)dy * 0.001f;
+		}
+
 		lastCursorPosX = xpos;
 		lastCursorPosY = ypos;
 

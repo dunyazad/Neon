@@ -58,6 +58,11 @@ namespace Neon
 		void OnScrollEvent(GLFWwindow* window, double xoffset, double yoffset);
 
 	protected:
+		double doubleClickInterval = 0.5;
+		double lastLButtonReleaseTime = 0.0;
+		double lastRButtonReleaseTime = 0.0;
+		double lastMButtonReleaseTime = 0.0;
+
 		static set<EventSystem*> instances;
 	};
 }
