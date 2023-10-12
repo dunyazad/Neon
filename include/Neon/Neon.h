@@ -8,6 +8,7 @@
 #include <Neon/NeonFrameBufferObject.h>
 
 #include <Neon/NeonEntity.h>
+#include <Neon/NeonScene.h>
 
 #include <Neon/Component/NeonCamera.h>
 #include <Neon/Component/NeonCameraManipulator.h>
@@ -18,8 +19,10 @@
 #include <Neon/Component/NeonTexture.h>
 #include <Neon/Component/NeonTransform.h>
 
-#include <Neon/NeonScene.h>
-#include <Neon/NeonSystem.h>
+#include <Neon/System/NeonEventSystem.h>
+#include <Neon/System/NeonRenderSystem.h>
+#include <Neon/System/NeonSystem.h>
+#include <Neon/System/NeonTransformUpdateSystem.h>
 
 namespace Neon
 {

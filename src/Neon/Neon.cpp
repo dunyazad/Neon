@@ -1,6 +1,10 @@
 #include <Neon/Neon.h>
 #include <Neon/NeonScene.h>
-#include <Neon/NeonSystem.h>
+
+#include <Neon/System/NeonEventSystem.h>
+#include <Neon/System/NeonRenderSystem.h>
+#include <Neon/System/NeonSystem.h>
+#include <Neon/System/NeonTransformUpdateSystem.h>
 
 namespace Neon
 {

@@ -1,7 +1,10 @@
 #pragma once
 
 #include <Neon/NeonCommon.h>
-#include <Neon/NeonSystem.h>
+#include <Neon/System/NeonSystem.h>
+#include <Neon/System/NeonEventSystem.h>
+#include <Neon/System/NeonRenderSystem.h>
+#include <Neon/System/NeonTransformUpdateSystem.h>
 
 namespace Neon
 {
