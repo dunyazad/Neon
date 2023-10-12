@@ -36,6 +36,8 @@ src/Neon/NeonWindow.cpp
 
 include/Neon/Component/NeonCamera.h
 src/Neon/Component/NeonCamera.cpp
+include/Neon/Component/NeonCameraManipulator.h
+src/Neon/Component/NeonCameraManipulator.cpp
 include/Neon/Component/NeonComponent.h
 src/Neon/Component/NeonComponent.cpp
 include/Neon/Component/NeonLight.h

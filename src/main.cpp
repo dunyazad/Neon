@@ -22,9 +22,9 @@ int main()
 			auto entity = scene->CreateEntity("Entity/Main Camera");
 			auto camera = scene->CreateComponent<Neon::Camera>("Camera/Main", 1280.0f, 1024.0f);
 			entity->AddComponent(camera);
-			camera->AddUpdateCallback([camera](float now, float timeDelta) {
+			camera->SetUpdateCallback([camera](float now, float timeDelta) {
 				//camera->distance = sinf(now * 0.001f);
-				camera->azimuth += timeDelta * 0.05f;
+				//camera->azimuth += timeDelta * 0.05f;
 				//camera->elevation += timeDelta * 0.01f;
 				});
 			camera->distance = 2.0f;
@@ -33,7 +33,10 @@ int main()
 			camera->centerPosition = glm::vec3(0.0f, 0.0f, 0.0f);
 			scene->SetMainCamera(camera);
 
-			scene->SubscribeKeyEvent(entity);
+			entity->SetCursorPosEventCallback([camera](GLFWwindow* window, double xpos, double ypos) {
+				cout << xpos << endl;
+				});
+
 			entity->SetKeyEventCallback([camera](GLFWwindow* window, int key, int scancode, int action, int mods) {
 				if (key == GLFW_KEY_LEFT && (action == GLFW_PRESS || action == GLFW_REPEAT))
 				{
@@ -51,10 +54,14 @@ int main()
 			auto light = scene->CreateComponent<Neon::Light>("Light/Main");
 			entity->AddComponent(light);
 
-			light->AddUpdateCallback([scene, light](float now, float timeDelta) {
+			light->SetUpdateCallback([scene, light](float now, float timeDelta) {
 				auto camera = scene->GetMainCamera();
 				light->position = camera->position;
 				light->direction = glm::normalize(camera->centerPosition - camera->position);
+				});
+
+			light->SetMouseButtonEventCallback([](GLFWwindow* window, int button, int action, int mods) {
+				cout << "Button" << endl;
 				});
 
 			//light->position = glm::vec3(0.0f, 0.0f, 10.0f);
@@ -128,7 +135,7 @@ int main()
 
 			auto transform = scene->CreateComponent<Neon::Transform>("Transform/Mesh");
 			entity->AddComponent(transform);
-			transform->AddUpdateCallback([transform](float now, float timeDelta) {
+			transform->SetUpdateCallback([transform](float now, float timeDelta) {
 				//transform->rotation = glm::angleAxis(glm::radians(now * 0.01f), glm::vec3(0.0f, 1.0f, 0.0f));
 				});
 		}

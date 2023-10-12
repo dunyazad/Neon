@@ -4,19 +4,10 @@
 
 namespace Neon
 {
-	class ComponentBase
+	class ComponentBase : public NeonObject
 	{
 	public:
 		ComponentBase(const string& name);
 		virtual ~ComponentBase();
-
-		virtual void OnUpdate(float now, float timeDelta);
-
-		inline void AddUpdateCallback(function<void(float, float)> callback) { updateCallbacks.push_back(callback); }
-
-	protected:
-		string name;
-
-		vector<function<void(float, float)>> updateCallbacks;
 	};
 }

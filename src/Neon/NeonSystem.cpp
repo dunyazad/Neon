@@ -202,33 +202,33 @@ namespace Neon
 
 	void EventSystem::OnKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
-		for (auto& entity : keyEventSubscribers)
+		for (auto& kvp : scene->GetEntities())
 		{
-			entity->OnKeyEvent(window, key, scancode, action, mods);
+			kvp.second->OnKeyEvent(window, key, scancode, action, mods);
 		}
 	}
 
 	void EventSystem::OnMouseButtonEvent(GLFWwindow* window, int button, int action, int mods)
 	{
-		for (auto& entity : mouseButtonEventSubscribers)
+		for (auto& kvp : scene->GetEntities())
 		{
-			entity->OnMouseButtonEvent(window, button, action, mods);
+			kvp.second->OnMouseButtonEvent(window, button, action, mods);
 		}
 	}
 
 	void EventSystem::OnCursorPosEvent(GLFWwindow* window, double xpos, double ypos)
 	{
-		for (auto& entity : cursorPosEventSubscribers)
+		for (auto& kvp : scene->GetEntities())
 		{
-			entity->OnCursorPosEvent(window, xpos, ypos);
+			kvp.second->OnCursorPosEvent(window, xpos, ypos);
 		}
 	}
 
 	void EventSystem::OnScrollEvent(GLFWwindow* window, double xoffset, double yoffset)
 	{
-		for (auto& entity : scrollEventSubscribers)
+		for (auto& kvp : scene->GetEntities())
 		{
-			entity->OnScrollEvent(window, xoffset, yoffset);
+			kvp.second->OnScrollEvent(window, xoffset, yoffset);
 		}
 	}
 }

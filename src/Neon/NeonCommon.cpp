@@ -24,6 +24,46 @@ void _CheckGLError(const char* file, int line)
 
 namespace Neon
 {
+	NeonObject::NeonObject(const string& name)
+		: name(name)
+	{
+	}
+
+	NeonObject::~NeonObject()
+	{
+	}
+
+	void NeonObject::OnKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
+	{
+		if (keyEventCallback) keyEventCallback(window, key, scancode, action, mods);
+	}
+
+	void NeonObject::OnMouseButtonEvent(GLFWwindow* window, int button, int action, int mods)
+	{
+		if (mouseButtonEventCallback) mouseButtonEventCallback(window, button, action, mods);
+	}
+	
+	void NeonObject::OnCursorPosEvent(GLFWwindow* window, double xpos, double ypos)
+	{
+		if (cursorPosEventCallback) cursorPosEventCallback(window, xpos, ypos);
+	}
+	
+	void NeonObject::OnScrollEvent(GLFWwindow* window, double xoffset, double yoffset)
+	{
+		if (scrollEventCallback) scrollEventCallback(window, xoffset, yoffset);
+	}
+
+	void NeonObject::OnUpdate(float now, float timeDelta)
+	{
+		if (updateCallback) updateCallback(now, timeDelta);
+	}
+
+
+
+
+
+
+
 	time_point<high_resolution_clock> Time::Now()
 	{
 		return high_resolution_clock::now();

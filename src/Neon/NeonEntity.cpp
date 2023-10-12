@@ -1,9 +1,10 @@
 #include <Neon/NeonEntity.h>
+#include <Neon/Component/NeonComponent.h>
 
 namespace Neon
 {
-	Entity::Entity(const string& name)
-		: name(name)
+	Entity::Entity(const string& name, Scene* scene)
+		: NeonObject(name), scene(scene)
 	{
 	}
 
@@ -13,49 +14,53 @@ namespace Neon
 
 	void Entity::OnKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
-		//cout << "Entity : " << name << endl;
-		//cout << "Window : " << window << endl;
-		//cout << "key : " << key << endl;
+		NeonObject::OnKeyEvent(window, key, scancode, action, mods);
 
-		if (keyEventCallback)
+		for (auto& kvp : components)
 		{
-			keyEventCallback(window, key, scancode, action, mods);
+			for (auto& component : kvp.second)
+			{
+				component->OnKeyEvent(window, key, scancode, action, mods);
+			}
 		}
 	}
 
 	void Entity::OnMouseButtonEvent(GLFWwindow* window, int button, int action, int mods)
 	{
-		//cout << "Entity : " << name << endl;
-		//cout << "Window : " << window << endl;
-		//cout << "button : " << button << endl;
+		NeonObject::OnMouseButtonEvent(window, button, action, mods);
 
-		if (mouseButtonEventCallback)
+		for (auto& kvp : components)
 		{
-			mouseButtonEventCallback(window, button, action, mods);
+			for (auto& component : kvp.second)
+			{
+				component->OnMouseButtonEvent(window, button, action, mods);
+			}
 		}
 	}
 
 	void Entity::OnCursorPosEvent(GLFWwindow* window, double xpos, double ypos)
 	{
-		//cout << "Entity : " << name << endl;
-		//cout << "Window : " << window << endl;
-		//cout << "x : " << xpos << " , y : " << ypos << endl;
+		NeonObject::OnCursorPosEvent(window, xpos, ypos);
 
-		if (cursorPosEventCallback)
+		for (auto& kvp : components)
 		{
-			cursorPosEventCallback(window, xpos, ypos);
+			for (auto& component : kvp.second)
+			{
+				component->OnCursorPosEvent(window, xpos, ypos);
+			}
 		}
 	}
 
 	void Entity::OnScrollEvent(GLFWwindow* window, double xoffset, double yoffset)
 	{
-		//cout << "Entity : " << name << endl;
-		//cout << "Window : " << window << endl;
-		//cout << "xoffset : " << xoffset << " , yoffset : " << yoffset << endl;
+		NeonObject::OnScrollEvent(window, xoffset, yoffset);
 
-		if (scrollEventCallback)
+		for (auto& kvp : components)
 		{
-			scrollEventCallback(window, xoffset, yoffset);
+			for (auto& component : kvp.second)
+			{
+				component->OnScrollEvent(window, xoffset, yoffset);
+			}
 		}
 	}
 }

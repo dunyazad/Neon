@@ -2,35 +2,27 @@
 
 namespace Neon
 {
-	Event::Event()
-	{
-	}
+	//KeyEvent::KeyEvent()
+	//{
+	//}
 
-	Event::~Event()
-	{
-	}
+	//KeyEvent::~KeyEvent()
+	//{
+	//}
 
-	KeyEvent::KeyEvent()
-	{
-	}
+	//KeyPressedEvent::KeyPressedEvent()
+	//{
+	//}
 
-	KeyEvent::~KeyEvent()
-	{
-	}
+	//KeyPressedEvent::~KeyPressedEvent()
+	//{
+	//}
 
-	KeyPressedEvent::KeyPressedEvent()
-	{
-	}
+	//KeyReleasedEvent::KeyReleasedEvent()
+	//{
+	//}
 
-	KeyPressedEvent::~KeyPressedEvent()
-	{
-	}
-
-	KeyReleasedEvent::KeyReleasedEvent()
-	{
-	}
-
-	KeyReleasedEvent::~KeyReleasedEvent()
-	{
-	}
+	//KeyReleasedEvent::~KeyReleasedEvent()
+	//{
+	//}
 }

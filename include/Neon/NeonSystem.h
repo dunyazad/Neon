@@ -57,24 +57,7 @@ namespace Neon
 		void OnCursorPosEvent(GLFWwindow* window, double xpos, double ypos);
 		void OnScrollEvent(GLFWwindow* window, double xoffset, double yoffset);
 
-		inline void SubscribeKeyEvent(Entity* entity) { keyEventSubscribers.insert(entity); }
-		inline void UnsubscribeKeyEvent(Entity* entity) { keyEventSubscribers.erase(entity); }
-
-		inline void SubscribeMouseButtonEvent(Entity* entity) { mouseButtonEventSubscribers.insert(entity); }
-		inline void UnsubscribeMouseButtonEvent(Entity* entity) { mouseButtonEventSubscribers.erase(entity); }
-
-		inline void SubscribeCursorPosEvent(Entity* entity) { cursorPosEventSubscribers.insert(entity); }
-		inline void UnsubscribeCursorPosEvent(Entity* entity) { cursorPosEventSubscribers.erase(entity); }
-
-		inline void SubscribeScrollEvent(Entity* entity) { scrollEventSubscribers.insert(entity); }
-		inline void UnsubscribeScrollEvent(Entity* entity) { scrollEventSubscribers.erase(entity); }
-
 	protected:
 		static set<EventSystem*> instances;
-
-		set<Entity*> keyEventSubscribers;
-		set<Entity*> mouseButtonEventSubscribers;
-		set<Entity*> cursorPosEventSubscribers;
-		set<Entity*> scrollEventSubscribers;
 	};
 }

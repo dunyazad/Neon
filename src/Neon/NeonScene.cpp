@@ -1,11 +1,6 @@
 #include <Neon/NeonScene.h>
 #include <Neon/NeonEntity.h>
-#include <Neon/Component/NeonCamera.h>
 #include <Neon/Component/NeonComponent.h>
-#include <Neon/Component/NeonMesh.h>
-#include <Neon/Component/NeonShader.h>
-#include <Neon/Component/NeonTexture.h>
-#include <Neon/Component/NeonTransform.h>
 
 namespace Neon
 {
@@ -56,7 +51,7 @@ namespace Neon
 		}
 		else
 		{
-			auto entity = new Entity(name);
+			auto entity = new Entity(name, this);
 			entities[name] = entity;
 			return entity;
 		}

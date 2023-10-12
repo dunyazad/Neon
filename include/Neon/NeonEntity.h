@@ -5,11 +5,12 @@
 namespace Neon
 {
 	class ComponentBase;
+	class Scene;
 
-	class Entity
+	class Entity : public NeonObject
 	{
 	public:
-		Entity(const string& name);
+		Entity(const string& name, Scene* scene);
 		~Entity();
 
 		template<class T>
@@ -36,26 +37,15 @@ namespace Neon
 			else return (T*)cv[index];
 		}
 
-		inline const string& GetName() const { return name; }
+		inline Scene* GetScene() const { return scene; }
 
-		void OnKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods);
-		void OnMouseButtonEvent(GLFWwindow* window, int button, int action, int mods);
-		void OnCursorPosEvent(GLFWwindow* window, double xpos, double ypos);
-		void OnScrollEvent(GLFWwindow* window, double xoffset, double yoffset);
-
-		inline void SetKeyEventCallback(function<void(GLFWwindow*, int, int, int, int)> callback) { keyEventCallback = callback; }
-		inline void SetMouseButtonEventCallback(function<void(GLFWwindow*, int, int, int)> callback) { mouseButtonEventCallback = callback; }
-		inline void SetCursorPosEventCallback(function<void(GLFWwindow*, double, double)> callback) { cursorPosEventCallback = callback; }
-		inline void SetScrollEventCallback(function<void(GLFWwindow*, double, double)> callback) { scrollEventCallback = callback; }
+		virtual void OnKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods);
+		virtual void OnMouseButtonEvent(GLFWwindow* window, int button, int action, int mods);
+		virtual void OnCursorPosEvent(GLFWwindow* window, double xpos, double ypos);
+		virtual void OnScrollEvent(GLFWwindow* window, double xoffset, double yoffset);
 
 	protected:
-		string name;
-
+		Scene* scene;
 		map<const type_info*, vector<ComponentBase*>> components;
-
-		function<void(GLFWwindow*, int, int, int, int)> keyEventCallback;
-		function<void(GLFWwindow*, int, int, int)> mouseButtonEventCallback;
-		function<void(GLFWwindow*, double, double)> cursorPosEventCallback;
-		function<void(GLFWwindow*, double, double)> scrollEventCallback;
 	};
 }
