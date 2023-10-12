@@ -10,6 +10,7 @@
 #include <Neon/NeonEntity.h>
 
 #include <Neon/Component/NeonCamera.h>
+#include <Neon/Component/NeonCameraManipulator.h>
 #include <Neon/Component/NeonComponent.h>
 #include <Neon/Component/NeonLight.h>
 #include <Neon/Component/NeonMesh.h>

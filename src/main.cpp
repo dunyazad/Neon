@@ -24,29 +24,28 @@ int main()
 			entity->AddComponent(camera);
 			camera->SetUpdateCallback([camera](float now, float timeDelta) {
 				//camera->distance = sinf(now * 0.001f);
-				//camera->azimuth += timeDelta * 0.05f;
-				//camera->elevation += timeDelta * 0.01f;
+				//camera->angleH += timeDelta * 0.05f;
+				//camera->angleV += timeDelta * 0.01f;
 				});
 			camera->distance = 2.0f;
-			camera->azimuth = 45.0f;
-			camera->elevation = -45.0f;
+			camera->angleH = 30.0f;
+			camera->angleV = 0.0f;
 			camera->centerPosition = glm::vec3(0.0f, 0.0f, 0.0f);
 			scene->SetMainCamera(camera);
-
-			entity->SetCursorPosEventCallback([camera](GLFWwindow* window, double xpos, double ypos) {
-				cout << xpos << endl;
-				});
 
 			entity->SetKeyEventCallback([camera](GLFWwindow* window, int key, int scancode, int action, int mods) {
 				if (key == GLFW_KEY_LEFT && (action == GLFW_PRESS || action == GLFW_REPEAT))
 				{
-					camera->azimuth -= 1.0f;
+					camera->angleH -= 1.0f;
 				}
 				else if (key == GLFW_KEY_RIGHT && (action == GLFW_PRESS || action == GLFW_REPEAT))
 				{
-					camera->azimuth += 1.0f;
+					camera->angleH += 1.0f;
 				}
 				});
+
+			auto cameraManipulator = scene->CreateComponent<Neon::CameraManipulator>("CameraManipulator/Main", camera);
+			entity->AddComponent(cameraManipulator);
 		}
 
 		{
@@ -136,7 +135,7 @@ int main()
 			auto transform = scene->CreateComponent<Neon::Transform>("Transform/Mesh");
 			entity->AddComponent(transform);
 			transform->SetUpdateCallback([transform](float now, float timeDelta) {
-				//transform->rotation = glm::angleAxis(glm::radians(now * 0.01f), glm::vec3(0.0f, 1.0f, 0.0f));
+				transform->rotation = glm::angleAxis(glm::radians(now * 0.01f), glm::vec3(0.0f, 1.0f, 0.0f));
 				});
 		}
 
