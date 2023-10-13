@@ -12,54 +12,54 @@ namespace Neon
 	{
 	}
 
-	void Entity::OnKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
+	void Entity::OnKeyEvent(const KeyEvent& event)
 	{
-		NeonObject::OnKeyEvent(window, key, scancode, action, mods);
+		NeonObject::OnKeyEvent(event);
 
 		for (auto& kvp : components)
 		{
 			for (auto& component : kvp.second)
 			{
-				component->OnKeyEvent(window, key, scancode, action, mods);
+				component->OnKeyEvent(event);
 			}
 		}
 	}
 
-	void Entity::OnMouseButtonEvent(GLFWwindow* window, int button, int action, int mods)
+	void Entity::OnMouseButtonEvent(const MouseButtonEvent& event)
 	{
-		NeonObject::OnMouseButtonEvent(window, button, action, mods);
+		NeonObject::OnMouseButtonEvent(event);
 
 		for (auto& kvp : components)
 		{
 			for (auto& component : kvp.second)
 			{
-				component->OnMouseButtonEvent(window, button, action, mods);
+				component->OnMouseButtonEvent(event);
 			}
 		}
 	}
 
-	void Entity::OnCursorPosEvent(GLFWwindow* window, double xpos, double ypos)
+	void Entity::OnCursorPosEvent(const CursorPosEvent& event)
 	{
-		NeonObject::OnCursorPosEvent(window, xpos, ypos);
+		NeonObject::OnCursorPosEvent(event);
 
 		for (auto& kvp : components)
 		{
 			for (auto& component : kvp.second)
 			{
-				component->OnCursorPosEvent(window, xpos, ypos);
+				component->OnCursorPosEvent(event);
 			}
 		}
 	}
 
-	void Entity::OnScrollEvent(GLFWwindow* window, double xoffset, double yoffset)
+	void Entity::OnScrollEvent(const ScrollEvent& event)
 	{
-		NeonObject::OnScrollEvent(window, xoffset, yoffset);
+		NeonObject::OnScrollEvent(event);
 
 		for (auto& kvp : components)
 		{
 			for (auto& component : kvp.second)
 			{
-				component->OnScrollEvent(window, xoffset, yoffset);
+				component->OnScrollEvent(event);
 			}
 		}
 	}

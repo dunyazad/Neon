@@ -34,12 +34,12 @@ int main()
 			camera->centerPosition = glm::vec3(0.0f, 0.0f, 0.0f);
 			scene->SetMainCamera(camera);
 
-			entity->SetKeyEventCallback([camera](GLFWwindow* window, int key, int scancode, int action, int mods) {
-				if (key == GLFW_KEY_LEFT && (action == GLFW_PRESS || action == GLFW_REPEAT))
+			entity->SetKeyEventCallback([camera](const Neon::KeyEvent& event) {
+				if (event.key == GLFW_KEY_LEFT && (event.action == GLFW_PRESS || event.action == GLFW_REPEAT))
 				{
 					camera->angleH -= 1.0f;
 				}
-				else if (key == GLFW_KEY_RIGHT && (action == GLFW_PRESS || action == GLFW_REPEAT))
+				else if (event.key == GLFW_KEY_RIGHT && (event.action == GLFW_PRESS || event.action == GLFW_REPEAT))
 				{
 					camera->angleH += 1.0f;
 				}
@@ -60,8 +60,8 @@ int main()
 				light->direction = glm::normalize(camera->centerPosition - camera->position);
 				});
 
-			light->SetMouseButtonEventCallback([](GLFWwindow* window, int button, int action, int mods) {
-				cout << "Button : " << button << " , action : " << action << endl;
+			light->SetMouseButtonEventCallback([](const Neon::MouseButtonEvent& event) {
+				cout << "Button : " << event.button << " , action : " << event.action << endl;
 				});
 
 			//light->position = glm::vec3(0.0f, 0.0f, 10.0f);
@@ -139,16 +139,16 @@ int main()
 				transform->rotation = glm::angleAxis(glm::radians(now * 0.01f), glm::vec3(0.0f, 1.0f, 0.0f));
 				});
 
-			entity->SetKeyEventCallback([mesh](GLFWwindow* window, int key, int scancode, int action, int mods) {
-				if (GLFW_KEY_1 == key)
+			entity->SetKeyEventCallback([mesh](const Neon::KeyEvent& event) {
+				if (GLFW_KEY_1 == event.key)
 				{
 					mesh->SetDrawingMode(Neon::Mesh::Triangles);
 				}
-				else if (GLFW_KEY_2 == key)
+				else if (GLFW_KEY_2 == event.key)
 				{
 					mesh->SetDrawingMode(Neon::Mesh::Lines);
 				}
-				else if (GLFW_KEY_3 == key)
+				else if (GLFW_KEY_3 == event.key)
 				{
 					mesh->SetDrawingMode(Neon::Mesh::Points);
 				}

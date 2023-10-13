@@ -39,10 +39,10 @@ namespace Neon
 
 		inline Scene* GetScene() const { return scene; }
 
-		virtual void OnKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods);
-		virtual void OnMouseButtonEvent(GLFWwindow* window, int button, int action, int mods);
-		virtual void OnCursorPosEvent(GLFWwindow* window, double xpos, double ypos);
-		virtual void OnScrollEvent(GLFWwindow* window, double xoffset, double yoffset);
+		virtual void OnKeyEvent(const KeyEvent& event);
+		virtual void OnMouseButtonEvent(const MouseButtonEvent& event);
+		virtual void OnCursorPosEvent(const CursorPosEvent& event);
+		virtual void OnScrollEvent(const ScrollEvent& event);
 
 	protected:
 		Scene* scene;

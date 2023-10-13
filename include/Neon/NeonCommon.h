@@ -56,6 +56,37 @@ namespace Neon
 
 	typedef unsigned long ID;
 
+	struct KeyEvent
+	{
+		GLFWwindow* window;
+		int key;
+		int scancode;
+		int action;
+		int mods;
+	};
+
+	struct MouseButtonEvent
+	{
+		GLFWwindow* window;
+		int button;
+		int action;
+		int mods;
+	};
+
+	struct CursorPosEvent
+	{
+		GLFWwindow* window;
+		double xpos;
+		double ypos;
+	};
+
+	struct ScrollEvent
+	{
+		GLFWwindow* window;
+		double xoffset;
+		double yoffset;
+	};
+
 	class NeonObject
 	{
 	public:
@@ -64,15 +95,15 @@ namespace Neon
 
 		inline const string& GetName() const { return name; }
 
-		virtual void OnKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods);
-		virtual void OnMouseButtonEvent(GLFWwindow* window, int button, int action, int mods);
-		virtual void OnCursorPosEvent(GLFWwindow* window, double xpos, double ypos);
-		virtual void OnScrollEvent(GLFWwindow* window, double xoffset, double yoffset);
+		virtual void OnKeyEvent(const KeyEvent& event);
+		virtual void OnMouseButtonEvent(const MouseButtonEvent& event);
+		virtual void OnCursorPosEvent(const CursorPosEvent& event);
+		virtual void OnScrollEvent(const ScrollEvent& event);
 
-		inline void SetKeyEventCallback(function<void(GLFWwindow*, int, int, int, int)> callback) { keyEventCallback = callback; }
-		inline void SetMouseButtonEventCallback(function<void(GLFWwindow*, int, int, int)> callback) { mouseButtonEventCallback = callback; }
-		inline void SetCursorPosEventCallback(function<void(GLFWwindow*, double, double)> callback) { cursorPosEventCallback = callback; }
-		inline void SetScrollEventCallback(function<void(GLFWwindow*, double, double)> callback) { scrollEventCallback = callback; }
+		inline void SetKeyEventCallback(function<void(const KeyEvent&)> callback) { keyEventCallback = callback; }
+		inline void SetMouseButtonEventCallback(function<void(const MouseButtonEvent&)> callback) { mouseButtonEventCallback = callback; }
+		inline void SetCursorPosEventCallback(function<void(const CursorPosEvent&)> callback) { cursorPosEventCallback = callback; }
+		inline void SetScrollEventCallback(function<void(const ScrollEvent&)> callback) { scrollEventCallback = callback; }
 
 		virtual void OnUpdate(float now, float timeDelta);
 
@@ -82,10 +113,10 @@ namespace Neon
 	protected:
 		string name;
 
-		function<void(GLFWwindow*, int, int, int, int)> keyEventCallback;
-		function<void(GLFWwindow*, int, int, int)> mouseButtonEventCallback;
-		function<void(GLFWwindow*, double, double)> cursorPosEventCallback;
-		function<void(GLFWwindow*, double, double)> scrollEventCallback;
+		function<void(const KeyEvent&)> keyEventCallback;
+		function<void(const MouseButtonEvent&)> mouseButtonEventCallback;
+		function<void(const CursorPosEvent&)> cursorPosEventCallback;
+		function<void(const ScrollEvent&)> scrollEventCallback;
 
 		function<void(float, float)> updateCallback;
 	};

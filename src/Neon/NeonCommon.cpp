@@ -35,24 +35,24 @@ namespace Neon
 	{
 	}
 
-	void NeonObject::OnKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
+	void NeonObject::OnKeyEvent(const KeyEvent& event)
 	{
-		if (keyEventCallback) keyEventCallback(window, key, scancode, action, mods);
+		if (keyEventCallback) keyEventCallback(event);
 	}
 
-	void NeonObject::OnMouseButtonEvent(GLFWwindow* window, int button, int action, int mods)
+	void NeonObject::OnMouseButtonEvent(const MouseButtonEvent& event)
 	{
-		if (mouseButtonEventCallback) mouseButtonEventCallback(window, button, action, mods);
+		if (mouseButtonEventCallback) mouseButtonEventCallback(event);
 	}
 	
-	void NeonObject::OnCursorPosEvent(GLFWwindow* window, double xpos, double ypos)
+	void NeonObject::OnCursorPosEvent(const CursorPosEvent& event)
 	{
-		if (cursorPosEventCallback) cursorPosEventCallback(window, xpos, ypos);
+		if (cursorPosEventCallback) cursorPosEventCallback(event);
 	}
 	
-	void NeonObject::OnScrollEvent(GLFWwindow* window, double xoffset, double yoffset)
+	void NeonObject::OnScrollEvent(const ScrollEvent& event)
 	{
-		if (scrollEventCallback) scrollEventCallback(window, xoffset, yoffset);
+		if (scrollEventCallback) scrollEventCallback(event);
 	}
 
 	void NeonObject::OnUpdate(float now, float timeDelta)

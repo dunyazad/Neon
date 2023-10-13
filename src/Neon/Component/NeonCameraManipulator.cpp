@@ -12,11 +12,11 @@ namespace Neon
 	{
 	}
 
-	void CameraManipulator::OnKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
+	void CameraManipulator::OnKeyEvent(const KeyEvent& event)
 	{
-		if (key == GLFW_KEY_LEFT_SHIFT || key == GLFW_KEY_RIGHT_SHIFT)
+		if (event.key == GLFW_KEY_LEFT_SHIFT || event.key == GLFW_KEY_RIGHT_SHIFT)
 		{
-			if (action == GLFW_PRESS)
+			if (event.action == GLFW_PRESS)
 			{
 				isShiftDown = true;
 			}
@@ -26,60 +26,60 @@ namespace Neon
 			}
 		}
 
-		NeonObject::OnKeyEvent(window, key, scancode, action, mods);
+		NeonObject::OnKeyEvent(event);
 	}
 
-	void CameraManipulator::OnMouseButtonEvent(GLFWwindow* window, int button, int action, int mods)
+	void CameraManipulator::OnMouseButtonEvent(const MouseButtonEvent& event)
 	{
-		if (button == GLFW_MOUSE_BUTTON_1) // Left Button
+		if (event.button == GLFW_MOUSE_BUTTON_1) // Left Button
 		{
-			if (action == GLFW_PRESS)
+			if (event.action == GLFW_PRESS)
 			{
 				isLButtonPressed = true;
 				lbuttonPressX = lastCursorPosX;
 				lbuttonPressY = lastCursorPosY;
 			}
-			else if (action == GLFW_RELEASE)
+			else if (event.action == GLFW_RELEASE)
 			{
 				isLButtonPressed = false;
 			}
 		}
-		else if (button == GLFW_MOUSE_BUTTON_2) // Right Button
+		else if (event.button == GLFW_MOUSE_BUTTON_2) // Right Button
 		{
-			if (action == GLFW_PRESS)
+			if (event.action == GLFW_PRESS)
 			{
 				isRButtonPressed = true;
 
 				rbuttonPressX = lastCursorPosX;
 				rbuttonPressY = lastCursorPosY;
 			}
-			else if (action == GLFW_RELEASE)
+			else if (event.action == GLFW_RELEASE)
 			{
 				isRButtonPressed = false;
 			}
 		}
-		else if (button == GLFW_MOUSE_BUTTON_3) // Middle Button
+		else if (event.button == GLFW_MOUSE_BUTTON_3) // Middle Button
 		{
-			if (action == GLFW_PRESS)
+			if (event.action == GLFW_PRESS)
 			{
 				isMButtonPressed = true;
 
 				mbuttonPressX = lastCursorPosX;
 				mbuttonPressY = lastCursorPosY;
 			}
-			else if (action == GLFW_RELEASE)
+			else if (event.action == GLFW_RELEASE)
 			{
 				isMButtonPressed = false;
 			}
 		}
 
-		NeonObject::OnMouseButtonEvent(window, button, action, mods);
+		NeonObject::OnMouseButtonEvent(event);
 	}
 
-	void CameraManipulator::OnCursorPosEvent(GLFWwindow* window, double xpos, double ypos)
+	void CameraManipulator::OnCursorPosEvent(const CursorPosEvent& event)
 	{
-		auto dx = xpos - lastCursorPosX;
-		auto dy = ypos - lastCursorPosY;
+		auto dx = event.xpos - lastCursorPosX;
+		auto dy = event.ypos - lastCursorPosY;
 
 		if (isRButtonPressed)
 		{
@@ -98,19 +98,19 @@ namespace Neon
 			camera->centerPosition += glm::normalize(yAxis) * (float)dy * 0.001f;
 		}
 
-		lastCursorPosX = xpos;
-		lastCursorPosY = ypos;
+		lastCursorPosX = event.xpos;
+		lastCursorPosY = event.ypos;
 
-		NeonObject::OnCursorPosEvent(window, xpos, ypos);
+		NeonObject::OnCursorPosEvent(event);
 	}
 
-	void CameraManipulator::OnScrollEvent(GLFWwindow* window, double xoffset, double yoffset)
+	void CameraManipulator::OnScrollEvent(const ScrollEvent& event)
 	{
-		camera->fovy -= float(xoffset) * 0.01f;
+		camera->fovy -= float(event.xoffset) * 0.01f;
 		if (0.01f > camera->fovy) camera->fovy = 0.01f;
 		if (89.99f < camera->fovy) camera->fovy = 89.99f;
 
-		if (yoffset > 0)
+		if (event.yoffset > 0)
 		{
 			camera->distance *= 0.9f;
 		}
@@ -119,6 +119,6 @@ namespace Neon
 			camera->distance *= 1.1f;
 		}
 
-		NeonObject::OnScrollEvent(window, xoffset, yoffset);
+		NeonObject::OnScrollEvent(event);
 	}
 }

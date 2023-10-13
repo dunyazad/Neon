@@ -56,52 +56,60 @@ namespace Neon
 
 	void EventSystem::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
+		KeyEvent event{ window, key, scancode, action, mods };
+
 		for (auto& instance : instances)
 		{
-			instance->OnKeyEvent(window, key, scancode, action, mods);
+			instance->OnKeyEvent(event);
 		}
 	}
 
 	void EventSystem::MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 	{
+		MouseButtonEvent event{ window, button, action, mods };
+
 		for (auto& instance : instances)
 		{
-			instance->OnMouseButtonEvent(window, button, action, mods);
+			instance->OnMouseButtonEvent(event);
 		}
 	}
 
 	void EventSystem::CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
 	{
+		CursorPosEvent event{ window, xpos, ypos };
+
 		for (auto& instance : instances)
 		{
-			instance->OnCursorPosEvent(window, xpos, ypos);
+			instance->OnCursorPosEvent(event);
 		}
 	}
 
 	void EventSystem::ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 	{
+		ScrollEvent event{ window, xoffset, yoffset };
+
 		for (auto& instance : instances)
 		{
-			instance->OnScrollEvent(window, xoffset, yoffset);
+			instance->OnScrollEvent(event);
 		}
 	}
 
-	void EventSystem::OnKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
+	void EventSystem::OnKeyEvent(const KeyEvent& event)
 	{
 		for (auto& kvp : scene->GetEntities())
 		{
-			kvp.second->OnKeyEvent(window, key, scancode, action, mods);
+			kvp.second->OnKeyEvent(event);
 		}
 	}
 
-	void EventSystem::OnMouseButtonEvent(GLFWwindow* window, int button, int action, int mods)
+	void EventSystem::OnMouseButtonEvent(const MouseButtonEvent& event)
 	{
 		auto now = glfwGetTime();
 
 		bool doubleClicked = false;
-		if (action == GLFW_RELEASE)
+		if (event.action == GLFW_RELEASE)
 		{
-			if (button == GLFW_MOUSE_BUTTON_1)
+			if (event.button == GLFW_MOUSE_BUTTON_1)
 			{
 				auto delta = now - lastLButtonReleaseTime;
 				if (delta < doubleClickInterval)
@@ -111,7 +119,7 @@ namespace Neon
 
 				lastLButtonReleaseTime = now;
 			}
-			else if (button == GLFW_MOUSE_BUTTON_2)
+			else if (event.button == GLFW_MOUSE_BUTTON_2)
 			{
 				auto delta = now - lastRButtonReleaseTime;
 				if (delta < doubleClickInterval)
@@ -121,7 +129,7 @@ namespace Neon
 
 				lastRButtonReleaseTime = now;
 			}
-			else if (button == GLFW_MOUSE_BUTTON_3)
+			else if (event.button == GLFW_MOUSE_BUTTON_3)
 			{
 				auto delta = now - lastMButtonReleaseTime;
 				if (delta < doubleClickInterval)
@@ -133,25 +141,27 @@ namespace Neon
 			}
 		}
 
+		MouseButtonEvent e{ event.window, event.button, doubleClicked ? GLFW_DOUBLE_ACTION : event.action, event.mods };
+
 		for (auto& kvp : scene->GetEntities())
 		{
-			kvp.second->OnMouseButtonEvent(window, button, doubleClicked ? GLFW_DOUBLE_ACTION : action, mods);
+			kvp.second->OnMouseButtonEvent(e);
 		}
 	}
 
-	void EventSystem::OnCursorPosEvent(GLFWwindow* window, double xpos, double ypos)
+	void EventSystem::OnCursorPosEvent(const CursorPosEvent& event)
 	{
 		for (auto& kvp : scene->GetEntities())
 		{
-			kvp.second->OnCursorPosEvent(window, xpos, ypos);
+			kvp.second->OnCursorPosEvent(event);
 		}
 	}
 
-	void EventSystem::OnScrollEvent(GLFWwindow* window, double xoffset, double yoffset)
+	void EventSystem::OnScrollEvent(const ScrollEvent& event)
 	{
 		for (auto& kvp : scene->GetEntities())
 		{
-			kvp.second->OnScrollEvent(window, xoffset, yoffset);
+			kvp.second->OnScrollEvent(event);
 		}
 	}
 }
