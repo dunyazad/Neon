@@ -40,10 +40,13 @@ namespace Neon
 		void Bind();
 		void Unbind();
 
-		enum DrawingMode { Triangles, Lines, Points };
+		enum FillMode { Fill, Line, Point };
 
-		inline DrawingMode GetDrawingMode() { return drawingMode; }
-		inline void SetDrawingMode(DrawingMode mode) { drawingMode = mode; }
+		inline GLenum GetDrawingMode() { return drawingMode; }
+		inline void SetDrawingMode(GLenum mode) { drawingMode = mode; }
+
+		inline FillMode GetFillMode() { return fillMode; }
+		inline void SetFillMode(FillMode mode) { fillMode = mode; }
 
 		void FromSTLFile(const URL& fileURL, float scaleX = 1.0f, float scaleY = 1.0f, float scaleZ = 1.0f);
 		void RecalculateFaceNormal();
@@ -51,6 +54,7 @@ namespace Neon
 	private:
 		VertexArrayObject* vao = nullptr;
 		map<VertexBufferObjectBase::BufferType, VertexBufferObjectBase*> bufferObjects;
-		DrawingMode drawingMode = Triangles;
+		GLenum drawingMode = GL_TRIANGLES;
+		FillMode fillMode = Fill;
 	};
 }

@@ -5,6 +5,8 @@
 
 namespace Neon
 {
+	class Transform;
+
 	class Light : public ComponentBase
 	{
 	public:

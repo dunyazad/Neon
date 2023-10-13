@@ -5,12 +5,14 @@
 
 namespace Neon
 {
+	class Entity;
 	class Camera;
+	class Transform;
 
 	class CameraManipulator : public ComponentBase
 	{
 	public:
-		CameraManipulator(const string& name, Camera* camera);
+		CameraManipulator(const string& name, Entity* cameraEntity, Camera* camera);
 		virtual ~CameraManipulator();
 
 		virtual void OnKeyEvent(const KeyEvent& event);
@@ -19,7 +21,9 @@ namespace Neon
 		virtual void OnScrollEvent(const ScrollEvent& event);
 
 	protected:
+		Entity* cameraEntity = nullptr;
 		Camera* camera = nullptr;
+		Transform* transform = nullptr;
 
 		bool isShiftDown = false;
 

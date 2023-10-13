@@ -31,6 +31,13 @@ using namespace std;
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/vector_angle.hpp>
 
+ostream& operator << (ostream& o, const glm::vec2& v);
+ostream& operator << (ostream& o, const glm::vec3& v);
+ostream& operator << (ostream& o, const glm::vec4& v);
+ostream& operator << (ostream& o, const glm::mat3& m);
+ostream& operator << (ostream& o, const glm::mat4& m);
+ostream& operator << (ostream& o, const glm::quat& q);
+
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
@@ -162,12 +169,6 @@ namespace Neon
 		virtual void Unbind() = 0;
 		virtual void Upload() = 0;
 	};
-
-	ostream& operator << (ostream& o, const glm::vec2& v);
-	ostream& operator << (ostream& o, const glm::vec3& v);
-	ostream& operator << (ostream& o, const glm::vec4& v);
-	ostream& operator << (ostream& o, const glm::mat3& m);
-	ostream& operator << (ostream& o, const glm::mat4& m);
 
 	int safe_stoi(const string& input);
 	float safe_stof(const string& input);

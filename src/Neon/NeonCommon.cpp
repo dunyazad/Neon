@@ -1,5 +1,35 @@
 #include <Neon/NeonCommon.h>
 
+ostream& operator << (ostream& o, const glm::vec2& v)
+{
+	return o << v.x << " " << v.y;
+}
+
+ostream& operator << (ostream& o, const glm::vec3& v)
+{
+	return o << v.x << " " << v.y << " " << v.z;
+}
+
+ostream& operator << (ostream& o, const glm::vec4& v)
+{
+	return o << v.x << "\t" << v.y << "\t" << v.z << "\t" << v.w;
+}
+
+ostream& operator << (ostream& o, const glm::mat3& m)
+{
+	return o << m[0] << endl << m[1] << endl << m[2];
+}
+
+ostream& operator << (ostream& o, const glm::mat4& m)
+{
+	return o << m[0] << endl << m[1] << endl << m[2] << endl << m[3];
+}
+
+ostream& operator << (ostream& o, const glm::quat& q)
+{
+	return o << q.w << "\t" << q.x << "\t" << q.y << "\t" << q.z;
+}
+
 void _CheckGLError(const char* file, int line)
 {
 	GLenum err(glGetError());
@@ -142,31 +172,6 @@ namespace Neon
 		cout << DeltaMili(touchedTime, now) << " miliseconds" << endl;
 
 		touchedTime = now;
-	}
-
-	ostream& operator << (ostream& o, const glm::vec2& v)
-	{
-		return o << v.x << " " << v.y;
-	}
-
-	ostream& operator << (ostream& o, const glm::vec3& v)
-	{
-		return o << v.x << " " << v.y << " " << v.z;
-	}
-
-	ostream& operator << (ostream& o, const glm::vec4& v)
-	{
-		return o << v.x << "\t" << v.y << "\t" << v.z << "\t" << v.w;
-	}
-
-	ostream& operator << (ostream& o, const glm::mat3& m)
-	{
-		return o << m[0] << endl << m[1] << endl << m[2];
-	}
-
-	ostream& operator << (ostream& o, const glm::mat4& m)
-	{
-		return o << m[0] << endl << m[1] << endl << m[2] << endl << m[3];
 	}
 
 	int safe_stoi(const string& input)

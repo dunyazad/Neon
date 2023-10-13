@@ -16,6 +16,11 @@ namespace Neon
 		absoluteTransform = glm::mat4_cast(rotation);
 		absoluteTransform = glm::translate(absoluteTransform, position);
 
+		if (nullptr != parent)
+		{
+			absoluteTransform = parent->absoluteTransform * absoluteTransform;
+		}
+
 		ComponentBase::OnUpdate(now, timeDelta);
 	}
 }

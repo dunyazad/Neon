@@ -21,6 +21,9 @@ int main()
 
 		{
 			auto entity = scene->CreateEntity("Entity/Main Camera");
+			auto transform = scene->CreateComponent<Neon::Transform>("Transform/Main Camera");
+			entity->AddComponent(transform);
+
 			auto camera = scene->CreateComponent<Neon::Camera>("Camera/Main", 1280.0f, 1024.0f);
 			entity->AddComponent(camera);
 			camera->SetUpdateCallback([camera](float now, float timeDelta) {
@@ -45,12 +48,15 @@ int main()
 				}
 				});
 
-			auto cameraManipulator = scene->CreateComponent<Neon::CameraManipulator>("CameraManipulator/Main", camera);
+			auto cameraManipulator = scene->CreateComponent<Neon::CameraManipulator>("CameraManipulator/Main", entity, camera);
 			entity->AddComponent(cameraManipulator);
 		}
 
 		{
 			auto entity = scene->CreateEntity("Entity/Main Light");
+			//auto transform = scene->CreateComponent<Neon::Transform>("Transform/Main Light");
+			//entity->AddComponent(transform);
+
 			auto light = scene->CreateComponent<Neon::Light>("Light/Main");
 			entity->AddComponent(light);
 
@@ -58,14 +64,15 @@ int main()
 				auto camera = scene->GetMainCamera();
 				light->position = camera->position;
 				light->direction = glm::normalize(camera->centerPosition - camera->position);
-				});
+			});
 
 			light->SetMouseButtonEventCallback([](const Neon::MouseButtonEvent& event) {
 				cout << "Button : " << event.button << " , action : " << event.action << endl;
 				});
 
-			//light->position = glm::vec3(0.0f, 0.0f, 10.0f);
-			//light->direction = glm::vec3(0.0f, 0.0f, -1.0f);
+			auto cameraEntity = scene->GetEntity("Entity/Main Camera");
+			//transform->parent = cameraEntity->GetComponent<Neon::Transform>(0);
+			
 			scene->SetMainLight(light);
 		}
 
@@ -74,7 +81,7 @@ int main()
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Axes");
 			entity->AddComponent(mesh);
 			
-			mesh->SetDrawingMode(Neon::Mesh::Lines);
+			mesh->SetDrawingMode(GL_LINES);
 			mesh->AddVertex(0.0f, 0.0f, 0.0f);
 			mesh->AddVertex(10.0f, 0.0f, 0.0f);
 			mesh->AddVertex(0.0f, 0.0f, 0.0f);
@@ -106,7 +113,7 @@ int main()
 			auto entity = scene->CreateEntity("Entity/Mesh");
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Mesh");
 			entity->AddComponent(mesh);
-			mesh->FromSTLFile(Neon::URL::Resource("/stl/mx.stl"), 0.01f, 0.01f, 0.01f);
+			mesh->FromSTLFile(Neon::URL::Resource("/stl/EiffelTower_fixed.stl"), 0.01f, 0.01f, 0.01f);
 			auto nov = mesh->GetVertexBuffer()->Size() / 3;
 			auto rotation = glm::angleAxis(-glm::half_pi<float>(), glm::vec3(1.0f, 0.0f, 0.0f));
 			for (int i = 0; i < nov; i++)
@@ -142,15 +149,15 @@ int main()
 			entity->SetKeyEventCallback([mesh](const Neon::KeyEvent& event) {
 				if (GLFW_KEY_1 == event.key)
 				{
-					mesh->SetDrawingMode(Neon::Mesh::Triangles);
+					mesh->SetFillMode(Neon::Mesh::Fill);
 				}
 				else if (GLFW_KEY_2 == event.key)
 				{
-					mesh->SetDrawingMode(Neon::Mesh::Lines);
+					mesh->SetFillMode(Neon::Mesh::Line);
 				}
 				else if (GLFW_KEY_3 == event.key)
 				{
-					mesh->SetDrawingMode(Neon::Mesh::Points);
+					mesh->SetFillMode(Neon::Mesh::Point);
 				}
 				});
 		}

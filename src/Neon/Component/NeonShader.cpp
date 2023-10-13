@@ -74,7 +74,7 @@ namespace Neon
         }
     }
 
-    void Shader::SetUniformFloat2(const char* name, float values[2]) {
+    void Shader::SetUniformFloat2(const char* name, const float values[2]) {
         auto location = glGetUniformLocation(shaderProgram, name);
         if (-1 != location)
         {
@@ -82,7 +82,7 @@ namespace Neon
         }
     }
 
-    void Shader::SetUniformFloat3(const char* name, float values[3]) {
+    void Shader::SetUniformFloat3(const char* name, const float values[3]) {
         auto location = glGetUniformLocation(shaderProgram, name);
         if (-1 != location)
         {
@@ -90,7 +90,7 @@ namespace Neon
         }
     }
 
-    void Shader::SetUniformFloat4(const char* name, float values[4]) {
+    void Shader::SetUniformFloat4(const char* name, const float values[4]) {
         auto location = glGetUniformLocation(shaderProgram, name);
         if (-1 != location)
         {
@@ -98,7 +98,7 @@ namespace Neon
         }
     }
 
-    void Shader::SetUniformFloat3x3(const char* name, float value[9]) {
+    void Shader::SetUniformFloat3x3(const char* name, const float value[9]) {
         auto location = glGetUniformLocation(shaderProgram, name);
         if (-1 != location)
         {
@@ -106,7 +106,7 @@ namespace Neon
         }
     }
     
-    void Shader::SetUniformFloat4x4(const char* name, float value[16]) {
+    void Shader::SetUniformFloat4x4(const char* name, const float value[16]) {
         auto location = glGetUniformLocation(shaderProgram, name);
         if (-1 != location)
         {

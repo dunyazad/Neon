@@ -1,10 +1,12 @@
 #include <Neon/Component/NeonCameraManipulator.h>
 #include <Neon/Component/NeonCamera.h>
+#include <Neon/Component/NeonTransform.h>
+#include <Neon/NeonEntity.h>
 
 namespace Neon
 {
-	CameraManipulator::CameraManipulator(const string& name, Camera* camera)
-		: ComponentBase(name), camera(camera)
+	CameraManipulator::CameraManipulator(const string& name, Entity* cameraEntity, Camera* camera)
+		: ComponentBase(name), cameraEntity(cameraEntity), camera(camera), transform(cameraEntity->GetComponent<Transform>(0))
 	{
 	}
 
@@ -92,9 +94,9 @@ namespace Neon
 			auto xAxis = glm::vec3(glm::row(camera->viewMatrix, 0));
 			auto yAxis = glm::vec3(glm::row(camera->viewMatrix, 1));
 
-			camera->position += glm::normalize(xAxis) * (float)-dx * 0.001f;
+			transform->position += glm::normalize(xAxis) * (float)-dx * 0.001f;
 			camera->centerPosition += glm::normalize(xAxis) * (float)-dx * 0.001f;
-			camera->position += glm::normalize(yAxis) * (float)dy * 0.001f;
+			transform->position += glm::normalize(yAxis) * (float)dy * 0.001f;
 			camera->centerPosition += glm::normalize(yAxis) * (float)dy * 0.001f;
 		}
 

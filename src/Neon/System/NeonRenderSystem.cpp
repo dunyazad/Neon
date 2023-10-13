@@ -60,7 +60,7 @@ namespace Neon
 				{
 					if (nullptr != camera)
 					{
-						shader->SetUniformFloat3("cameraPosition", glm::value_ptr(camera->position));
+						shader->SetUniformFloat3("cameraPosition", glm::value_ptr(glm::vec3(glm::column(camera->viewMatrix, 3))));
 					}
 					shader->SetUniformFloat3("lightPosition", glm::value_ptr(light->position));
 					shader->SetUniformFloat3("lightDirection", glm::value_ptr(light->direction));
@@ -96,25 +96,18 @@ namespace Neon
 			if (nullptr != mesh)
 			{
 				mesh->Bind();
-				if (mesh->GetDrawingMode() == Mesh::Lines)
+				if (mesh->GetFillMode() == Mesh::FillMode::Line)
 				{
 					glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 				}
-				else if (mesh->GetDrawingMode() == Mesh::Points)
+				else if (mesh->GetFillMode() == Mesh::FillMode::Point)
 				{
 					glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
 				}
 				
-				if (mesh->GetDrawingMode() == Mesh::Lines)
-				{
-					glDrawElements(GL_LINES, (GLsizei)mesh->GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
-				}
-				else
-				{
-					glDrawElements(GL_TRIANGLES, (GLsizei)mesh->GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
-				}
+				glDrawElements(mesh->GetDrawingMode(), (GLsizei)mesh->GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
 
-				if (mesh->GetDrawingMode() != Mesh::Triangles)
+				if (mesh->GetDrawingMode() != Mesh::Fill)
 				{
 					glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 				}

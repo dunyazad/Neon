@@ -1,4 +1,5 @@
 #include <Neon/Component/NeonLight.h>
+#include <Neon/Component/NeonTransform.h>
 
 namespace Neon
 {
