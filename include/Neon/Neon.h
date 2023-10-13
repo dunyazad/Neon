@@ -6,6 +6,7 @@
 #include <Neon/NeonVertexBufferObject.hpp>
 #include <Neon/NeonImage.h>
 #include <Neon/NeonFrameBufferObject.h>
+#include <Neon/NeonURL.h>
 
 #include <Neon/NeonEntity.h>
 #include <Neon/NeonScene.h>
@@ -40,8 +41,8 @@ namespace Neon
 
 		void Run();
 
-		inline const string& GetResourceRoot() const { return resourceRoot; }
-		inline void SetResourceRoot(const string& root) { resourceRoot = root; }
+		//inline const string& GetResourceRoot() const { return resourceRoot; }
+		//inline void SetResourceRoot(const string& root) { resourceRoot = root; }
 
 		Scene* CreateScene(const string& name);
 		Scene* GetScene(const string& name);

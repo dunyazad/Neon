@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Neon/NeonCommon.h>
+#include <Neon/NeonURL.h>
 #include <Neon/Component/NeonComponent.h>
 
 namespace Neon
@@ -44,7 +45,7 @@ namespace Neon
 		inline DrawingMode GetDrawingMode() { return drawingMode; }
 		inline void SetDrawingMode(DrawingMode mode) { drawingMode = mode; }
 
-		void FromSTLFile(const string& filePath, float scaleX = 1.0f, float scaleY = 1.0f, float scaleZ = 1.0f);
+		void FromSTLFile(const URL& fileURL, float scaleX = 1.0f, float scaleY = 1.0f, float scaleZ = 1.0f);
 		void RecalculateFaceNormal();
 
 	private:

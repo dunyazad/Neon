@@ -168,9 +168,9 @@ namespace Neon
 		}
 	}
 
-	void Mesh::FromSTLFile(const string& filePath, float scaleX, float scaleY, float scaleZ)
+	void Mesh::FromSTLFile(const URL& fileURL, float scaleX, float scaleY, float scaleZ)
 	{
-		ifstream ifs(filePath);
+		ifstream ifs(fileURL.path);
 		if (ifs.is_open() == false)
 			return;
 
@@ -181,7 +181,7 @@ namespace Neon
 		{
 			ifs.close();
 			
-			ifstream ifs(filePath);
+			ifstream ifs(fileURL.path);
 			stringstream buffer;
 			buffer << ifs.rdbuf();
 
@@ -227,7 +227,7 @@ namespace Neon
 			ifs.close();
 			
 			FILE* fp = nullptr;
-			fopen_s(&fp, filePath.c_str(), "rb");
+			fopen_s(&fp, fileURL.path.c_str(), "rb");
 			if (fp != nullptr)
 			{
 				char header[80];

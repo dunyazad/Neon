@@ -5,7 +5,8 @@
 int main()
 {
 	Neon::Application app(1280, 1024);
-	app.SetResourceRoot(filesystem::current_path().string() + "/../res");
+	Neon::URL::ChangeDirectory("..");
+	//app.SetResourceRoot(filesystem::current_path().string() + "/../res");
 
 	Neon::Image* imageB = nullptr;
 	Neon::Image* imageC = nullptr;
@@ -95,7 +96,7 @@ int main()
 			mesh->AddIndex(4);
 			mesh->AddIndex(5);
 
-			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Color", (app.GetResourceRoot() + "/shader/color.vs").c_str(), (app.GetResourceRoot() + "/shader/color.fs").c_str());
+			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Color", Neon::URL::Resource("/shader/color.vs"), Neon::URL::Resource("/shader/color.fs"));
 			entity->AddComponent(shader);
 		}
 
@@ -105,7 +106,7 @@ int main()
 			auto entity = scene->CreateEntity("Entity/Mesh");
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Mesh");
 			entity->AddComponent(mesh);
-			mesh->FromSTLFile(app.GetResourceRoot() + "/stl/mx.stl", 0.01f, 0.01f, 0.01f);
+			mesh->FromSTLFile(Neon::URL::Resource("/stl/mx.stl"), 0.01f, 0.01f, 0.01f);
 			auto nov = mesh->GetVertexBuffer()->Size() / 3;
 			auto rotation = glm::angleAxis(-glm::half_pi<float>(), glm::vec3(1.0f, 0.0f, 0.0f));
 			for (int i = 0; i < nov; i++)
@@ -129,7 +130,7 @@ int main()
 
 			mesh->RecalculateFaceNormal();
 
-			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", (app.GetResourceRoot() + "/shader/lighting.vs").c_str(), (app.GetResourceRoot() + "/shader/lighting.fs").c_str());
+			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", Neon::URL::Resource("/shader/lighting.vs"), Neon::URL::Resource("/shader/lighting.fs"));
 			entity->AddComponent(shader);
 
 			auto transform = scene->CreateComponent<Neon::Transform>("Transform/Mesh");

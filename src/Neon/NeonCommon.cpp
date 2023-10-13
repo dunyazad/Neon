@@ -24,6 +24,8 @@ void _CheckGLError(const char* file, int line)
 
 namespace Neon
 {
+	json Settings;
+
 	NeonObject::NeonObject(const string& name)
 		: name(name)
 	{

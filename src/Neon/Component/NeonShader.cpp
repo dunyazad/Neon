@@ -2,13 +2,13 @@
 
 namespace Neon
 {
-    Shader::Shader(const string& name, const char* vertexPath, const char* fragmentPath)
+    Shader::Shader(const string& name, const URL& vertexURL, const URL& fragmentURL)
         : ComponentBase(name)
     {
         // Load the vertex shader from file
-        std::ifstream vertexFile(vertexPath);
+        std::ifstream vertexFile(vertexURL.path);
         if (!vertexFile) {
-            std::cout << "Failed to open vertex shader file : " << vertexPath << std::endl;
+            std::cout << "Failed to open vertex shader file : " << vertexURL.path << std::endl;
             exit(EXIT_FAILURE);
         }
         std::stringstream vertexStream;
@@ -17,9 +17,9 @@ namespace Neon
         const char* vertexSourcePtr = vertexSource.c_str();
 
         // Load the fragment shader from file
-        std::ifstream fragmentFile(fragmentPath);
+        std::ifstream fragmentFile(fragmentURL.path);
         if (!fragmentFile) {
-            std::cout << "Failed to open fragment shader file : " << fragmentPath << std::endl;
+            std::cout << "Failed to open fragment shader file : " << fragmentURL.path << std::endl;
             exit(EXIT_FAILURE);
         }
         std::stringstream fragmentStream;

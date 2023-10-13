@@ -10,17 +10,17 @@
 
 namespace Neon
 {
-	Image::Image(const string& name, const string& filename, bool verticalFlip)
-		: filename(filename), verticalFlip(verticalFlip)
+	Image::Image(const URL& fileURL, bool verticalFlip)
+		: fileURL(fileURL), verticalFlip(verticalFlip)
 	{
-		std::ifstream imageFile(filename);
+		std::ifstream imageFile(fileURL.path);
 		if (!imageFile) {
-			std::cout << "Failed to open image file : " << filename << std::endl;
+			std::cout << "Failed to open image file : " << fileURL.path << std::endl;
 			exit(EXIT_FAILURE);
 		}
 
 		stbi_set_flip_vertically_on_load(verticalFlip);
-		data = stbi_load(filename.c_str(), &width, &height, &nrChannels, bits);
+		data = stbi_load(fileURL.path.c_str(), &width, &height, &nrChannels, bits);
 	}
 
 	Image::~Image()
@@ -30,15 +30,15 @@ namespace Neon
 		}
 	}
 
-	void Image::Write(const string& outputFilename, bool verticalFlip)
+	void Image::Write(const URL& outputFileURL, bool verticalFlip)
 	{
 		stbi_flip_vertically_on_write(verticalFlip);
-		stbi_write_png(outputFilename.c_str(), width, height, nrChannels, data, width * nrChannels);
+		stbi_write_png(outputFileURL.path.c_str(), width, height, nrChannels, data, width * nrChannels);
 	}
 
 	Image* Image::ResizeToPOT(Image* from)
 	{
-		Image* result = new Image(from->GetName() + "_resized", from->filename, from->verticalFlip);
+		Image* result = new Image(from->fileURL, from->verticalFlip);
 
 		auto wpot = NextPowerOf2(from->width);
 		auto hpot = NextPowerOf2(from->height);

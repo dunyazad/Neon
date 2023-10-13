@@ -26,6 +26,8 @@ include/Neon/NeonImage.h
 src/Neon/NeonImage.cpp
 include/Neon/NeonScene.h
 src/Neon/NeonScene.cpp
+include/Neon/NeonURL.h
+src/Neon/NeonURL.cpp
 include/Neon/NeonVertexArrayObject.h
 src/Neon/NeonVertexArrayObject.cpp
 include/Neon/NeonVertexBufferObject.hpp
@@ -78,6 +80,7 @@ target_include_directories(Neon PUBLIC
 "External/glad"
 "External/glm"
 "External/imgui"
+"External/json/include"
 "include"
 "src"
 )

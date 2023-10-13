@@ -10,3 +10,6 @@
 [submodule "External/glm"]
 	path = External/glm
 	url = https://github.com/g-truc/glm.git
+[submodule "External/json"]
+	path = External/json
+	url = https://github.com/nlohmann/json.git

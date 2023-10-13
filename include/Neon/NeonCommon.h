@@ -35,6 +35,9 @@ using namespace std;
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
@@ -49,6 +52,8 @@ using namespace std::chrono;
 
 namespace Neon
 {
+	extern json Settings;
+
 	typedef unsigned long ID;
 
 	class NeonObject

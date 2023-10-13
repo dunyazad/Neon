@@ -1,20 +1,19 @@
 #pragma once
 
 #include <Neon/NeonCommon.h>
+#include <Neon/NeonURL.h>
 
 namespace Neon
 {
 	class Image
 	{
 	public:
-		Image(const string& name, const string& filename, bool verticalFlip = true);
+		Image(const URL& fileURL, bool verticalFlip = true);
 		~Image();
 
-		void Write(const string& outputFilename, bool verticalFlip = true);
+		void Write(const URL& outputFileURL, bool verticalFlip = true);
 
 		static Image* ResizeToPOT(Image* from);
-
-		inline string GetName() { return filename; }
 
 		inline int GetWidth() { return width; }
 		inline int GetHeight() { return height; }
@@ -23,7 +22,7 @@ namespace Neon
 		inline unsigned char* Data() { return data; }
 
 	private:
-		string filename;
+		URL fileURL;
 
 		int width = 0;
 		int height = 0;

@@ -1,13 +1,14 @@
 #pragma once
 
 #include <Neon/NeonCommon.h>
+#include <Neon/NeonURL.h>
 #include <Neon/Component/NeonComponent.h>
 
 namespace Neon
 {
     class Shader : public ComponentBase {
     public:
-        Shader(const string& name, const char* vertexPath, const char* fragmentPath);
+        Shader(const string& name, const URL& vertexURL, const URL& fragmentURL);
         ~Shader();
 
         void Use();
