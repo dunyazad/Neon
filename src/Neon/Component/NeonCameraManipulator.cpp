@@ -116,7 +116,7 @@ namespace Neon
 		{
 			camera->distance *= 0.9f;
 		}
-		else
+		else if (event.yoffset < 0)
 		{
 			camera->distance *= 1.1f;
 		}

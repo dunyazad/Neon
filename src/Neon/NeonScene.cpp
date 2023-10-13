@@ -1,5 +1,6 @@
 #include <Neon/NeonScene.h>
 #include <Neon/NeonEntity.h>
+#include <Neon/NeonDebugEntity.h>
 #include <Neon/Component/NeonComponent.h>
 
 namespace Neon
@@ -53,6 +54,32 @@ namespace Neon
 		{
 			auto entity = new Entity(name, this);
 			entities[name] = entity;
+			return entity;
+		}
+	}
+
+	DebugEntity* Scene::GetDebugEntity(const string& name)
+	{
+		if (0 != debugEntities.count(name))
+		{
+			return debugEntities[name];
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
+
+	DebugEntity* Scene::CreateDebugEntity(const string& name)
+	{
+		if (0 != debugEntities.count(name))
+		{
+			return nullptr;
+		}
+		else
+		{
+			auto entity = new DebugEntity(name, this);
+			debugEntities[name] = entity;
 			return entity;
 		}
 	}

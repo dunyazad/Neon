@@ -10,6 +10,7 @@ namespace Neon
 {
 	class Window;
 	class Entity;
+	class DebugEntity;
 	class ComponentBase;
 	class Camera;
 	class Light;
@@ -22,6 +23,9 @@ namespace Neon
 
 		Entity* GetEntity(const string& name);
 		Entity* CreateEntity(const string& name);
+
+		DebugEntity* GetDebugEntity(const string& name);
+		DebugEntity* CreateDebugEntity(const string& name);
 
 		template <class T, typename... Args>
 		T* CreateComponent(const std::string& name, Args... args)
@@ -86,6 +90,7 @@ namespace Neon
 		}
 
 		inline const map<string, Entity*>& GetEntities() const { return entities; }
+		inline const map<string, DebugEntity*>& GetDebugEntities() const { return debugEntities; }
 		template<class T> vector<ComponentBase*>& GetComponents() { return components[&typeid(T)]; }
 
 		void Frame(float now, float timeDelta);
@@ -103,6 +108,7 @@ namespace Neon
 		bool active = true;
 		Window* window;
 		map<string, Entity*> entities;
+		map<string, DebugEntity*> debugEntities;
 		map<const type_info*, vector<ComponentBase*>> components;
 		map<string, ComponentBase*> componentNameMapping;
 

@@ -8,6 +8,7 @@
 #include <Neon/NeonFrameBufferObject.h>
 #include <Neon/NeonURL.h>
 
+#include <Neon/NeonDebugEntity.h>
 #include <Neon/NeonEntity.h>
 #include <Neon/NeonScene.h>
 

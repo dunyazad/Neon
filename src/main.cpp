@@ -19,6 +19,24 @@ int main()
 
 		auto scene = app.CreateScene("Scene/Main");
 
+		auto debugLines = scene->CreateDebugEntity("DebugEntity/Lines");
+		auto debugTriangles = scene->CreateDebugEntity("DebugEntity/Triangles");
+		debugTriangles->SetKeyEventCallback([debugTriangles](const Neon::KeyEvent& event) {
+			auto mesh = debugTriangles->GetComponent<Neon::Mesh>(0);
+			if (GLFW_KEY_4 == event.key)
+			{
+				mesh->SetFillMode(Neon::Mesh::Fill);
+			}
+			else if (GLFW_KEY_5 == event.key)
+			{
+				mesh->SetFillMode(Neon::Mesh::Line);
+			}
+			else if (GLFW_KEY_6 == event.key)
+			{
+				mesh->SetFillMode(Neon::Mesh::Point);
+			}
+			});
+
 		{
 			auto entity = scene->CreateEntity("Entity/Main Camera");
 			auto transform = scene->CreateComponent<Neon::Transform>("Transform/Main Camera");
@@ -137,13 +155,32 @@ int main()
 
 			mesh->RecalculateFaceNormal();
 
+			auto noi = mesh->GetIndexBuffer()->Size();
+			for (size_t i = 0; i < noi / 3; i++)
+			{
+				auto i0 = mesh->GetIndexBuffer()->GetElement(i * 3 + 0);
+				auto i1 = mesh->GetIndexBuffer()->GetElement(i * 3 + 1);
+				auto i2 = mesh->GetIndexBuffer()->GetElement(i * 3 + 2);
+
+				glm::vec3 v0, v1, v2;
+				mesh->GetVertex(i0, v0.x, v0.y, v0.z);
+				mesh->GetVertex(i1, v1.x, v1.y, v1.z);
+				mesh->GetVertex(i2, v2.x, v2.y, v2.z);
+
+				//debugLines->AddLine(v0, v1, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+				//debugLines->AddLine(v1, v2, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+				//debugLines->AddLine(v2, v0, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+				debugTriangles->AddTriangle(v0, v1, v2, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+			}
+
 			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", Neon::URL::Resource("/shader/lighting.vs"), Neon::URL::Resource("/shader/lighting.fs"));
 			entity->AddComponent(shader);
 
 			auto transform = scene->CreateComponent<Neon::Transform>("Transform/Mesh");
 			entity->AddComponent(transform);
 			transform->SetUpdateCallback([transform](float now, float timeDelta) {
-				transform->rotation = glm::angleAxis(glm::radians(now * 0.01f), glm::vec3(0.0f, 1.0f, 0.0f));
+				//transform->rotation = glm::angleAxis(glm::radians(now * 0.01f), glm::vec3(0.0f, 1.0f, 0.0f));
 				});
 
 			entity->SetKeyEventCallback([mesh](const Neon::KeyEvent& event) {

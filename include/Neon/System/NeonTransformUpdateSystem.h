@@ -11,7 +11,7 @@ namespace Neon
 	{
 	public:
 		TransformUpdateSystem(Scene* scene);
-		~TransformUpdateSystem();
+		virtual ~TransformUpdateSystem();
 
 		void Frame(float now, float timeDelta);
 	};

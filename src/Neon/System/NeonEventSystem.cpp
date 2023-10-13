@@ -1,5 +1,6 @@
 #include <Neon/System/NeonEventSystem.h>
 
+#include <Neon/NeonDebugEntity.h>
 #include <Neon/NeonEntity.h>
 #include <Neon/NeonScene.h>
 #include <Neon/NeonVertexBufferObject.hpp>
@@ -100,6 +101,11 @@ namespace Neon
 		{
 			kvp.second->OnKeyEvent(event);
 		}
+
+		for (auto& kvp : scene->GetDebugEntities())
+		{
+			kvp.second->OnKeyEvent(event);
+		}
 	}
 
 	void EventSystem::OnMouseButtonEvent(const MouseButtonEvent& event)
@@ -147,6 +153,11 @@ namespace Neon
 		{
 			kvp.second->OnMouseButtonEvent(e);
 		}
+
+		for (auto& kvp : scene->GetDebugEntities())
+		{
+			kvp.second->OnMouseButtonEvent(e);
+		}
 	}
 
 	void EventSystem::OnCursorPosEvent(const CursorPosEvent& event)
@@ -155,11 +166,21 @@ namespace Neon
 		{
 			kvp.second->OnCursorPosEvent(event);
 		}
+
+		for (auto& kvp : scene->GetDebugEntities())
+		{
+			kvp.second->OnCursorPosEvent(event);
+		}
 	}
 
 	void EventSystem::OnScrollEvent(const ScrollEvent& event)
 	{
 		for (auto& kvp : scene->GetEntities())
+		{
+			kvp.second->OnScrollEvent(event);
+		}
+
+		for (auto& kvp : scene->GetDebugEntities())
 		{
 			kvp.second->OnScrollEvent(event);
 		}

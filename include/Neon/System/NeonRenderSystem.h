@@ -11,7 +11,7 @@ namespace Neon
 	{
 	public:
 		RenderSystem(Scene* scene);
-		~RenderSystem();
+		virtual ~RenderSystem();
 
 		void Frame(float now, float timeDelta);
 

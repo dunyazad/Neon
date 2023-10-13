@@ -16,6 +16,8 @@ include/Neon/Neon.h
 src/Neon/Neon.cpp
 include/Neon/NeonCommon.h
 src/Neon/NeonCommon.cpp
+include/Neon/NeonDebugEntity.h
+src/Neon/NeonDebugEntity.cpp
 include/Neon/NeonEntity.h
 src/Neon/NeonEntity.cpp
 include/Neon/NeonEvent.h

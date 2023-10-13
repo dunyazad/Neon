@@ -10,7 +10,7 @@ namespace Neon
 	{
 	public:
 		SystemBase(Scene* scene);
-		~SystemBase();
+		virtual ~SystemBase();
 
 	protected:
 		Scene* scene;
