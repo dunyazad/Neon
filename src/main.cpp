@@ -155,8 +155,8 @@ int main()
 
 			mesh->RecalculateFaceNormal();
 
-			auto noi = mesh->GetIndexBuffer()->Size();
-			for (size_t i = 0; i < noi / 3; i++)
+			auto noi = (int)mesh->GetIndexBuffer()->Size();
+			for (int i = 0; i < noi / 3; i++)
 			{
 				auto i0 = mesh->GetIndexBuffer()->GetElement(i * 3 + 0);
 				auto i1 = mesh->GetIndexBuffer()->GetElement(i * 3 + 1);

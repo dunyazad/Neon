@@ -12,6 +12,7 @@
 #include <Neon/NeonEntity.h>
 #include <Neon/NeonScene.h>
 
+#include <Neon/Component/NeonBSPTree.h>
 #include <Neon/Component/NeonCamera.h>
 #include <Neon/Component/NeonCameraManipulator.h>
 #include <Neon/Component/NeonComponent.h>
