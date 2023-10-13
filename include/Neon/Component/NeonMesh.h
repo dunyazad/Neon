@@ -34,8 +34,13 @@ namespace Neon
 		void GetNormal(int index, float& x, float& y, float& z);
 		void SetNormal(int index, float x, float y, float z); 
 		void AddIndex(GLuint index);
+		void GetIndex(int bufferIndex, GLuint& index);
 		void AddColor(float r, float g, float b, float a);
+		void GetColor(int index, float& r, float& g, float& b, float& a);
+		void SetColor(int index, float r, float g, float b, float a);
 		void AddUV(float u, float v);
+		void GetUV(int index, float& u, float& v);
+		void SetUV(int index, float u, float v);
 
 		void Bind();
 		void Unbind();

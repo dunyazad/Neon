@@ -131,6 +131,12 @@ namespace Neon
 		buffer->AddElement(index);
 	}
 
+	void Mesh::GetIndex(int bufferIndex, GLuint& index)
+	{
+		auto buffer = GetIndexBuffer();
+		index = buffer->GetElement(bufferIndex);
+	}
+
 	void Mesh::AddColor(float r, float g, float b, float a)
 	{
 		auto buffer = GetColorBuffer();
@@ -139,12 +145,43 @@ namespace Neon
 		buffer->AddElement(b);
 		buffer->AddElement(a);
 	}
+
+	void Mesh::GetColor(int index, float& r, float& g, float& b, float& a)
+	{
+		auto buffer = GetColorBuffer();
+		r = buffer->GetElement(index * 4 + 0);
+		g = buffer->GetElement(index * 4 + 1);
+		b = buffer->GetElement(index * 4 + 2);
+		a = buffer->GetElement(index * 4 + 3);
+	}
+	void Mesh::SetColor(int index, float r, float g, float b, float a)
+	{
+		auto buffer = GetColorBuffer();
+		buffer->SetElement(index * 4 + 0, r);
+		buffer->SetElement(index * 4 + 1, g);
+		buffer->SetElement(index * 4 + 2, b);
+		buffer->SetElement(index * 4 + 3, a);
+	}
 		
 	void Mesh::AddUV(float u, float v)
 	{
 		auto buffer = GetUVBuffer();
 		buffer->AddElement(u);
 		buffer->AddElement(v);
+	}
+
+	void Mesh::GetUV(int index, float& u, float& v)
+	{
+		auto buffer = GetUVBuffer();
+		u = buffer->GetElement(index * 2 + 0);
+		v = buffer->GetElement(index * 2 + 1);
+	}
+
+	void Mesh::SetUV(int index, float u, float v)
+	{
+		auto buffer = GetUVBuffer();
+		buffer->SetElement(index * 2 + 0, u);
+		buffer->SetElement(index * 2 + 1, v);
 	}
 
 	void Mesh::Bind()
