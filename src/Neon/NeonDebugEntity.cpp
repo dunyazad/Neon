@@ -22,11 +22,11 @@ namespace Neon
 
 	void DebugEntity::AddLine(const glm::vec3& v0, const glm::vec3& v1, const glm::vec4& c0, const glm::vec4& c1)
 	{
-		GLuint index = (GLuint)mesh->GetVertexBuffer()->Size() / 3;
-		mesh->AddVertex(v0.x, v0.y, v0.z);
-		mesh->AddVertex(v1.x, v1.y, v1.z);
-		mesh->AddColor(c0.r, c0.g, c0.b, c0.a);
-		mesh->AddColor(c1.r, c1.g, c1.b, c1.a);
+		GLuint index = (GLuint)mesh->GetVertexBuffer()->Size();
+		mesh->AddVertex(v0);
+		mesh->AddVertex(v1);
+		mesh->AddColor(c0);
+		mesh->AddColor(c1);
 		mesh->AddIndex(index);
 		mesh->AddIndex(index + 1);
 
@@ -36,17 +36,17 @@ namespace Neon
 
 	void DebugEntity::AddTriangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const glm::vec4& c0, const glm::vec4& c1, const glm::vec4& c2)
 	{
-		GLuint index = (GLuint)mesh->GetVertexBuffer()->Size() / 3;
-		mesh->AddVertex(v0.x, v0.y, v0.z);
-		mesh->AddVertex(v1.x, v1.y, v1.z);
-		mesh->AddVertex(v2.x, v2.y, v2.z);
-		mesh->AddColor(c0.r, c0.g, c0.b, c0.a);
-		mesh->AddColor(c1.r, c1.g, c1.b, c1.a);
-		mesh->AddColor(c2.r, c2.g, c2.b, c2.a);
+		GLuint index = (GLuint)mesh->GetVertexBuffer()->Size();
+		mesh->AddVertex(v0);
+		mesh->AddVertex(v1);
+		mesh->AddVertex(v2);
+		mesh->AddColor(c0);
+		mesh->AddColor(c1);
+		mesh->AddColor(c2);
 		auto normal = glm::normalize(glm::cross(glm::normalize(v1 - v0), glm::normalize(v2 - v0)));
-		mesh->AddNormal(normal.x, normal.y, normal.z);
-		mesh->AddNormal(normal.x, normal.y, normal.z);
-		mesh->AddNormal(normal.x, normal.y, normal.z);
+		mesh->AddNormal(normal);
+		mesh->AddNormal(normal);
+		mesh->AddNormal(normal);
 		mesh->AddIndex(index);
 		mesh->AddIndex(index + 1);
 		mesh->AddIndex(index + 2);

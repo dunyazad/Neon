@@ -113,6 +113,8 @@ namespace Neon
 
 		void Build()
 		{
+			auto vb = mesh->GetVertexBuffer();
+			
 		}
 
 		void Clear()

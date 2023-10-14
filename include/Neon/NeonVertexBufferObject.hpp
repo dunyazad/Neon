@@ -62,6 +62,9 @@ namespace Neon
 		inline size_t Size() { return elements.size(); }
 		inline void Clear() { elements.clear(); }
 
+		inline auto begin() { return elements.begin(); }
+		inline auto end() { return elements.end(); }
+
 		size_t AddElement(const T& element)
 		{
 			elements.push_back(element);
@@ -71,7 +74,7 @@ namespace Neon
 			return elements.size() - 1;
 		}
 
-		const T& GetElement(int index)
+		const T& GetElement(size_t index)
 		{
 			return elements[index];
 		}
@@ -81,7 +84,7 @@ namespace Neon
 			return elements;
 		}
 
-		bool SetElement(int index, const T& element)
+		bool SetElement(size_t index, const T& element)
 		{
 			if (index >= elements.size())
 				return false;

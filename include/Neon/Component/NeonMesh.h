@@ -21,26 +21,30 @@ namespace Neon
 
 		inline VertexArrayObject* GetVAO() { return vao; }
 
-		VertexBufferObject<float>* GetVertexBuffer();
-		VertexBufferObject<float>* GetNormalBuffer();
+		VertexBufferObject<glm::vec3>* GetVertexBuffer();
+		VertexBufferObject<glm::vec3>* GetNormalBuffer();
 		VertexBufferObject<GLuint>* GetIndexBuffer();
-		VertexBufferObject<float>* GetColorBuffer();
-		VertexBufferObject<float>* GetUVBuffer();
+		VertexBufferObject<glm::vec4>* GetColorBuffer();
+		VertexBufferObject<glm::vec2>* GetUVBuffer();
 
-		void AddVertex(float x, float y, float z);
-		void GetVertex(int index, float& x, float& y, float& z);
-		void SetVertex(int index, float x, float y, float z);
-		void AddNormal(float x, float y, float z);
-		void GetNormal(int index, float& x, float& y, float& z);
-		void SetNormal(int index, float x, float y, float z); 
-		void AddIndex(GLuint index);
+		size_t AddVertex(const glm::vec3& v);
+		const glm::vec3& GetVertex(size_t index);
+		void SetVertex(size_t index, const glm::vec3& v);
+
+		size_t AddNormal(const glm::vec3& n);
+		const glm::vec3& GetNormal(size_t index);
+		void SetNormal(size_t index, const glm::vec3& n);
+
+		size_t AddIndex(GLuint index);
 		void GetIndex(int bufferIndex, GLuint& index);
-		void AddColor(float r, float g, float b, float a);
-		void GetColor(int index, float& r, float& g, float& b, float& a);
-		void SetColor(int index, float r, float g, float b, float a);
-		void AddUV(float u, float v);
-		void GetUV(int index, float& u, float& v);
-		void SetUV(int index, float u, float v);
+
+		size_t AddColor(const glm::vec4& c);
+		const glm::vec4& GetColor(size_t index);
+		void SetColor(size_t index, const glm::vec4& c);
+
+		size_t AddUV(const glm::vec2& uv);
+		const glm::vec2& GetUV(size_t index);
+		void SetUV(size_t index, const glm::vec2& uv);
 
 		void Bind();
 		void Unbind();

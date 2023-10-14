@@ -74,19 +74,19 @@ int main()
 			entity->AddComponent(mesh);
 
 			mesh->SetDrawingMode(GL_LINES);
-			mesh->AddVertex(0.0f, 0.0f, 0.0f);
-			mesh->AddVertex(10.0f, 0.0f, 0.0f);
-			mesh->AddVertex(0.0f, 0.0f, 0.0f);
-			mesh->AddVertex(0.0f, 10.0f, 0.0f);
-			mesh->AddVertex(0.0f, 0.0f, 0.0f);
-			mesh->AddVertex(0.0f, 0.0f, 10.0f);
+			mesh->AddVertex(glm::vec3(0.0f, 0.0f, 0.0f));
+			mesh->AddVertex(glm::vec3(10.0f, 0.0f, 0.0f));
+			mesh->AddVertex(glm::vec3(0.0f, 0.0f, 0.0f));
+			mesh->AddVertex(glm::vec3(0.0f, 10.0f, 0.0f));
+			mesh->AddVertex(glm::vec3(0.0f, 0.0f, 0.0f));
+			mesh->AddVertex(glm::vec3(0.0f, 0.0f, 10.0f));
 
-			mesh->AddColor(1.0f, 0.0f, 0.0f, 1.0f);
-			mesh->AddColor(1.0f, 0.0f, 0.0f, 1.0f);
-			mesh->AddColor(0.0f, 1.0f, 0.0f, 1.0f);
-			mesh->AddColor(0.0f, 1.0f, 0.0f, 1.0f);
-			mesh->AddColor(0.0f, 0.0f, 1.0f, 1.0f);
-			mesh->AddColor(0.0f, 0.0f, 1.0f, 1.0f);
+			mesh->AddColor(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+			mesh->AddColor(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+			mesh->AddColor(glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+			mesh->AddColor(glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+			mesh->AddColor(glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+			mesh->AddColor(glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
 
 			mesh->AddIndex(0);
 			mesh->AddIndex(1);
@@ -106,17 +106,15 @@ int main()
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Mesh");
 			entity->AddComponent(mesh);
 			mesh->FromSTLFile(Neon::URL::Resource("/stl/EiffelTower_fixed.stl"), 0.01f, 0.01f, 0.01f);
-			auto nov = mesh->GetVertexBuffer()->Size() / 3;
+			auto nov = mesh->GetVertexBuffer()->Size();
 			auto rotation = glm::angleAxis(-glm::half_pi<float>(), glm::vec3(1.0f, 0.0f, 0.0f));
 			for (int i = 0; i < nov; i++)
 			{
-				mesh->AddColor(1.0f, 1.0f, 1.0f, 1.0f);
+				mesh->AddColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
 				{
-					float x, y, z;
-					mesh->GetVertex(i, x, y, z);
-					auto roatated = rotation * glm::vec3(x, y, z);
-					mesh->SetVertex(i, roatated.x, roatated.y, roatated.z);
+					auto roatated = rotation * mesh->GetVertex(i);
+					mesh->SetVertex(i, roatated);
 				}
 
 				//{
@@ -129,17 +127,16 @@ int main()
 
 			mesh->RecalculateFaceNormal();
 
-			auto noi = (int)mesh->GetIndexBuffer()->Size();
-			for (int i = 0; i < noi / 3; i++)
+			auto noi = mesh->GetIndexBuffer()->Size();
+			for (size_t i = 0; i < noi / 3; i++)
 			{
 				auto i0 = mesh->GetIndexBuffer()->GetElement(i * 3 + 0);
 				auto i1 = mesh->GetIndexBuffer()->GetElement(i * 3 + 1);
 				auto i2 = mesh->GetIndexBuffer()->GetElement(i * 3 + 2);
 
-				glm::vec3 v0, v1, v2;
-				mesh->GetVertex(i0, v0.x, v0.y, v0.z);
-				mesh->GetVertex(i1, v1.x, v1.y, v1.z);
-				mesh->GetVertex(i2, v2.x, v2.y, v2.z);
+				auto v0 = mesh->GetVertex(i0);
+				auto v1 = mesh->GetVertex(i1);
+				auto v2 = mesh->GetVertex(i2);
 
 				debugTriangles->AddTriangle(v0, v1, v2, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 			}

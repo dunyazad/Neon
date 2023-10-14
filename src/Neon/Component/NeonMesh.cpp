@@ -23,25 +23,25 @@ namespace Neon
 		SAFE_DELETE(vao);
 	}
 
-	VertexBufferObject<float>* Mesh::GetVertexBuffer()
+	VertexBufferObject<glm::vec3>* Mesh::GetVertexBuffer()
 	{
 		if (0 == bufferObjects.count(VertexBufferObjectBase::BufferType::VERTEX_BUFFER))
 		{
-			auto buffer = new VertexBufferObject<float>(VertexBufferObjectBase::BufferType::VERTEX_BUFFER, VertexBufferObjectBase::BufferType::VERTEX_BUFFER);
+			auto buffer = new VertexBufferObject<glm::vec3>(VertexBufferObjectBase::BufferType::VERTEX_BUFFER, VertexBufferObjectBase::BufferType::VERTEX_BUFFER);
 			bufferObjects[VertexBufferObjectBase::BufferType::VERTEX_BUFFER] = buffer;
 		}
-		return (VertexBufferObject<float>*)bufferObjects[VertexBufferObjectBase::BufferType::VERTEX_BUFFER];
+		return (VertexBufferObject<glm::vec3>*)bufferObjects[VertexBufferObjectBase::BufferType::VERTEX_BUFFER];
 	}
 
-	VertexBufferObject<float>* Mesh::GetNormalBuffer()
+	VertexBufferObject<glm::vec3>* Mesh::GetNormalBuffer()
 	{
 		if (0 == bufferObjects.count(VertexBufferObjectBase::BufferType::NORMAL_BUFFER))
 		{
-			auto buffer = new VertexBufferObject<float>(VertexBufferObjectBase::BufferType::NORMAL_BUFFER, VertexBufferObjectBase::BufferType::NORMAL_BUFFER);
+			auto buffer = new VertexBufferObject<glm::vec3>(VertexBufferObjectBase::BufferType::NORMAL_BUFFER, VertexBufferObjectBase::BufferType::NORMAL_BUFFER);
 			bufferObjects[VertexBufferObjectBase::BufferType::NORMAL_BUFFER] = buffer;
 		}
 
-		return (VertexBufferObject<float>*)bufferObjects[VertexBufferObjectBase::BufferType::NORMAL_BUFFER];
+		return (VertexBufferObject<glm::vec3>*)bufferObjects[VertexBufferObjectBase::BufferType::NORMAL_BUFFER];
 	}
 
 	VertexBufferObject<GLuint>* Mesh::GetIndexBuffer()
@@ -55,80 +55,68 @@ namespace Neon
 		return (VertexBufferObject<GLuint>*)bufferObjects[VertexBufferObjectBase::BufferType::INDEX_BUFFER];
 	}
 
-	VertexBufferObject<float>* Mesh::GetColorBuffer()
+	VertexBufferObject<glm::vec4>* Mesh::GetColorBuffer()
 	{
 		if (0 == bufferObjects.count(VertexBufferObjectBase::BufferType::COLOR_BUFFER))
 		{
-			auto buffer = new VertexBufferObject<float>(VertexBufferObjectBase::BufferType::COLOR_BUFFER, VertexBufferObjectBase::BufferType::COLOR_BUFFER);
+			auto buffer = new VertexBufferObject<glm::vec4>(VertexBufferObjectBase::BufferType::COLOR_BUFFER, VertexBufferObjectBase::BufferType::COLOR_BUFFER);
 			bufferObjects[VertexBufferObjectBase::BufferType::COLOR_BUFFER] = buffer;
 		}
 
-		return (VertexBufferObject<float>*)bufferObjects[VertexBufferObjectBase::BufferType::COLOR_BUFFER];
+		return (VertexBufferObject<glm::vec4>*)bufferObjects[VertexBufferObjectBase::BufferType::COLOR_BUFFER];
 	}
 
-	VertexBufferObject<float>* Mesh::GetUVBuffer()
+	VertexBufferObject<glm::vec2>* Mesh::GetUVBuffer()
 	{
 		if (0 == bufferObjects.count(VertexBufferObjectBase::BufferType::UV_BUFFER))
 		{
-			auto buffer = new VertexBufferObject<float>(VertexBufferObjectBase::BufferType::UV_BUFFER, VertexBufferObjectBase::BufferType::UV_BUFFER);
+			auto buffer = new VertexBufferObject<glm::vec2>(VertexBufferObjectBase::BufferType::UV_BUFFER, VertexBufferObjectBase::BufferType::UV_BUFFER);
 			bufferObjects[VertexBufferObjectBase::BufferType::UV_BUFFER] = buffer;
 		}
 
-		return (VertexBufferObject<float>*)bufferObjects[VertexBufferObjectBase::BufferType::UV_BUFFER];
+		return (VertexBufferObject<glm::vec2>*)bufferObjects[VertexBufferObjectBase::BufferType::UV_BUFFER];
 	}
 
-	void Mesh::AddVertex(float x, float y, float z)
+	size_t Mesh::AddVertex(const glm::vec3& v)
 	{
 		auto buffer = GetVertexBuffer();
-		buffer->AddElement(x);
-		buffer->AddElement(y);
-		buffer->AddElement(z);
+		return buffer->AddElement(v);
 	}
 
-	void Mesh::GetVertex(int index, float& x, float& y, float& z)
+	const glm::vec3& Mesh::GetVertex(size_t index)
 	{
 		auto buffer = GetVertexBuffer();
-		x = buffer->GetElement(index * 3 + 0);
-		y = buffer->GetElement(index * 3 + 1);
-		z = buffer->GetElement(index * 3 + 2);
+		return buffer->GetElement(index);
 	}
 
-	void Mesh::SetVertex(int index, float x, float y, float z)
+	void Mesh::SetVertex(size_t index, const glm::vec3& v)
 	{
 		auto buffer = GetVertexBuffer();
-		buffer->SetElement(index * 3 + 0, x);
-		buffer->SetElement(index * 3 + 1, y);
-		buffer->SetElement(index * 3 + 2, z);
+		buffer->SetElement(index, v);
 	}
 
-	void Mesh::AddNormal(float x, float y, float z)
+	size_t Mesh::AddNormal(const glm::vec3& n)
 	{
 		auto buffer = GetNormalBuffer();
-		buffer->AddElement(x);
-		buffer->AddElement(y);
-		buffer->AddElement(z);
+		return buffer->AddElement(n);
 	}
 
-	void Mesh::GetNormal(int index, float& x, float& y, float& z)
+	const glm::vec3& Mesh::GetNormal(size_t index)
 	{
 		auto buffer = GetNormalBuffer();
-		x = buffer->GetElement(index * 3 + 0);
-		y = buffer->GetElement(index * 3 + 1);
-		z = buffer->GetElement(index * 3 + 2);
-	}
-	
-	void Mesh::SetNormal(int index, float x, float y, float z)
-	{
-		auto buffer = GetNormalBuffer();
-		buffer->SetElement(index * 3 + 0, x);
-		buffer->SetElement(index * 3 + 1, y);
-		buffer->SetElement(index * 3 + 2, z);
+		return buffer->GetElement(index);
 	}
 
-	void Mesh::AddIndex(GLuint index)
+	void Mesh::SetNormal(size_t index, const glm::vec3& n)
+	{
+		auto buffer = GetNormalBuffer();
+		buffer->SetElement(index, n);
+	}
+
+	size_t Mesh::AddIndex(GLuint index)
 	{
 		auto buffer = GetIndexBuffer();
-		buffer->AddElement(index);
+		return buffer->AddElement(index);
 	}
 
 	void Mesh::GetIndex(int bufferIndex, GLuint& index)
@@ -137,51 +125,40 @@ namespace Neon
 		index = buffer->GetElement(bufferIndex);
 	}
 
-	void Mesh::AddColor(float r, float g, float b, float a)
+	size_t Mesh::AddColor(const glm::vec4& c)
 	{
 		auto buffer = GetColorBuffer();
-		buffer->AddElement(r);
-		buffer->AddElement(g);
-		buffer->AddElement(b);
-		buffer->AddElement(a);
+		return buffer->AddElement(c);
 	}
 
-	void Mesh::GetColor(int index, float& r, float& g, float& b, float& a)
+	const glm::vec4& Mesh::GetColor(size_t index)
 	{
 		auto buffer = GetColorBuffer();
-		r = buffer->GetElement(index * 4 + 0);
-		g = buffer->GetElement(index * 4 + 1);
-		b = buffer->GetElement(index * 4 + 2);
-		a = buffer->GetElement(index * 4 + 3);
+		return buffer->GetElement(index);
 	}
-	void Mesh::SetColor(int index, float r, float g, float b, float a)
+
+	void Mesh::SetColor(size_t index, const glm::vec4& c)
 	{
 		auto buffer = GetColorBuffer();
-		buffer->SetElement(index * 4 + 0, r);
-		buffer->SetElement(index * 4 + 1, g);
-		buffer->SetElement(index * 4 + 2, b);
-		buffer->SetElement(index * 4 + 3, a);
-	}
-		
-	void Mesh::AddUV(float u, float v)
-	{
-		auto buffer = GetUVBuffer();
-		buffer->AddElement(u);
-		buffer->AddElement(v);
+		buffer->SetElement(index, c);
 	}
 
-	void Mesh::GetUV(int index, float& u, float& v)
+	size_t Mesh::AddUV(const glm::vec2& uv)
 	{
 		auto buffer = GetUVBuffer();
-		u = buffer->GetElement(index * 2 + 0);
-		v = buffer->GetElement(index * 2 + 1);
+		return buffer->AddElement(uv);
 	}
 
-	void Mesh::SetUV(int index, float u, float v)
+	const glm::vec2& Mesh::GetUV(size_t index)
 	{
 		auto buffer = GetUVBuffer();
-		buffer->SetElement(index * 2 + 0, u);
-		buffer->SetElement(index * 2 + 1, v);
+		return buffer->GetElement(index);
+	}
+
+	void Mesh::SetUV(size_t index, const glm::vec2& uv)
+	{
+		auto buffer = GetUVBuffer();
+		buffer->SetElement(index, uv);
 	}
 
 	void Mesh::Bind()
@@ -191,7 +168,6 @@ namespace Neon
 		for (auto& kvp : bufferObjects)
 		{
 			kvp.second->Bind();
-			kvp.second->Upload();
 		}
 	}
 
@@ -241,7 +217,7 @@ namespace Neon
 						fn.y = safe_stof(words[3]);
 						fn.z = safe_stof(words[4]);
 
-						AddNormal(fn.x, fn.y, fn.z);
+						AddNormal(fn);
 					}
 				}
 				else if (words[0] == "vertex")
@@ -250,7 +226,7 @@ namespace Neon
 					float y = safe_stof(words[2]);
 					float z = safe_stof(words[3]);
 
-					AddVertex(x * scaleX, y * scaleY, z * scaleZ);
+					AddVertex(glm::vec3(x * scaleX, y * scaleY, z * scaleZ));
 					AddIndex(vertex_index++);
 				}
 				else if (words[0] == "endfacet")
@@ -286,16 +262,16 @@ namespace Neon
 					fread_s(&v2, 12, 12, 1, fp);
 					fread_s(&dummy, 2, 2, 1, fp);
 
-					AddVertex(v0.x * scaleX, v0.y * scaleY, v0.z * scaleZ);
-					AddNormal(fn.x, fn.y, fn.z);
+					AddVertex(glm::vec3(v0.x * scaleX, v0.y * scaleY, v0.z * scaleZ));
+					AddNormal(fn);
 					AddIndex(vertex_index++);
 
-					AddVertex(v1.x * scaleX, v1.y * scaleY, v1.z * scaleZ);
-					AddNormal(fn.x, fn.y, fn.z);
+					AddVertex(glm::vec3(v1.x * scaleX, v1.y * scaleY, v1.z * scaleZ));
+					AddNormal(fn);
 					AddIndex(vertex_index++);
 
-					AddVertex(v2.x * scaleX, v2.y * scaleY, v2.z * scaleZ);
-					AddNormal(fn.x, fn.y, fn.z);
+					AddVertex(glm::vec3(v2.x * scaleX, v2.y * scaleY, v2.z * scaleZ));
+					AddNormal(fn);
 					AddIndex(vertex_index++);
 				}
 			}
@@ -307,15 +283,14 @@ namespace Neon
 		auto noi = GetIndexBuffer()->Size();
 		for (int i = 0; i < noi / 3; i++)
 		{
-			glm::vec3 v0, v1, v2;
-			GetVertex(i * 3 + 0, v0.x, v0.y, v0.z);
-			GetVertex(i * 3 + 1, v1.x, v1.y, v1.z);
-			GetVertex(i * 3 + 2, v2.x, v2.y, v2.z);
+			auto v0 = GetVertex(i * 3 + 0);
+			auto v1 = GetVertex(i * 3 + 1);
+			auto v2 = GetVertex(i * 3 + 2);
 
 			auto normal = glm::normalize(glm::cross(glm::normalize(v1 - v0), glm::normalize(v2 - v0)));
-			SetNormal(i * 3 + 0, normal.x, normal.y, normal.z);
-			SetNormal(i * 3 + 1, normal.x, normal.y, normal.z);
-			SetNormal(i * 3 + 2, normal.x, normal.y, normal.z);
+			SetNormal(i * 3 + 0, normal);
+			SetNormal(i * 3 + 1, normal);
+			SetNormal(i * 3 + 2, normal);
 		}
 	}
 }
