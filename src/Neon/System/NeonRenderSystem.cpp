@@ -25,7 +25,13 @@ namespace Neon
 
 	void RenderSystem::Frame(float now, float timeDelta)
 	{
+		int display_w, display_h;
+		glfwGetFramebufferSize(scene->GetWindow()->GetGLFWWindow(), &display_w, &display_h);
+		glViewport(0, 0, display_w, display_h);
+
 		auto camera = scene->GetMainCamera();
+		camera->frameWidth = (float)display_w;
+		camera->frameHeight = (float)display_h;
 		camera->OnUpdate(now, timeDelta);
 
 		auto light = scene->GetMainLight();
