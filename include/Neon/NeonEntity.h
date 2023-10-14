@@ -37,6 +37,8 @@ namespace Neon
 			else return (T*)cv[index];
 		}
 
+		inline const map<const type_info*, vector<ComponentBase*>>& GetAllComponents() const { return components; }
+
 		inline Scene* GetScene() const { return scene; }
 
 		virtual void OnKeyEvent(const KeyEvent& event);

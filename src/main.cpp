@@ -6,7 +6,6 @@ int main()
 {
 	Neon::Application app(1280, 1024);
 	Neon::URL::ChangeDirectory("..");
-	//app.SetResourceRoot(filesystem::current_path().string() + "/../res");
 
 	Neon::Image* imageB = nullptr;
 	Neon::Image* imageC = nullptr;
@@ -44,27 +43,11 @@ int main()
 
 			auto camera = scene->CreateComponent<Neon::Camera>("Camera/Main", 1280.0f, 1024.0f);
 			entity->AddComponent(camera);
-			camera->SetUpdateCallback([camera](float now, float timeDelta) {
-				//camera->distance = sinf(now * 0.001f);
-				//camera->angleH += timeDelta * 0.05f;
-				//camera->angleV += timeDelta * 0.01f;
-				});
 			camera->distance = 2.0f;
 			camera->angleH = 30.0f;
 			camera->angleV = 30.0f;
 			camera->centerPosition = glm::vec3(0.0f, 0.0f, 0.0f);
 			scene->SetMainCamera(camera);
-
-			entity->SetKeyEventCallback([camera](const Neon::KeyEvent& event) {
-				if (event.key == GLFW_KEY_LEFT && (event.action == GLFW_PRESS || event.action == GLFW_REPEAT))
-				{
-					camera->angleH -= 1.0f;
-				}
-				else if (event.key == GLFW_KEY_RIGHT && (event.action == GLFW_PRESS || event.action == GLFW_REPEAT))
-				{
-					camera->angleH += 1.0f;
-				}
-				});
 
 			auto cameraManipulator = scene->CreateComponent<Neon::CameraManipulator>("CameraManipulator/Main", entity, camera);
 			entity->AddComponent(cameraManipulator);
@@ -72,8 +55,6 @@ int main()
 
 		{
 			auto entity = scene->CreateEntity("Entity/Main Light");
-			//auto transform = scene->CreateComponent<Neon::Transform>("Transform/Main Light");
-			//entity->AddComponent(transform);
 
 			auto light = scene->CreateComponent<Neon::Light>("Light/Main");
 			entity->AddComponent(light);
@@ -82,15 +63,8 @@ int main()
 				auto camera = scene->GetMainCamera();
 				light->position = camera->position;
 				light->direction = glm::normalize(camera->centerPosition - camera->position);
-			});
-
-			light->SetMouseButtonEventCallback([](const Neon::MouseButtonEvent& event) {
-				cout << "Button : " << event.button << " , action : " << event.action << endl;
 				});
 
-			auto cameraEntity = scene->GetEntity("Entity/Main Camera");
-			//transform->parent = cameraEntity->GetComponent<Neon::Transform>(0);
-			
 			scene->SetMainLight(light);
 		}
 
@@ -98,7 +72,7 @@ int main()
 			auto entity = scene->CreateEntity("Entity/Axes");
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Axes");
 			entity->AddComponent(mesh);
-			
+
 			mesh->SetDrawingMode(GL_LINES);
 			mesh->AddVertex(0.0f, 0.0f, 0.0f);
 			mesh->AddVertex(10.0f, 0.0f, 0.0f);
@@ -137,7 +111,7 @@ int main()
 			for (int i = 0; i < nov; i++)
 			{
 				mesh->AddColor(1.0f, 1.0f, 1.0f, 1.0f);
-				
+
 				{
 					float x, y, z;
 					mesh->GetVertex(i, x, y, z);
@@ -167,10 +141,6 @@ int main()
 				mesh->GetVertex(i1, v1.x, v1.y, v1.z);
 				mesh->GetVertex(i2, v2.x, v2.y, v2.z);
 
-				//debugLines->AddLine(v0, v1, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-				//debugLines->AddLine(v1, v2, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-				//debugLines->AddLine(v2, v0, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-
 				debugTriangles->AddTriangle(v0, v1, v2, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 			}
 
@@ -198,30 +168,6 @@ int main()
 				}
 				});
 		}
-
-		//{
-		//	frame.AddVertex(-0.5f, -0.5f, 0.0f);
-		//	frame.AddVertex(0.5f, -0.5f, 0.0f);
-		//	frame.AddVertex(0.5f, 0.5f, 0.0f);
-		//	frame.AddVertex(-0.5f, 0.5f, 0.0f);
-
-		//	frame.AddIndex(0);
-		//	frame.AddIndex(1);
-		//	frame.AddIndex(2);
-
-		//	frame.AddIndex(0);
-		//	frame.AddIndex(2);
-		//	frame.AddIndex(3);
-
-		//	frame.AddUV(0.0f, 0.0f);
-		//	frame.AddUV(1.0f, 0.0f);
-		//	frame.AddUV(1.0f, 1.0f);
-		//	frame.AddUV(0.0f, 1.0f);
-
-		//	textureFrame = new Neon::Texture("frame", 1920, 1080);
-		//	fbo = new Neon::FrameBufferObject("frame", textureFrame);
-		//}
-
 		});
 
 

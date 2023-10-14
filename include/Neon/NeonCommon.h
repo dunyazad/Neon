@@ -38,6 +38,9 @@ ostream& operator << (ostream& o, const glm::mat3& m);
 ostream& operator << (ostream& o, const glm::mat4& m);
 ostream& operator << (ostream& o, const glm::quat& q);
 
+bool operator < (const glm::vec3& a, const glm::vec3& b);
+bool operator > (const glm::vec3& a, const glm::vec3& b);
+
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>

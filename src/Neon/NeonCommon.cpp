@@ -30,6 +30,46 @@ ostream& operator << (ostream& o, const glm::quat& q)
 	return o << q.w << "\t" << q.x << "\t" << q.y << "\t" << q.z;
 }
 
+bool operator < (const glm::vec3& a, const glm::vec3& b)
+{
+	if (a.x < b.x) return true;
+	else if (a.x > b.x) return false;
+	else
+	{
+		if (a.y < b.y) return true;
+		else if (a.y > b.y) return false;
+		else
+		{
+			if (a.z < b.z) return true;
+			else if (a.z > b.z) return false;
+			else
+			{
+				return false;
+			}
+		}
+	}
+}
+
+bool operator > (const glm::vec3& a, const glm::vec3& b)
+{
+	if (a.x > b.x) return true;
+	else if (a.x < b.x) return false;
+	else
+	{
+		if (a.y > b.y) return true;
+		else if (a.y < b.y) return false;
+		else
+		{
+			if (a.z > b.z) return true;
+			else if (a.z < b.z) return false;
+			else
+			{
+				return true;
+			}
+		}
+	}
+}
+
 void _CheckGLError(const char* file, int line)
 {
 	GLenum err(glGetError());

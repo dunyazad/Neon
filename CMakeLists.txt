@@ -36,8 +36,7 @@ include/Neon/NeonVertexBufferObject.hpp
 include/Neon/NeonWindow.h
 src/Neon/NeonWindow.cpp
 
-include/Neon/Component/NeonBSPTree.h
-src/Neon/Component/NeonBSPTree.cpp
+include/Neon/Component/NeonBSPTree.hpp
 include/Neon/Component/NeonCamera.h
 src/Neon/Component/NeonCamera.cpp
 include/Neon/Component/NeonCameraManipulator.h

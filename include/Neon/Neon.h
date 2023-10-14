@@ -12,7 +12,7 @@
 #include <Neon/NeonEntity.h>
 #include <Neon/NeonScene.h>
 
-#include <Neon/Component/NeonBSPTree.h>
+#include <Neon/Component/NeonBSPTree.hpp>
 #include <Neon/Component/NeonCamera.h>
 #include <Neon/Component/NeonCameraManipulator.h>
 #include <Neon/Component/NeonComponent.h>
@@ -42,9 +42,6 @@ namespace Neon
 		void OnTerminate(function<void()> onTerminate);
 
 		void Run();
-
-		//inline const string& GetResourceRoot() const { return resourceRoot; }
-		//inline void SetResourceRoot(const string& root) { resourceRoot = root; }
 
 		Scene* CreateScene(const string& name);
 		Scene* GetScene(const string& name);
