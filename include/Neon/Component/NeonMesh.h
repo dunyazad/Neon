@@ -8,7 +8,7 @@ namespace Neon
 {
 	class VertexArrayObject;
 	class VertexBufferObjectBase;
-	template <class T>
+	template <typename T>
 	class VertexBufferObject;
 	class Shader;
 	class Texture;
@@ -59,6 +59,8 @@ namespace Neon
 
 		void FromSTLFile(const URL& fileURL, float scaleX = 1.0f, float scaleY = 1.0f, float scaleZ = 1.0f);
 		void RecalculateFaceNormal();
+
+		bool visible = true;
 
 	private:
 		VertexArrayObject* vao = nullptr;

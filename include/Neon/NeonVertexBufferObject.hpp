@@ -2,7 +2,7 @@
 
 namespace Neon
 {
-	template <class T>
+	template <typename T>
 	class VertexBufferObject : public VertexBufferObjectBase
 	{
 	public:
@@ -61,9 +61,6 @@ namespace Neon
 
 		inline size_t Size() { return elements.size(); }
 		inline void Clear() { elements.clear(); }
-
-		inline auto begin() { return elements.begin(); }
-		inline auto end() { return elements.end(); }
 
 		size_t AddElement(const T& element)
 		{

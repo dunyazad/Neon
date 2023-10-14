@@ -13,7 +13,7 @@ namespace Neon
 		Entity(const string& name, Scene* scene);
 		~Entity();
 
-		template<class T>
+		template<typename T>
 		void AddComponent(T* component)
 		{
 			if (nullptr != component)
@@ -22,13 +22,13 @@ namespace Neon
 			}
 		}
 
-		template<class T>
+		template<typename T>
 		vector<ComponentBase*> GetComponents()
 		{
 			return components[&typeid(T)];
 		}
 
-		template<class T>
+		template<typename T>
 		T* GetComponent(int index)
 		{
 			auto cv = components[&typeid(T)];

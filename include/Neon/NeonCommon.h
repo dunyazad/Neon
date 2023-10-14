@@ -8,6 +8,7 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <iterator>
 #include <list>
 #include <map>
 #include <memory>
@@ -81,6 +82,8 @@ namespace Neon
 		int button;
 		int action;
 		int mods;
+		double xpos;
+		double ypos;
 	};
 
 	struct CursorPosEvent

@@ -18,8 +18,10 @@ int main()
 
 		auto scene = app.CreateScene("Scene/Main");
 
+		auto debugPoints = scene->CreateDebugEntity("DebugEntity/Points");
 		auto debugLines = scene->CreateDebugEntity("DebugEntity/Lines");
 		auto debugTriangles = scene->CreateDebugEntity("DebugEntity/Triangles");
+
 		debugTriangles->SetKeyEventCallback([debugTriangles](const Neon::KeyEvent& event) {
 			auto mesh = debugTriangles->GetComponent<Neon::Mesh>(0);
 			if (GLFW_KEY_4 == event.key)
@@ -127,19 +129,19 @@ int main()
 
 			mesh->RecalculateFaceNormal();
 
-			auto noi = mesh->GetIndexBuffer()->Size();
-			for (size_t i = 0; i < noi / 3; i++)
-			{
-				auto i0 = mesh->GetIndexBuffer()->GetElement(i * 3 + 0);
-				auto i1 = mesh->GetIndexBuffer()->GetElement(i * 3 + 1);
-				auto i2 = mesh->GetIndexBuffer()->GetElement(i * 3 + 2);
+			//auto noi = mesh->GetIndexBuffer()->Size();
+			//for (size_t i = 0; i < noi / 3; i++)
+			//{
+			//	auto i0 = mesh->GetIndexBuffer()->GetElement(i * 3 + 0);
+			//	auto i1 = mesh->GetIndexBuffer()->GetElement(i * 3 + 1);
+			//	auto i2 = mesh->GetIndexBuffer()->GetElement(i * 3 + 2);
 
-				auto v0 = mesh->GetVertex(i0);
-				auto v1 = mesh->GetVertex(i1);
-				auto v2 = mesh->GetVertex(i2);
+			//	auto v0 = mesh->GetVertex(i0);
+			//	auto v1 = mesh->GetVertex(i1);
+			//	auto v2 = mesh->GetVertex(i2);
 
-				debugTriangles->AddTriangle(v0, v1, v2, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-			}
+			//	debugTriangles->AddTriangle(v0, v1, v2, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+			//}
 
 			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", Neon::URL::Resource("/shader/lighting.vs"), Neon::URL::Resource("/shader/lighting.fs"));
 			entity->AddComponent(shader);
@@ -162,6 +164,92 @@ int main()
 				else if (GLFW_KEY_3 == event.key)
 				{
 					mesh->SetFillMode(Neon::Mesh::Point);
+				}
+				else if (GLFW_KEY_ESCAPE == event.key && GLFW_RELEASE == event.action)
+				{
+					mesh->visible = !mesh->visible;
+				}
+				});
+
+			auto bspTree = scene->CreateComponent<Neon::BSPTree<glm::vec3>>("BSPTree/Mesh", mesh);
+			bspTree->Build();
+
+			size_t count = 0;
+			bspTree->Traverse([&count, debugTriangles](const glm::vec3& v) {
+				//debugTriangles->AddPoint(v, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+
+				glPointSize(5.0f);
+
+				count++;
+				},
+				[&count]() {
+					cout << "total count : " << count << endl;
+				});
+
+			entity->SetMouseButtonEventCallback([scene, mesh, bspTree, debugPoints, debugLines](const Neon::MouseButtonEvent& event) {
+				if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_RELEASE)
+				{
+					auto camera = scene->GetMainCamera();
+
+					GLint viewport[4];
+					glGetIntegerv(GL_VIEWPORT, viewport);
+					float winX = (float)event.xpos;
+					float winY = (float)viewport[3] - (float)event.ypos;
+
+					auto u = winX / viewport[2] - 0.5f;
+					auto v = winY / viewport[3] - 0.5f;
+
+					auto pp = glm::unProject(
+						glm::vec3(winX, winY, 1),
+						glm::identity<glm::mat4>(),
+						camera->projectionMatrix * camera->viewMatrix,
+						glm::vec4(viewport[0], viewport[1], viewport[2], viewport[3]));
+
+					auto rayOrigin = glm::vec3(glm::inverse(camera->viewMatrix)[3]);
+					auto rayDirection = glm::normalize(pp - rayOrigin);
+
+					debugLines->AddLine(rayOrigin, rayOrigin + rayDirection * 100.0f);
+
+					vector<pair<float, int>> unorderedPickedFaceIndices;
+					auto ib = mesh->GetIndexBuffer();
+					auto noi = ib->Size();
+					for (size_t i = 0; i < noi / 3; i++)
+					{
+						auto v0 = mesh->GetVertex(i * 3 + 0);
+						auto v1 = mesh->GetVertex(i * 3 + 1);
+						auto v2 = mesh->GetVertex(i * 3 + 2);
+
+						glm::vec2 baricenter;
+						float distance = 0.0f;
+						if (glm::intersectRayTriangle(rayOrigin, rayDirection, v0, v1, v2, baricenter, distance))
+						{
+							if (distance > 0) {
+								unorderedPickedFaceIndices.push_back(make_pair(distance, (int)i));
+							}
+						}
+					}
+
+					if (0 < unorderedPickedFaceIndices.size())
+					{
+						struct PickedFacesLess {
+							inline bool operator() (const tuple<float, int>& a, const tuple<float, int>& b) {
+								return get<0>(a) < get<0>(b);
+							}
+						};
+
+						sort(unorderedPickedFaceIndices.begin(), unorderedPickedFaceIndices.end(), PickedFacesLess());
+
+						auto nearestIntersection = rayOrigin + rayDirection * unorderedPickedFaceIndices.front().first;
+
+						debugPoints->AddPoint(nearestIntersection, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+						auto result = bspTree->GetNearestNode(bspTree->root, nearestIntersection, bspTree->root);
+
+						if (nullptr != result)
+						{
+							debugPoints->AddPoint(result->t, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+						}
+					}
 				}
 				});
 		}

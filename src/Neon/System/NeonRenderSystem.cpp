@@ -100,21 +100,24 @@ namespace Neon
 			auto mesh = entity->GetComponent<Mesh>(0);
 			if (nullptr != mesh)
 			{
-				mesh->Bind();
-				if (mesh->GetFillMode() == Mesh::FillMode::Line)
+				if (mesh->visible)
 				{
-					glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-				}
-				else if (mesh->GetFillMode() == Mesh::FillMode::Point)
-				{
-					glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-				}
-				
-				glDrawElements(mesh->GetDrawingMode(), (GLsizei)mesh->GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+					mesh->Bind();
+					if (mesh->GetFillMode() == Mesh::FillMode::Line)
+					{
+						glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+					}
+					else if (mesh->GetFillMode() == Mesh::FillMode::Point)
+					{
+						glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+					}
 
-				if (mesh->GetDrawingMode() != Mesh::Fill)
-				{
-					glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+					glDrawElements(mesh->GetDrawingMode(), (GLsizei)mesh->GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+
+					if (mesh->GetDrawingMode() != Mesh::Fill)
+					{
+						glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+					}
 				}
 			}
 		}
@@ -182,26 +185,29 @@ namespace Neon
 			auto mesh = entity->GetComponent<Mesh>(0);
 			if (nullptr != mesh)
 			{
-				if (nullptr != shader)
+				if (mesh->visible)
 				{
-					shader->SetUniformInt("fillMode", (int)mesh->GetFillMode());
-				}
+					if (nullptr != shader)
+					{
+						shader->SetUniformInt("fillMode", (int)mesh->GetFillMode());
+					}
 
-				mesh->Bind();
-				if (mesh->GetFillMode() == Mesh::FillMode::Line)
-				{
-					glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-				}
-				else if (mesh->GetFillMode() == Mesh::FillMode::Point)
-				{
-					glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-				}
+					mesh->Bind();
+					if (mesh->GetFillMode() == Mesh::FillMode::Line)
+					{
+						glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+					}
+					else if (mesh->GetFillMode() == Mesh::FillMode::Point)
+					{
+						glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+					}
 
-				glDrawElements(mesh->GetDrawingMode(), (GLsizei)mesh->GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+					glDrawElements(mesh->GetDrawingMode(), (GLsizei)mesh->GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
 
-				if (mesh->GetDrawingMode() != Mesh::Fill)
-				{
-					glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+					if (mesh->GetDrawingMode() != Mesh::Fill)
+					{
+						glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+					}
 				}
 			}
 		}

@@ -28,6 +28,8 @@ namespace Neon
 		double lastLButtonReleaseTime = 0.0;
 		double lastRButtonReleaseTime = 0.0;
 		double lastMButtonReleaseTime = 0.0;
+		double lastMouseX = 0.0;
+		double lastMouseY = 0.0;
 
 		static set<EventSystem*> instances;
 	};

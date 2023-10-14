@@ -44,7 +44,7 @@ namespace Neon
 			}
 		}
 
-		template<class T> T* CreateComponent(const string& name)
+		template<typename T> T* CreateComponent(const string& name)
 		{
 			if (0 == componentNameMapping.count(name))
 			{
@@ -76,7 +76,7 @@ namespace Neon
 			}
 		}
 
-		template<class T>
+		template<typename T>
 		T* GetComponent(const string& name)
 		{
 			if (0 != componentNameMapping.count(name))
@@ -91,7 +91,7 @@ namespace Neon
 
 		inline const map<string, Entity*>& GetEntities() const { return entities; }
 		inline const map<string, DebugEntity*>& GetDebugEntities() const { return debugEntities; }
-		template<class T> vector<ComponentBase*>& GetComponents() { return components[&typeid(T)]; }
+		template<typename T> vector<ComponentBase*>& GetComponents() { return components[&typeid(T)]; }
 
 		void Frame(float now, float timeDelta);
 

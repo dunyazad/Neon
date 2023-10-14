@@ -147,7 +147,13 @@ namespace Neon
 			}
 		}
 
-		MouseButtonEvent e{ event.window, event.button, doubleClicked ? GLFW_DOUBLE_ACTION : event.action, event.mods };
+		MouseButtonEvent e {
+			event.window,
+			event.button,
+			doubleClicked ? GLFW_DOUBLE_ACTION : event.action,
+			event.mods,
+			lastMouseX,
+			lastMouseY };
 
 		for (auto& kvp : scene->GetEntities())
 		{
@@ -162,6 +168,9 @@ namespace Neon
 
 	void EventSystem::OnCursorPosEvent(const CursorPosEvent& event)
 	{
+		lastMouseX = event.xpos;
+		lastMouseY = event.ypos;
+
 		for (auto& kvp : scene->GetEntities())
 		{
 			kvp.second->OnCursorPosEvent(event);

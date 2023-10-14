@@ -20,6 +20,16 @@ namespace Neon
 	{
 	}
 
+	void DebugEntity::AddPoint(const glm::vec3& v, const glm::vec4& c)
+	{
+		auto index = mesh->AddVertex(v);
+		mesh->AddColor(c);
+		mesh->AddIndex((GLuint)index);
+
+		mesh->SetDrawingMode(GL_POINTS);
+		mesh->SetFillMode(Mesh::FillMode::Point);
+	}
+
 	void DebugEntity::AddLine(const glm::vec3& v0, const glm::vec3& v1, const glm::vec4& c0, const glm::vec4& c1)
 	{
 		GLuint index = (GLuint)mesh->GetVertexBuffer()->Size();

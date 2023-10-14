@@ -87,7 +87,7 @@ namespace Neon
         glfwPollEvents();
 
         // Check if the escape key was pressed
-        if (glfwGetKey(glfwWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+        if (glfwGetKey(glfwWindow, GLFW_KEY_Q) == GLFW_PRESS) {
             glfwSetWindowShouldClose(glfwWindow, GLFW_TRUE);
         }
     }

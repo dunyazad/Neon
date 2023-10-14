@@ -7,12 +7,12 @@ namespace Neon
 {
 	class Mesh;
 
-	template<class T>
+	template<typename T>
 	class BSPTreeNode
 	{
 	public:
-		BSPTreeNode(Mesh* mesh, T* triangle)
-			: triangle(triangle)
+		BSPTreeNode(Mesh* mesh, const T& t, size_t index)
+			: mesh(mesh), t(t), index(index)
 		{
 		}
 
@@ -20,17 +20,28 @@ namespace Neon
 		{
 		}
 
-		void Insert(T* t)
+		void Insert(const T& t, size_t index)
 		{
-			if (t->position < this->t->position)
+			if (t < this->t)
 			{
 				if (nullptr != positive)
 				{
-					positive->Insert(t);
+					positive->Insert(t, index);
 				}
 				else
 				{
-					positive = new BSPTreeNode<T>(mesh, t);
+					positive = new BSPTreeNode<T>(mesh, t, index);
+				}
+			}
+			else if (t > this->t)
+			{
+				if (nullptr != negative)
+				{
+					negative->Insert(t, index);
+				}
+				else
+				{
+					negative = new BSPTreeNode<T>(mesh, t, index);
 				}
 			}
 		}
@@ -87,9 +98,10 @@ namespace Neon
 			}
 		}
 
-	private:
+	//private:
 		Mesh* mesh = nullptr;
-		T* t = nullptr;
+		T t = nullptr;
+		size_t index = 0;
 
 		BSPTreeNode* positive = nullptr;
 		BSPTreeNode* negative = nullptr;
@@ -100,7 +112,7 @@ namespace Neon
 	{
 	public:
 		BSPTree(const string& name, Mesh* mesh)
-			: ComponentBase(name)
+			: ComponentBase(name), mesh(mesh)
 		{
 		}
 
@@ -113,12 +125,84 @@ namespace Neon
 
 		void Build()
 		{
-			auto vb = mesh->GetVertexBuffer();
-			
+			auto vb = mesh->GetVertexBuffer()->GetElements();
+			auto nov = vb.size();
+			for (size_t i = 0; i < nov; i++)
+			{
+				auto& v = vb[i];
+
+				if (nullptr == root)
+				{
+					root = new BSPTreeNode<glm::vec3>(mesh, v, i);
+				}
+				else
+				{
+					root->Insert(v, i);
+				}
+			}
 		}
 
 		void Clear()
 		{
+			if (nullptr != root)
+			{
+				root->Clear();
+				SAFE_DELETE(root);
+			}
+		}
+
+		void Traverse(function<void(const glm::vec3& v)> callback, function<void()> finishCallback)
+		{
+			stack<BSPTreeNode<T>*> nodes;
+			nodes.push(root);
+			while (nodes.empty() == false)
+			{
+				auto currentNode = nodes.top();
+				nodes.pop();
+
+				callback(currentNode->t);
+
+				if (currentNode->positive)
+				{
+					nodes.push(currentNode->positive);
+				}
+
+				if (currentNode->negative)
+				{
+					nodes.push(currentNode->negative);
+				}
+			}
+
+			finishCallback();
+		}
+
+		BSPTreeNode<T>* GetNearestNode(BSPTreeNode<T>* currentNode, const T& target, BSPTreeNode<T>* nearestNode)
+		{
+			if (currentNode == nullptr)
+			{
+				return nearestNode;
+			}
+
+			float currentDistance = glm::distance(currentNode->t, target);
+			float nearestDistance = glm::distance(nearestNode->t, target);
+
+			if (currentDistance < nearestDistance)
+			{
+				nearestNode = currentNode;
+			}
+
+			if (currentNode->t < target)
+			{
+				nearestNode = GetNearestNode(currentNode->positive, target, nearestNode);
+				nearestNode = GetNearestNode(currentNode->negative, target, nearestNode);
+			}
+			else
+			{
+				nearestNode = GetNearestNode(currentNode->negative, target, nearestNode);
+				nearestNode = GetNearestNode(currentNode->positive, target, nearestNode);
+			}
+
+			return nearestNode;
 		}
 	};
 }
