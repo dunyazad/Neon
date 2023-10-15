@@ -151,7 +151,7 @@ namespace Neon
 			}
 		}
 
-		void Traverse(BSPTreeNode<T>* node, function<void(const glm::vec3& v)> callback, function<void()> finishCallback)
+		void Traverse(BSPTreeNode<T>* node, function<void(BSPTreeNode<T>*)> callback, function<void()> finishCallback)
 		{
 			stack<BSPTreeNode<T>*> nodes;
 			nodes.push(node);
@@ -160,7 +160,7 @@ namespace Neon
 				auto currentNode = nodes.top();
 				nodes.pop();
 
-				callback(currentNode->t);
+				callback(currentNode);
 
 				if (currentNode->positive)
 				{

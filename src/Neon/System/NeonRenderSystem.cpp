@@ -100,7 +100,7 @@ namespace Neon
 			auto mesh = entity->GetComponent<Mesh>(0);
 			if (nullptr != mesh)
 			{
-				if (mesh->visible)
+				if (mesh->IsVisible())
 				{
 					mesh->Bind();
 					if (mesh->GetFillMode() == Mesh::FillMode::Line)
@@ -185,7 +185,7 @@ namespace Neon
 			auto mesh = entity->GetComponent<Mesh>(0);
 			if (nullptr != mesh)
 			{
-				if (mesh->visible)
+				if (mesh->IsVisible())
 				{
 					if (nullptr != shader)
 					{

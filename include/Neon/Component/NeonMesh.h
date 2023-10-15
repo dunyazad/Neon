@@ -51,6 +51,12 @@ namespace Neon
 		void Bind();
 		void Unbind();
 
+		void FromSTLFile(const URL& fileURL, float scaleX = 1.0f, float scaleY = 1.0f, float scaleZ = 1.0f);
+		void RecalculateFaceNormal();
+		void FillColor(const glm::vec4& color);
+
+		bool Pick(const Ray& ray, glm::vec3& intersection, size_t& faceIndex);
+
 		enum FillMode { Fill, Line, Point };
 
 		inline GLenum GetDrawingMode() { return drawingMode; }
@@ -60,14 +66,12 @@ namespace Neon
 		inline void SetFillMode(FillMode mode) { fillMode = mode; }
 		inline void ToggleFillMode() { int f = fillMode; f++; fillMode = (Mesh::FillMode)(f % ((int)Mesh::FillMode::Point + 1)); }
 
-		void FromSTLFile(const URL& fileURL, float scaleX = 1.0f, float scaleY = 1.0f, float scaleZ = 1.0f);
-		void RecalculateFaceNormal();
-
-		bool visible = true;
-
-		bool Pick(const Ray& ray, glm::vec3& intersection, size_t& faceIndex);
+		inline bool IsVisible() const { return visible; }
+		inline void SetVisible(bool visible) { this->visible = visible; }
 
 	private:
+		bool visible = true;
+
 		VertexArrayObject* vao = nullptr;
 		map<VertexBufferObjectBase::BufferType, VertexBufferObjectBase*> bufferObjects;
 		GLenum drawingMode = GL_TRIANGLES;

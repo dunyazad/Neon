@@ -302,6 +302,16 @@ namespace Neon
 		}
 	}
 
+	void Mesh::FillColor(const glm::vec4& color)
+	{
+		auto nov = GetVertexBuffer()->Size();
+		GetColorBuffer()->Clear();
+		for (size_t i = 0; i < nov; i++)
+		{
+			AddColor(color);
+		}
+	}
+
 	bool Mesh::Pick(const Ray& ray, glm::vec3& intersection, size_t& faceIndex)
 	{
 		vector<pair<float, int>> pickedFaceIndices;

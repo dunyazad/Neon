@@ -30,7 +30,7 @@ int main()
 				{
 					if (GLFW_KEY_ESCAPE == event.key && GLFW_RELEASE == event.action)
 					{
-						mesh->visible = !mesh->visible;
+						mesh->SetVisible(!mesh->IsVisible());
 					}
 				}
 			}
@@ -132,24 +132,26 @@ int main()
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Mesh");
 			entity->AddComponent(mesh);
 			mesh->FromSTLFile(Neon::URL::Resource("/stl/mx.stl"), 0.01f, 0.01f, 0.01f);
-			auto nov = mesh->GetVertexBuffer()->Size();
-			auto rotation = glm::angleAxis(-glm::half_pi<float>(), glm::vec3(1.0f, 0.0f, 0.0f));
-			for (int i = 0; i < nov; i++)
-			{
-				mesh->AddColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+			//auto nov = mesh->GetVertexBuffer()->Size();
+			//auto rotation = glm::angleAxis(-glm::half_pi<float>(), glm::vec3(1.0f, 0.0f, 0.0f));
+			//for (int i = 0; i < nov; i++)
+			//{
+			//	mesh->AddColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
-				{
-					auto roatated = rotation * mesh->GetVertex(i);
-					mesh->SetVertex(i, roatated);
-				}
+			//	{
+			//		auto roatated = rotation * mesh->GetVertex(i);
+			//		mesh->SetVertex(i, roatated);
+			//	}
 
-				//{
-				//	float x, y, z;
-				//	mesh->GetNormal(i, x, y, z);
-				//	auto roatated = rotation * glm::vec3(x, y, z);
-				//	mesh->SetNormal(i, roatated.x, roatated.y, roatated.z);
-				//}
-			}
+			//	//{
+			//	//	float x, y, z;
+			//	//	mesh->GetNormal(i, x, y, z);
+			//	//	auto roatated = rotation * glm::vec3(x, y, z);
+			//	//	mesh->SetNormal(i, roatated.x, roatated.y, roatated.z);
+			//	//}
+			//}
+
+			mesh->FillColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
 			mesh->RecalculateFaceNormal();
 
@@ -172,10 +174,6 @@ int main()
 
 			auto transform = scene->CreateComponent<Neon::Transform>("Transform/Mesh");
 			entity->AddComponent(transform);
-			transform->AddUpdateHandler([transform](double now, double timeDelta) {
-				//transform->rotation = glm::angleAxis(glm::radians(now * 0.01f), glm::vec3(0.0f, 1.0f, 0.0f));
-				});
-
 			entity->AddKeyEventHandler([mesh](const Neon::KeyEvent& event) {
 				if (GLFW_KEY_1 == event.key && GLFW_RELEASE == event.action)
 				{
@@ -187,7 +185,7 @@ int main()
 			bspTree->Build();
 
 			size_t count = 0;
-			bspTree->Traverse(bspTree->root, [&count, debugTriangles](const glm::vec3& v) {
+			bspTree->Traverse(bspTree->root, [&count, debugTriangles](Neon::BSPTreeNode<glm::vec3>* node) {
 				glPointSize(5.0f);
 
 				count++;
@@ -228,8 +226,17 @@ int main()
 
 						if (nullptr != result)
 						{
-							debugPoints->AddPoint(result->t, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+							bspTree->Traverse(bspTree->root, [&mesh, result](Neon::BSPTreeNode<glm::vec3>* node) {
+								//cout << node->index << endl;
+								if (node->t < result->t)
+								{
+									mesh->SetColor(node->index, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+								}
+								}, []() {});
+
+							//debugPoints->AddPoint(result->t, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
 						}
+
 					}
 				}
 				});
