@@ -22,8 +22,7 @@ namespace Neon
 
 		glm::vec3 centerPosition = glm::zero<glm::vec3>();
 		float distance = 5.0f;
-		float angleH = 0.0f;
-		float angleV = 0.0f;
+		glm::quat rotation = glm::identity<glm::quat>();
 
 		glm::mat4 viewMatrix = glm::identity<glm::mat4>();
 		glm::mat4 projectionMatrix = glm::identity<glm::mat4>();

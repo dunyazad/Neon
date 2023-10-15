@@ -16,11 +16,32 @@ int main()
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 
+		glPointSize(5);
+
 		auto scene = app.CreateScene("Scene/Main");
 
+		auto toggleVisibility = [](const Neon::KeyEvent& event)
+		{
+			auto entity = dynamic_cast<Neon::Entity*>(event.target);
+			if (nullptr != entity)
+			{
+				auto mesh = entity->GetComponent<Neon::Mesh>(0);
+				if (nullptr != mesh)
+				{
+					if (GLFW_KEY_ESCAPE == event.key && GLFW_RELEASE == event.action)
+					{
+						mesh->visible = !mesh->visible;
+					}
+				}
+			}
+		};
+
 		auto debugPoints = scene->CreateDebugEntity("DebugEntity/Points");
+		debugPoints->AddKeyEventHandler(toggleVisibility);
 		auto debugLines = scene->CreateDebugEntity("DebugEntity/Lines");
+		debugLines->AddKeyEventHandler(toggleVisibility);
 		auto debugTriangles = scene->CreateDebugEntity("DebugEntity/Triangles");
+		debugTriangles->AddKeyEventHandler(toggleVisibility);
 
 		debugTriangles->AddKeyEventHandler([debugTriangles](const Neon::KeyEvent& event) {
 			auto mesh = debugTriangles->GetComponent<Neon::Mesh>(0);
@@ -46,8 +67,6 @@ int main()
 			auto camera = scene->CreateComponent<Neon::Camera>("Camera/Main", 1280.0f, 1024.0f);
 			entity->AddComponent(camera);
 			camera->distance = 2.0f;
-			camera->angleH = 30.0f;
-			camera->angleV = 30.0f;
 			camera->centerPosition = glm::vec3(0.0f, 0.0f, 0.0f);
 			scene->SetMainCamera(camera);
 
@@ -107,7 +126,7 @@ int main()
 			auto entity = scene->CreateEntity("Entity/Mesh");
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Mesh");
 			entity->AddComponent(mesh);
-			mesh->FromSTLFile(Neon::URL::Resource("/stl/EiffelTower_fixed.stl"), 0.01f, 0.01f, 0.01f);
+			mesh->FromSTLFile(Neon::URL::Resource("/stl/mx.stl"), 0.01f, 0.01f, 0.01f);
 			auto nov = mesh->GetVertexBuffer()->Size();
 			auto rotation = glm::angleAxis(-glm::half_pi<float>(), glm::vec3(1.0f, 0.0f, 0.0f));
 			for (int i = 0; i < nov; i++)
@@ -164,10 +183,6 @@ int main()
 				else if (GLFW_KEY_3 == event.key)
 				{
 					mesh->SetFillMode(Neon::Mesh::Point);
-				}
-				else if (GLFW_KEY_ESCAPE == event.key && GLFW_RELEASE == event.action)
-				{
-					mesh->visible = !mesh->visible;
 				}
 				});
 

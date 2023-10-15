@@ -106,7 +106,7 @@ namespace Neon
 		for (auto& kvp : scene->GetDebugEntities())
 		{
 			KeyEvent e{ kvp.second, event.window, event.key, event.scancode, event.action, event.mods };
-			kvp.second->OnKeyEvent(event);
+			kvp.second->OnKeyEvent(e);
 		}
 	}
 
@@ -201,13 +201,13 @@ namespace Neon
 		for (auto& kvp : scene->GetEntities())
 		{
 			ScrollEvent e { kvp.second, event.window, event.xoffset, event.yoffset };
-			kvp.second->OnScrollEvent(event);
+			kvp.second->OnScrollEvent(e);
 		}
 
 		for (auto& kvp : scene->GetDebugEntities())
 		{
 			ScrollEvent e{ kvp.second, event.window, event.xoffset, event.yoffset };
-			kvp.second->OnScrollEvent(event);
+			kvp.second->OnScrollEvent(e);
 		}
 	}
 }

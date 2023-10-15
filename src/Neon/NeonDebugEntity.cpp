@@ -60,5 +60,8 @@ namespace Neon
 		mesh->AddIndex(index);
 		mesh->AddIndex(index + 1);
 		mesh->AddIndex(index + 2);
+
+		mesh->SetDrawingMode(GL_TRIANGLES);
+		mesh->SetFillMode(Mesh::FillMode::Fill);
 	}
 }

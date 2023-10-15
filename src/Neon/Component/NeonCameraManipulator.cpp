@@ -85,8 +85,10 @@ namespace Neon
 
 		if (isRButtonPressed)
 		{
-			camera->angleH -= float(dx);
-			camera->angleV += float(dy);
+			auto rH = glm::angleAxis(glm::radians(float(dx * 0.1f)), glm::vec3(0, 1, 0));
+			auto rV = glm::angleAxis(glm::radians(float(dy * 0.1f)), glm::vec3(1, 0, 0));
+
+			camera->rotation = camera->rotation * rH * rV;
 		}
 
 		if (isMButtonPressed)

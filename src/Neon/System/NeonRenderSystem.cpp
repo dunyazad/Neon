@@ -204,7 +204,7 @@ namespace Neon
 
 					glDrawElements(mesh->GetDrawingMode(), (GLsizei)mesh->GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
 
-					if (mesh->GetDrawingMode() != Mesh::Fill)
+					if (mesh->GetFillMode() != Mesh::Fill)
 					{
 						glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 					}
