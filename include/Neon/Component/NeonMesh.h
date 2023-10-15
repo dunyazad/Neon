@@ -19,6 +19,8 @@ namespace Neon
 		Mesh(const string& name);
 		~Mesh();
 
+		void Clear();
+
 		inline VertexArrayObject* GetVAO() { return vao; }
 
 		VertexBufferObject<glm::vec3>* GetVertexBuffer();

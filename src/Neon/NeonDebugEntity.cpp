@@ -20,6 +20,11 @@ namespace Neon
 	{
 	}
 
+	void DebugEntity::Clear()
+	{
+		mesh->Clear();
+	}
+
 	void DebugEntity::AddPoint(const glm::vec3& v, const glm::vec4& c)
 	{
 		auto index = mesh->AddVertex(v);

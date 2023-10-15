@@ -180,6 +180,8 @@ namespace Neon
 		virtual void Bind() = 0;
 		virtual void Unbind() = 0;
 		virtual void Upload() = 0;
+
+		virtual void Clear() = 0;
 	};
 
 	int safe_stoi(const string& input);

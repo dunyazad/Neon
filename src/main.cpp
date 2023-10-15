@@ -313,6 +313,8 @@ int main()
 
 						auto nearestIntersection = rayOrigin + rayDirection * unorderedPickedFaceIndices.front().first;
 
+						debugPoints->Clear();
+
 						debugPoints->AddPoint(nearestIntersection, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 
 						auto result = bspTree->GetNearestNode(bspTree->root, nearestIntersection, bspTree->root);

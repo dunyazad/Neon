@@ -60,7 +60,7 @@ namespace Neon
 		}
 
 		inline size_t Size() { return elements.size(); }
-		inline void Clear() { elements.clear(); }
+		inline virtual void Clear() { elements.clear(); }
 
 		size_t AddElement(const T& element)
 		{

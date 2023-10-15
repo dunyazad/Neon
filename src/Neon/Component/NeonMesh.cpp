@@ -23,6 +23,14 @@ namespace Neon
 		SAFE_DELETE(vao);
 	}
 
+	void Mesh::Clear()
+	{
+		for (auto& kvp : bufferObjects)
+		{
+			kvp.second->Clear();
+		}
+	}
+
 	VertexBufferObject<glm::vec3>* Mesh::GetVertexBuffer()
 	{
 		if (0 == bufferObjects.count(VertexBufferObjectBase::BufferType::VERTEX_BUFFER))
