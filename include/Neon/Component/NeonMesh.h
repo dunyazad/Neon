@@ -65,6 +65,8 @@ namespace Neon
 
 		bool visible = true;
 
+		bool Pick(const Ray& ray, glm::vec3& intersection, size_t& faceIndex);
+
 	private:
 		VertexArrayObject* vao = nullptr;
 		map<VertexBufferObjectBase::BufferType, VertexBufferObjectBase*> bufferObjects;

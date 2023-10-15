@@ -64,22 +64,6 @@ int main()
 		debugTriangles->AddKeyEventHandler(toggleVisibility);
 		debugTriangles->AddKeyEventHandler(toggleFillMode);
 
-		debugTriangles->AddKeyEventHandler([debugTriangles](const Neon::KeyEvent& event) {
-			auto mesh = debugTriangles->GetComponent<Neon::Mesh>(0);
-			if (GLFW_KEY_4 == event.key)
-			{
-				mesh->SetFillMode(Neon::Mesh::Fill);
-			}
-			else if (GLFW_KEY_5 == event.key)
-			{
-				mesh->SetFillMode(Neon::Mesh::Line);
-			}
-			else if (GLFW_KEY_6 == event.key)
-			{
-				mesh->SetFillMode(Neon::Mesh::Point);
-			}
-			});
-
 		{
 			auto entity = scene->CreateEntity("Entity/Main Camera");
 			auto transform = scene->CreateComponent<Neon::Transform>("Transform/Main Camera");
@@ -193,17 +177,9 @@ int main()
 				});
 
 			entity->AddKeyEventHandler([mesh](const Neon::KeyEvent& event) {
-				if (GLFW_KEY_1 == event.key)
+				if (GLFW_KEY_1 == event.key && GLFW_RELEASE == event.action)
 				{
-					mesh->SetFillMode(Neon::Mesh::Fill);
-				}
-				else if (GLFW_KEY_2 == event.key)
-				{
-					mesh->SetFillMode(Neon::Mesh::Line);
-				}
-				else if (GLFW_KEY_3 == event.key)
-				{
-					mesh->SetFillMode(Neon::Mesh::Point);
+					mesh->ToggleFillMode();
 				}
 				});
 
@@ -212,8 +188,6 @@ int main()
 
 			size_t count = 0;
 			bspTree->Traverse(bspTree->root, [&count, debugTriangles](const glm::vec3& v) {
-				//debugTriangles->AddPoint(v, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
-
 				glPointSize(5.0f);
 
 				count++;
@@ -229,38 +203,11 @@ int main()
 
 					auto ray = camera->GetPickingRay(event.xpos, event.ypos);
 
-					vector<pair<float, int>> unorderedPickedFaceIndices;
-					auto ib = mesh->GetIndexBuffer();
-					auto noi = ib->Size();
-					for (size_t i = 0; i < noi / 3; i++)
+					glm::vec3 intersection;
+					size_t faceIndex = 0;
+					if (mesh->Pick(ray, intersection, faceIndex))
 					{
-						auto v0 = mesh->GetVertex(i * 3 + 0);
-						auto v1 = mesh->GetVertex(i * 3 + 1);
-						auto v2 = mesh->GetVertex(i * 3 + 2);
-
-						glm::vec2 baricenter;
-						float distance = 0.0f;
-						if (glm::intersectRayTriangle(ray.origin, ray.direction, v0, v1, v2, baricenter, distance))
-						{
-							if (distance > 0) {
-								unorderedPickedFaceIndices.push_back(make_pair(distance, (int)i));
-							}
-						}
-					}
-
-					if (0 < unorderedPickedFaceIndices.size())
-					{
-						struct PickedFacesLess {
-							inline bool operator() (const tuple<float, int>& a, const tuple<float, int>& b) {
-								return get<0>(a) < get<0>(b);
-							}
-						};
-
-						sort(unorderedPickedFaceIndices.begin(), unorderedPickedFaceIndices.end(), PickedFacesLess());
-
-						auto nearestIntersection = ray.origin + ray.direction * unorderedPickedFaceIndices.front().first;
-
-						camera->centerPosition = nearestIntersection;
+						camera->centerPosition = intersection;
 					}
 				}
 				else if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_RELEASE)
@@ -269,44 +216,15 @@ int main()
 
 					auto ray = camera->GetPickingRay(event.xpos, event.ypos);
 
-					debugLines->AddLine(ray.origin, ray.origin + ray.direction * 100.0f);
-
-					vector<pair<float, int>> unorderedPickedFaceIndices;
-					auto ib = mesh->GetIndexBuffer();
-					auto noi = ib->Size();
-					for (size_t i = 0; i < noi / 3; i++)
+					glm::vec3 intersection;
+					size_t faceIndex = 0;
+					if (mesh->Pick(ray, intersection, faceIndex))
 					{
-						auto v0 = mesh->GetVertex(i * 3 + 0);
-						auto v1 = mesh->GetVertex(i * 3 + 1);
-						auto v2 = mesh->GetVertex(i * 3 + 2);
-
-						glm::vec2 baricenter;
-						float distance = 0.0f;
-						if (glm::intersectRayTriangle(ray.origin, ray.direction, v0, v1, v2, baricenter, distance))
-						{
-							if (distance > 0) {
-								unorderedPickedFaceIndices.push_back(make_pair(distance, (int)i));
-							}
-						}
-					}
-
-					if (0 < unorderedPickedFaceIndices.size())
-					{
-						struct PickedFacesLess {
-							inline bool operator() (const tuple<float, int>& a, const tuple<float, int>& b) {
-								return get<0>(a) < get<0>(b);
-							}
-						};
-
-						sort(unorderedPickedFaceIndices.begin(), unorderedPickedFaceIndices.end(), PickedFacesLess());
-
-						auto nearestIntersection = ray.origin + ray.direction * unorderedPickedFaceIndices.front().first;
-
 						debugPoints->Clear();
 
-						debugPoints->AddPoint(nearestIntersection, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+						debugPoints->AddPoint(intersection, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 
-						auto result = bspTree->GetNearestNode(bspTree->root, nearestIntersection, bspTree->root);
+						auto result = bspTree->GetNearestNode(bspTree->root, intersection, bspTree->root);
 
 						if (nullptr != result)
 						{
@@ -314,7 +232,6 @@ int main()
 						}
 					}
 				}
-
 				});
 		}
 		});

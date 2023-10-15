@@ -301,4 +301,45 @@ namespace Neon
 			SetNormal(i * 3 + 2, normal);
 		}
 	}
+
+	bool Mesh::Pick(const Ray& ray, glm::vec3& intersection, size_t& faceIndex)
+	{
+		vector<pair<float, int>> pickedFaceIndices;
+		auto ib = GetIndexBuffer();
+		auto noi = ib->Size();
+		for (size_t i = 0; i < noi / 3; i++)
+		{
+			auto v0 = GetVertex(i * 3 + 0);
+			auto v1 = GetVertex(i * 3 + 1);
+			auto v2 = GetVertex(i * 3 + 2);
+
+			glm::vec2 baricenter;
+			float distance = 0.0f;
+			if (glm::intersectRayTriangle(ray.origin, ray.direction, v0, v1, v2, baricenter, distance))
+			{
+				if (distance > 0) {
+					pickedFaceIndices.push_back(make_pair(distance, (int)i));
+				}
+			}
+		}
+
+		if (0 < pickedFaceIndices.size())
+		{
+			struct PickedFacesLess {
+				inline bool operator() (const tuple<float, int>& a, const tuple<float, int>& b) {
+					return get<0>(a) < get<0>(b);
+				}
+			};
+
+			sort(pickedFaceIndices.begin(), pickedFaceIndices.end(), PickedFacesLess());
+
+			intersection = ray.origin + ray.direction * pickedFaceIndices.front().first;
+			faceIndex = pickedFaceIndices.front().second;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
 }
