@@ -26,10 +26,10 @@ namespace Neon
 		}
 	}
 
-	void Scene::Frame(float now, float timeDelta)
+	void Scene::Frame(double now, double timeDelta)
 	{
-		transformUpdateSystem.Frame((float)now, (float)timeDelta);
-		renderSystem.Frame((float)now, (float)timeDelta);
+		transformUpdateSystem.Frame(now, timeDelta);
+		renderSystem.Frame(now, timeDelta);
 	}
 
 	Entity* Scene::GetEntity(const string& name)

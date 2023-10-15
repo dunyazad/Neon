@@ -137,7 +137,7 @@ namespace Neon
 		}
 	}
 
-	void NeonObject::OnUpdate(float now, float timeDelta)
+	void NeonObject::OnUpdate(double now, double timeDelta)
 	{
 		for (auto& handler : updateHandlers)
 		{

@@ -151,10 +151,10 @@ namespace Neon
 			}
 		}
 
-		void Traverse(function<void(const glm::vec3& v)> callback, function<void()> finishCallback)
+		void Traverse(BSPTreeNode<T>* node, function<void(const glm::vec3& v)> callback, function<void()> finishCallback)
 		{
 			stack<BSPTreeNode<T>*> nodes;
-			nodes.push(root);
+			nodes.push(node);
 			while (nodes.empty() == false)
 			{
 				auto currentNode = nodes.top();

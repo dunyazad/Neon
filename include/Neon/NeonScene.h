@@ -93,7 +93,7 @@ namespace Neon
 		inline const map<string, DebugEntity*>& GetDebugEntities() const { return debugEntities; }
 		template<typename T> vector<ComponentBase*>& GetComponents() { return components[&typeid(T)]; }
 
-		void Frame(float now, float timeDelta);
+		void Frame(double now, double timeDelta);
 
 		inline Window* GetWindow() { return window; }
 

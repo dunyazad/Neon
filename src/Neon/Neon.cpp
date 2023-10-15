@@ -24,7 +24,7 @@ namespace Neon
 		onInitializeFunction = onInitialize;
 	}
 
-	void Application::OnUpdate(function<void(float, float)> onUpdate)
+	void Application::OnUpdate(function<void(double, double)> onUpdate)
 	{
 		onUpdateFunction = onUpdate;
 	}
@@ -79,12 +79,12 @@ namespace Neon
 
 				if (onUpdateFunction != nullptr)
 				{
-					onUpdateFunction((float)now, (float)timeDelta);
+					onUpdateFunction(now, timeDelta);
 				}
 
 				for (auto& kvp : scenes)
 				{
-					kvp.second->Frame((float)now, (float)timeDelta);
+					kvp.second->Frame(now, timeDelta);
 				}
 
 #pragma region imgui

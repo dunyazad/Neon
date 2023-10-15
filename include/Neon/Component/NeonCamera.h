@@ -14,6 +14,8 @@ namespace Neon
 
 		virtual void OnUpdate(float now, float timeDelta);
 
+		Ray GetPickingRay(double xpos, double ypos);
+
 		float fovy = 45.0f;
 		float frameWidth = 1024.0f;
 		float frameHeight = 768.0f;

@@ -38,7 +38,7 @@ namespace Neon
 		~Application();
 
 		void OnInitialize(function<void()> onInitialize);
-		void OnUpdate(function<void(float, float)> onUpdate);
+		void OnUpdate(function<void(double, double)> onUpdate);
 		void OnTerminate(function<void()> onTerminate);
 
 		void Run();
@@ -48,7 +48,7 @@ namespace Neon
 
 	private:
 		function<void()> onInitializeFunction;
-		function<void(float, float)> onUpdateFunction;
+		function<void(double, double)> onUpdateFunction;
 		function<void()> onTerminateFunction;
 
 		Window* window = nullptr;

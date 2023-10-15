@@ -65,6 +65,12 @@ namespace Neon
 {
 	extern json Settings;
 
+	struct Ray
+	{
+		glm::vec3 origin = glm::zero<glm::vec3>();
+		glm::vec3 direction = glm::zero<glm::vec3>();
+	};
+
 	typedef unsigned long ID;
 
 	class NeonObject;
@@ -124,10 +130,10 @@ namespace Neon
 		inline void AddCursorPosEventHandler(function<void(const CursorPosEvent&)> handler) { cursorPosEventHandlers.push_back(handler); }
 		inline void AddScrollEventHandler(function<void(const ScrollEvent&)> handler) { scrollEventHandlers.push_back(handler); }
 
-		virtual void OnUpdate(float now, float timeDelta);
+		virtual void OnUpdate(double now, double timeDelta);
 
-		inline void AddUpdateHandler(function<void(float, float)> handler) { updateHandlers.push_back(handler); }
-		//inline void RemoveUpdateHandler(function<void(float, float)> handler) { updateHandlers.erase(handler); }
+		inline void AddUpdateHandler(function<void(double, double)> handler) { updateHandlers.push_back(handler); }
+		//inline void RemoveUpdateHandler(function<void(double, double)> handler) { updateHandlers.erase(handler); }
 
 	protected:
 		string name;
@@ -137,7 +143,7 @@ namespace Neon
 		vector<function<void(const CursorPosEvent&)>> cursorPosEventHandlers;
 		vector<function<void(const ScrollEvent&)>> scrollEventHandlers;
 
-		vector<function<void(float, float)>> updateHandlers;
+		vector<function<void(double, double)>> updateHandlers;
 	};
 
 	class Time

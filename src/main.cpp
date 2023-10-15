@@ -80,7 +80,7 @@ int main()
 			auto light = scene->CreateComponent<Neon::Light>("Light/Main");
 			entity->AddComponent(light);
 
-			light->AddUpdateHandler([scene, light](float now, float timeDelta) {
+			light->AddUpdateHandler([scene, light](double now, double timeDelta) {
 				auto camera = scene->GetMainCamera();
 				light->position = camera->position;
 				light->direction = glm::normalize(camera->centerPosition - camera->position);
@@ -167,7 +167,7 @@ int main()
 
 			auto transform = scene->CreateComponent<Neon::Transform>("Transform/Mesh");
 			entity->AddComponent(transform);
-			transform->AddUpdateHandler([transform](float now, float timeDelta) {
+			transform->AddUpdateHandler([transform](double now, double timeDelta) {
 				//transform->rotation = glm::angleAxis(glm::radians(now * 0.01f), glm::vec3(0.0f, 1.0f, 0.0f));
 				});
 
@@ -190,7 +190,7 @@ int main()
 			bspTree->Build();
 
 			size_t count = 0;
-			bspTree->Traverse([&count, debugTriangles](const glm::vec3& v) {
+			bspTree->Traverse(bspTree->root, [&count, debugTriangles](const glm::vec3& v) {
 				//debugTriangles->AddPoint(v, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
 
 				glPointSize(5.0f);
@@ -206,24 +206,7 @@ int main()
 				{
 					auto camera = scene->GetMainCamera();
 
-					GLint viewport[4];
-					glGetIntegerv(GL_VIEWPORT, viewport);
-					float winX = (float)event.xpos;
-					float winY = (float)viewport[3] - (float)event.ypos;
-
-					auto u = winX / viewport[2] - 0.5f;
-					auto v = winY / viewport[3] - 0.5f;
-
-					auto pp = glm::unProject(
-						glm::vec3(winX, winY, 1),
-						glm::identity<glm::mat4>(),
-						camera->projectionMatrix * camera->viewMatrix,
-						glm::vec4(viewport[0], viewport[1], viewport[2], viewport[3]));
-
-					auto rayOrigin = glm::vec3(glm::inverse(camera->viewMatrix)[3]);
-					auto rayDirection = glm::normalize(pp - rayOrigin);
-
-					debugLines->AddLine(rayOrigin, rayOrigin + rayDirection * 100.0f);
+					auto ray = camera->GetPickingRay(event.xpos, event.ypos);
 
 					vector<pair<float, int>> unorderedPickedFaceIndices;
 					auto ib = mesh->GetIndexBuffer();
@@ -236,7 +219,7 @@ int main()
 
 						glm::vec2 baricenter;
 						float distance = 0.0f;
-						if (glm::intersectRayTriangle(rayOrigin, rayDirection, v0, v1, v2, baricenter, distance))
+						if (glm::intersectRayTriangle(ray.origin, ray.direction, v0, v1, v2, baricenter, distance))
 						{
 							if (distance > 0) {
 								unorderedPickedFaceIndices.push_back(make_pair(distance, (int)i));
@@ -254,7 +237,7 @@ int main()
 
 						sort(unorderedPickedFaceIndices.begin(), unorderedPickedFaceIndices.end(), PickedFacesLess());
 
-						auto nearestIntersection = rayOrigin + rayDirection * unorderedPickedFaceIndices.front().first;
+						auto nearestIntersection = ray.origin + ray.direction * unorderedPickedFaceIndices.front().first;
 
 						camera->centerPosition = nearestIntersection;
 					}
@@ -263,24 +246,9 @@ int main()
 				{
 					auto camera = scene->GetMainCamera();
 
-					GLint viewport[4];
-					glGetIntegerv(GL_VIEWPORT, viewport);
-					float winX = (float)event.xpos;
-					float winY = (float)viewport[3] - (float)event.ypos;
+					auto ray = camera->GetPickingRay(event.xpos, event.ypos);
 
-					auto u = winX / viewport[2] - 0.5f;
-					auto v = winY / viewport[3] - 0.5f;
-
-					auto pp = glm::unProject(
-						glm::vec3(winX, winY, 1),
-						glm::identity<glm::mat4>(),
-						camera->projectionMatrix * camera->viewMatrix,
-						glm::vec4(viewport[0], viewport[1], viewport[2], viewport[3]));
-
-					auto rayOrigin = glm::vec3(glm::inverse(camera->viewMatrix)[3]);
-					auto rayDirection = glm::normalize(pp - rayOrigin);
-
-					debugLines->AddLine(rayOrigin, rayOrigin + rayDirection * 100.0f);
+					debugLines->AddLine(ray.origin, ray.origin + ray.direction * 100.0f);
 
 					vector<pair<float, int>> unorderedPickedFaceIndices;
 					auto ib = mesh->GetIndexBuffer();
@@ -293,7 +261,7 @@ int main()
 
 						glm::vec2 baricenter;
 						float distance = 0.0f;
-						if (glm::intersectRayTriangle(rayOrigin, rayDirection, v0, v1, v2, baricenter, distance))
+						if (glm::intersectRayTriangle(ray.origin, ray.direction, v0, v1, v2, baricenter, distance))
 						{
 							if (distance > 0) {
 								unorderedPickedFaceIndices.push_back(make_pair(distance, (int)i));
@@ -311,7 +279,7 @@ int main()
 
 						sort(unorderedPickedFaceIndices.begin(), unorderedPickedFaceIndices.end(), PickedFacesLess());
 
-						auto nearestIntersection = rayOrigin + rayDirection * unorderedPickedFaceIndices.front().first;
+						auto nearestIntersection = ray.origin + ray.direction * unorderedPickedFaceIndices.front().first;
 
 						debugPoints->Clear();
 
@@ -334,7 +302,7 @@ int main()
 
 
 
-	app.OnUpdate([&](float now, float timeDelta) {
+	app.OnUpdate([&](double now, double timeDelta) {
 		//auto t = Neon::Time("Update");
 
 		//fbo->Bind();

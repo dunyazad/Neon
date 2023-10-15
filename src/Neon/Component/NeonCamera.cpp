@@ -17,25 +17,34 @@ namespace Neon
 
 	void Camera::OnUpdate(float now, float timeDelta)
 	{
-		//position.x = distance * sinf(glm::radians(azimuth)) * cosf(glm::radians(elevation));
-		//position.y = distance * cosf(glm::radians(azimuth));
-		//position.z = distance * sinf(glm::radians(azimuth)) * sinf(glm::radians(elevation));
-
-		//cout << position << endl;
-		//viewMatrix = glm::lookAt(position, centerPosition, glm::vec3(0, 1, 0));
-
-		/*auto rH = glm::angleAxis(glm::radians(angleH - 180), glm::vec3(0, 1, 0));
-		auto rV = glm::angleAxis(glm::radians(angleV - 180), glm::vec3(1, 0, 0));
-
-		rotation = rotation * rH * rV;
-		*/
-
 		auto eye = centerPosition + rotation * glm::vec3(0, 0, distance);
 		position = eye;
 
-		viewMatrix = glm::lookAt(eye, centerPosition, rotation * glm::vec3(0, -1, 0));
+		viewMatrix = glm::lookAt(eye, centerPosition, rotation * glm::vec3(0, 1, 0));
 		projectionMatrix = glm::perspective(fovy, frameWidth / frameHeight, zNear, zFar);
 
 		Transform::OnUpdate(now, timeDelta);
+	}
+
+	Ray Camera::GetPickingRay(double xpos, double ypos)
+	{
+		GLint viewport[4];
+		glGetIntegerv(GL_VIEWPORT, viewport);
+		float winX = (float)xpos;
+		float winY = frameHeight - (float)ypos;
+
+		auto u = winX / frameWidth - 0.5f;
+		auto v = winY / frameHeight - 0.5f;
+
+		auto pp = glm::unProject(
+			glm::vec3(winX, winY, 1),
+			glm::identity<glm::mat4>(),
+			projectionMatrix * viewMatrix,
+			glm::vec4(0, 0, frameWidth, frameHeight));
+
+		auto rayOrigin = glm::vec3(glm::inverse(viewMatrix)[3]);
+		auto rayDirection = glm::normalize(pp - rayOrigin);
+
+		return { rayOrigin, rayDirection };
 	}
 }
