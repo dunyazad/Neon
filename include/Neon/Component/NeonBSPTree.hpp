@@ -7,16 +7,30 @@ namespace Neon
 {
 	class Mesh;
 
+	struct BSPTriangle
+	{
+		glm::vec3 v0;
+		glm::vec3 v1;
+		glm::vec3 v2;
+
+		GLuint i0;
+		GLuint i1;
+		GLuint i2;
+
+		glm::vec3 centroid;
+		glm::vec3 normal;
+	};
+
 	template<typename T>
-	class BSPTreeNode
+	class BSPTreeVertexNode
 	{
 	public:
-		BSPTreeNode(Mesh* mesh, const T& t, size_t index)
+		BSPTreeVertexNode(Mesh* mesh, const T& t, size_t index)
 			: mesh(mesh), t(t), index(index)
 		{
 		}
 
-		~BSPTreeNode()
+		~BSPTreeVertexNode()
 		{
 		}
 
@@ -30,7 +44,7 @@ namespace Neon
 				}
 				else
 				{
-					positive = new BSPTreeNode<T>(mesh, t, index);
+					positive = new BSPTreeVertexNode<T>(mesh, t, index);
 				}
 			}
 			else if (t > this->t)
@@ -41,7 +55,7 @@ namespace Neon
 				}
 				else
 				{
-					negative = new BSPTreeNode<T>(mesh, t, index);
+					negative = new BSPTreeVertexNode<T>(mesh, t, index);
 				}
 			}
 		}
@@ -100,11 +114,111 @@ namespace Neon
 
 	//private:
 		Mesh* mesh = nullptr;
-		T t = nullptr;
+		T t;
 		size_t index = 0;
 
-		BSPTreeNode* positive = nullptr;
-		BSPTreeNode* negative = nullptr;
+		BSPTreeVertexNode<T>* positive = nullptr;
+		BSPTreeVertexNode<T>* negative = nullptr;
+	};
+
+	template<typename T>
+	class BSPTreeTriangleNode
+	{
+	public:
+		BSPTreeTriangleNode(Mesh* mesh, const T& t, size_t index)
+			: mesh(mesh), t(t), index(index)
+		{
+		}
+
+		~BSPTreeTriangleNode()
+		{
+		}
+
+		//void Insert(const T& t, size_t index)
+		//{
+		//	if (t < this->t)
+		//	{
+		//		if (nullptr != positive)
+		//		{
+		//			positive->Insert(t, index);
+		//		}
+		//		else
+		//		{
+		//			positive = new BSPTreeVertexNode<T>(mesh, t, index);
+		//		}
+		//	}
+		//	else if (t > this->t)
+		//	{
+		//		if (nullptr != negative)
+		//		{
+		//			negative->Insert(t, index);
+		//		}
+		//		else
+		//		{
+		//			negative = new BSPTreeVertexNode<T>(mesh, t, index);
+		//		}
+		//	}
+		//}
+
+		void Insert(const T& t, size_t index)
+		{
+			float sd0 = glm::dot(t.v0 - this->t.centroid, this->t.normal);
+			float sd1 = glm::dot(t.v1 - this->t.centroid, this->t.normal);
+			float sd2 = glm::dot(t.v2 - this->t.centroid, this->t.normal);
+
+			if (sd0 > 0 && sd1 > 0 && sd2 > 0)
+			{
+				if (nullptr != positive)
+				{
+					positive->Insert(t, index);
+				}
+				else
+				{
+					positive = new BSPTreeTriangleNode<T>(mesh, t, index);
+				}
+			}
+			else if (sd0 < 0 && sd1 < 0 && sd2 < 0)
+			{
+				if (nullptr != negative)
+				{
+					negative->Insert(t, index);
+				}
+				else
+				{
+					negative = new BSPTreeTriangleNode<T>(mesh, t, index);
+				}
+			}
+			else if (abs(sd0) <= FLT_EPSILON && abs(sd1) <= FLT_EPSILON && abs(sd2) <= FLT_EPSILON)
+			{
+				cout << "coplanar" << endl;
+			}
+			else
+			{
+				cout << "intersection" << endl;
+			}
+		}
+
+		void Clear()
+		{
+			if (nullptr != positive)
+			{
+				positive->Clear();
+				SAFE_DELETE(positive);
+			}
+			if (nullptr != negative)
+			{
+				negative->Clear();
+				SAFE_DELETE(negative);
+			}
+		}
+
+		//private:
+		Mesh* mesh = nullptr;
+		T t;
+		size_t index = 0;
+
+		BSPTreeTriangleNode<T>* positive = nullptr;
+		BSPTreeTriangleNode<T>* negative = nullptr;
 	};
 
 	template<typename T>
@@ -121,9 +235,10 @@ namespace Neon
 		}
 
 		Mesh* mesh = nullptr;
-		BSPTreeNode<T>* root = nullptr;
+		BSPTreeVertexNode<T>* vertexRoot = nullptr;
+		BSPTreeTriangleNode<T>* triangleRoot = nullptr;
 
-		void Build()
+		void BuildVertices()
 		{
 			auto vb = mesh->GetVertexBuffer()->GetElements();
 			auto nov = vb.size();
@@ -131,29 +246,64 @@ namespace Neon
 			{
 				auto& v = vb[i];
 
-				if (nullptr == root)
+				if (nullptr == vertexRoot)
 				{
-					root = new BSPTreeNode<glm::vec3>(mesh, v, i);
+					vertexRoot = new BSPTreeVertexNode<glm::vec3>(mesh, v, i);
 				}
 				else
 				{
-					root->Insert(v, i);
+					vertexRoot->Insert(v, i);
+				}
+			}
+		}
+
+		void BuildTriangles()
+		{
+			auto noi = mesh->GetIndexBuffer()->Size();
+			for (size_t i = 0; i < noi / 3; i++)
+			{
+				GLuint i0, i1, i2;
+				mesh->GetIndex(i * 3 + 0, i0);
+				mesh->GetIndex(i * 3 + 1, i1);
+				mesh->GetIndex(i * 3 + 2, i2);
+
+				auto v0 = mesh->GetVertex(i0);
+				auto v1 = mesh->GetVertex(i1);
+				auto v2 = mesh->GetVertex(i2);
+
+				glm::vec3 centroid = (v0 + v1 + v2) / 3.0f;
+				auto normal = glm::normalize(glm::cross(glm::normalize(v1 - v0), glm::normalize(v2 - v0)));
+
+
+				if (nullptr == triangleRoot)
+				{
+					triangleRoot = new BSPTreeTriangleNode<T>(mesh, {v0, v1, v2, i0, i1, i2, centroid, normal}, i / 3);
+				}
+				else
+				{
+					triangleRoot->Insert({ v0, v1, v2, i0, i1, i2, centroid, normal }, i / 3);
 				}
 			}
 		}
 
 		void Clear()
 		{
-			if (nullptr != root)
+			if (nullptr != vertexRoot)
 			{
-				root->Clear();
-				SAFE_DELETE(root);
+				vertexRoot->Clear();
+				SAFE_DELETE(vertexRoot);
+			}
+
+			if (nullptr != triangleRoot)
+			{
+				triangleRoot->Clear();
+				SAFE_DELETE(triangleRoot);
 			}
 		}
 
-		void Traverse(BSPTreeNode<T>* node, function<void(BSPTreeNode<T>*)> callback, function<void()> finishCallback)
+		void Traverse(BSPTreeVertexNode<T>* node, function<void(BSPTreeVertexNode<T>*)> callback, function<void()> finishCallback)
 		{
-			stack<BSPTreeNode<T>*> nodes;
+			stack<BSPTreeVertexNode<T>*> nodes;
 			nodes.push(node);
 			while (nodes.empty() == false)
 			{
@@ -176,7 +326,7 @@ namespace Neon
 			finishCallback();
 		}
 
-		BSPTreeNode<T>* GetNearestNode(BSPTreeNode<T>* currentNode, const T& target, BSPTreeNode<T>* nearestNode)
+		BSPTreeVertexNode<T>* GetNearestNode(BSPTreeVertexNode<T>* currentNode, const T& target, BSPTreeVertexNode<T>* nearestNode)
 		{
 			if (currentNode == nullptr)
 			{

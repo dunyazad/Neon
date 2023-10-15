@@ -38,7 +38,7 @@ namespace Neon
 		void SetNormal(size_t index, const glm::vec3& n);
 
 		size_t AddIndex(GLuint index);
-		void GetIndex(int bufferIndex, GLuint& index);
+		void GetIndex(size_t bufferIndex, GLuint& index);
 
 		size_t AddColor(const glm::vec4& c);
 		const glm::vec4& GetColor(size_t index);

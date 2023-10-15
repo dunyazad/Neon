@@ -127,7 +127,7 @@ namespace Neon
 		return buffer->AddElement(index);
 	}
 
-	void Mesh::GetIndex(int bufferIndex, GLuint& index)
+	void Mesh::GetIndex(size_t bufferIndex, GLuint& index)
 	{
 		auto buffer = GetIndexBuffer();
 		index = buffer->GetElement(bufferIndex);

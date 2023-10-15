@@ -16,7 +16,7 @@ int main()
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 
-		glPointSize(5);
+		glPointSize(10.0f);
 
 		auto scene = app.CreateScene("Scene/Main");
 
@@ -132,24 +132,6 @@ int main()
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Mesh");
 			entity->AddComponent(mesh);
 			mesh->FromSTLFile(Neon::URL::Resource("/stl/mx.stl"), 0.01f, 0.01f, 0.01f);
-			//auto nov = mesh->GetVertexBuffer()->Size();
-			//auto rotation = glm::angleAxis(-glm::half_pi<float>(), glm::vec3(1.0f, 0.0f, 0.0f));
-			//for (int i = 0; i < nov; i++)
-			//{
-			//	mesh->AddColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-
-			//	{
-			//		auto roatated = rotation * mesh->GetVertex(i);
-			//		mesh->SetVertex(i, roatated);
-			//	}
-
-			//	//{
-			//	//	float x, y, z;
-			//	//	mesh->GetNormal(i, x, y, z);
-			//	//	auto roatated = rotation * glm::vec3(x, y, z);
-			//	//	mesh->SetNormal(i, roatated.x, roatated.y, roatated.z);
-			//	//}
-			//}
 
 			mesh->FillColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
@@ -181,12 +163,15 @@ int main()
 				}
 				});
 
-			auto bspTree = scene->CreateComponent<Neon::BSPTree<glm::vec3>>("BSPTree/Mesh", mesh);
-			bspTree->Build();
+			auto trianglesBSPTree = scene->CreateComponent<Neon::BSPTree<Neon::BSPTriangle>>("Triangles BSPTree/Mesh", mesh);
+			trianglesBSPTree->BuildTriangles();
+
+			auto verticesBSPTree = scene->CreateComponent<Neon::BSPTree<glm::vec3>>("Vertices BSPTree/Mesh", mesh);
+			verticesBSPTree->BuildVertices();
 
 			size_t count = 0;
-			bspTree->Traverse(bspTree->root, [&count, debugTriangles](Neon::BSPTreeNode<glm::vec3>* node) {
-				glPointSize(5.0f);
+			verticesBSPTree->Traverse(verticesBSPTree->vertexRoot, [&count, debugTriangles](Neon::BSPTreeVertexNode<glm::vec3>* node) {
+				glPointSize(10.0f);
 
 				count++;
 				},
@@ -194,7 +179,7 @@ int main()
 					cout << "total count : " << count << endl;
 				});
 
-			entity->AddMouseButtonEventHandler([scene, mesh, bspTree, debugPoints, debugLines](const Neon::MouseButtonEvent& event) {
+			entity->AddMouseButtonEventHandler([scene, mesh, verticesBSPTree, debugPoints, debugLines](const Neon::MouseButtonEvent& event) {
 				if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_DOUBLE_ACTION)
 				{
 					auto camera = scene->GetMainCamera();
@@ -222,11 +207,11 @@ int main()
 
 						debugPoints->AddPoint(intersection, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 
-						auto result = bspTree->GetNearestNode(bspTree->root, intersection, bspTree->root);
+						auto result = verticesBSPTree->GetNearestNode(verticesBSPTree->vertexRoot, intersection, verticesBSPTree->vertexRoot);
 
 						if (nullptr != result)
 						{
-							bspTree->Traverse(bspTree->root, [&mesh, result](Neon::BSPTreeNode<glm::vec3>* node) {
+							verticesBSPTree->Traverse(verticesBSPTree->vertexRoot, [&mesh, result](Neon::BSPTreeVertexNode<glm::vec3>* node) {
 								//cout << node->index << endl;
 								if (node->t < result->t)
 								{
@@ -236,10 +221,10 @@ int main()
 
 							//debugPoints->AddPoint(result->t, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
 						}
-
 					}
 				}
 				});
+
 		}
 		});
 
@@ -255,35 +240,11 @@ int main()
 		//glClearColor(0.9f, 0.7f, 0.5f, 1.0f);
 		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		//shaderA->use();
-		//triangle.Bind();
-		//glDrawElements(GL_TRIANGLES, (GLsizei)triangle.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
-
-		//shaderB->use();
-		//owl.Bind();
-		//glDrawElements(GL_TRIANGLES, (GLsizei)owl.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
-
-		//lion.Bind();
-		//glDrawElements(GL_TRIANGLES, (GLsizei)lion.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
-
 		//fbo->Unbind();
 
 		glClearColor(0.3f, 0.5f, 0.7f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		//shaderA->Use();
-		//triangle.Bind();
-		//glDrawElements(GL_TRIANGLES, (GLsizei)triangle.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
-
-		//shaderB->Use();
-		//owl.Bind();
-		//glDrawElements(GL_TRIANGLES, (GLsizei)owl.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
-
-		//lion.Bind();
-		//glDrawElements(GL_TRIANGLES, (GLsizei)lion.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
-
-		//frame.Bind();
-		//glDrawElements(GL_TRIANGLES, (GLsizei)frame.GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
 		});
 
 
