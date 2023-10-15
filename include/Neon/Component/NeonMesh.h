@@ -58,6 +58,7 @@ namespace Neon
 
 		inline FillMode GetFillMode() { return fillMode; }
 		inline void SetFillMode(FillMode mode) { fillMode = mode; }
+		inline void ToggleFillMode() { int f = fillMode; f++; fillMode = (Mesh::FillMode)(f % ((int)Mesh::FillMode::Point + 1)); }
 
 		void FromSTLFile(const URL& fileURL, float scaleX = 1.0f, float scaleY = 1.0f, float scaleZ = 1.0f);
 		void RecalculateFaceNormal();

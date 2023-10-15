@@ -36,12 +36,33 @@ int main()
 			}
 		};
 
+		auto toggleFillMode = [](const Neon::KeyEvent& event)
+		{
+			auto entity = dynamic_cast<Neon::Entity*>(event.target);
+			if (nullptr != entity)
+			{
+				auto mesh = entity->GetComponent<Neon::Mesh>(0);
+				if (nullptr != mesh)
+				{
+					if (GLFW_KEY_2 == event.key && GLFW_RELEASE == event.action)
+					{
+						mesh->ToggleFillMode();
+					}
+				}
+			}
+		};
+
 		auto debugPoints = scene->CreateDebugEntity("DebugEntity/Points");
 		debugPoints->AddKeyEventHandler(toggleVisibility);
+		debugPoints->AddKeyEventHandler(toggleFillMode);
+
 		auto debugLines = scene->CreateDebugEntity("DebugEntity/Lines");
 		debugLines->AddKeyEventHandler(toggleVisibility);
+		debugLines->AddKeyEventHandler(toggleFillMode);
+
 		auto debugTriangles = scene->CreateDebugEntity("DebugEntity/Triangles");
 		debugTriangles->AddKeyEventHandler(toggleVisibility);
+		debugTriangles->AddKeyEventHandler(toggleFillMode);
 
 		debugTriangles->AddKeyEventHandler([debugTriangles](const Neon::KeyEvent& event) {
 			auto mesh = debugTriangles->GetComponent<Neon::Mesh>(0);
