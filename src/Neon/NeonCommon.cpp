@@ -96,6 +96,31 @@ namespace Neon
 {
 	json Settings;
 
+	namespace Intersection
+	{
+		bool Equals(const glm::vec3& a, const glm::vec3& b)
+		{
+			return FLT_EPSILON > glm::distance(a, b);
+		}
+
+		bool LinePlaneIntersection(const glm::vec3& l0, const glm::vec3& l1, const glm::vec3& pp, const glm::vec3& pn, glm::vec3& intersectionPoint) {
+			auto lineDirection = l1 - l0;
+			auto dotProduct = dot(lineDirection, pn);
+
+			if (fabs(dotProduct) < 1e-6) {
+				return false;
+			}
+
+			auto t = dot(pp - l0, pn) / dotProduct;
+
+			if (t < 0) return false;
+			else if (t > 1) return false;
+
+			intersectionPoint = l0 + t * lineDirection;
+			return true;
+		}
+	}
+
 	NeonObject::NeonObject(const string& name)
 		: name(name)
 	{

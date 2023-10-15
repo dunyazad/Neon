@@ -71,6 +71,18 @@ namespace Neon
 		glm::vec3 direction = glm::zero<glm::vec3>();
 	};
 
+	struct Plane
+	{
+		glm::vec3 point = glm::zero<glm::vec3>();
+		glm::vec3 normal = glm::zero<glm::vec3>();
+	};
+
+	namespace Intersection
+	{
+		bool Equals(const glm::vec3& a, const glm::vec3& b);
+		bool LinePlaneIntersection(const glm::vec3& l0, const glm::vec3& l1, const glm::vec3& pn, const glm::vec3& pp, glm::vec3& intersectionPoint);
+	}
+
 	typedef unsigned long ID;
 
 	class NeonObject;
