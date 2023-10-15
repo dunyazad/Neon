@@ -22,7 +22,7 @@ int main()
 		auto debugLines = scene->CreateDebugEntity("DebugEntity/Lines");
 		auto debugTriangles = scene->CreateDebugEntity("DebugEntity/Triangles");
 
-		debugTriangles->SetKeyEventCallback([debugTriangles](const Neon::KeyEvent& event) {
+		debugTriangles->AddKeyEventHandler([debugTriangles](const Neon::KeyEvent& event) {
 			auto mesh = debugTriangles->GetComponent<Neon::Mesh>(0);
 			if (GLFW_KEY_4 == event.key)
 			{
@@ -61,7 +61,7 @@ int main()
 			auto light = scene->CreateComponent<Neon::Light>("Light/Main");
 			entity->AddComponent(light);
 
-			light->SetUpdateCallback([scene, light](float now, float timeDelta) {
+			light->AddUpdateHandler([scene, light](float now, float timeDelta) {
 				auto camera = scene->GetMainCamera();
 				light->position = camera->position;
 				light->direction = glm::normalize(camera->centerPosition - camera->position);
@@ -129,30 +129,30 @@ int main()
 
 			mesh->RecalculateFaceNormal();
 
-			//auto noi = mesh->GetIndexBuffer()->Size();
-			//for (size_t i = 0; i < noi / 3; i++)
-			//{
-			//	auto i0 = mesh->GetIndexBuffer()->GetElement(i * 3 + 0);
-			//	auto i1 = mesh->GetIndexBuffer()->GetElement(i * 3 + 1);
-			//	auto i2 = mesh->GetIndexBuffer()->GetElement(i * 3 + 2);
+			auto noi = mesh->GetIndexBuffer()->Size();
+			for (size_t i = 0; i < noi / 3; i++)
+			{
+				auto i0 = mesh->GetIndexBuffer()->GetElement(i * 3 + 0);
+				auto i1 = mesh->GetIndexBuffer()->GetElement(i * 3 + 1);
+				auto i2 = mesh->GetIndexBuffer()->GetElement(i * 3 + 2);
 
-			//	auto v0 = mesh->GetVertex(i0);
-			//	auto v1 = mesh->GetVertex(i1);
-			//	auto v2 = mesh->GetVertex(i2);
+				auto v0 = mesh->GetVertex(i0);
+				auto v1 = mesh->GetVertex(i1);
+				auto v2 = mesh->GetVertex(i2);
 
-			//	debugTriangles->AddTriangle(v0, v1, v2, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-			//}
+				debugTriangles->AddTriangle(v0, v1, v2, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+			}
 
 			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", Neon::URL::Resource("/shader/lighting.vs"), Neon::URL::Resource("/shader/lighting.fs"));
 			entity->AddComponent(shader);
 
 			auto transform = scene->CreateComponent<Neon::Transform>("Transform/Mesh");
 			entity->AddComponent(transform);
-			transform->SetUpdateCallback([transform](float now, float timeDelta) {
+			transform->AddUpdateHandler([transform](float now, float timeDelta) {
 				//transform->rotation = glm::angleAxis(glm::radians(now * 0.01f), glm::vec3(0.0f, 1.0f, 0.0f));
 				});
 
-			entity->SetKeyEventCallback([mesh](const Neon::KeyEvent& event) {
+			entity->AddKeyEventHandler([mesh](const Neon::KeyEvent& event) {
 				if (GLFW_KEY_1 == event.key)
 				{
 					mesh->SetFillMode(Neon::Mesh::Fill);
@@ -186,8 +186,65 @@ int main()
 					cout << "total count : " << count << endl;
 				});
 
-			entity->SetMouseButtonEventCallback([scene, mesh, bspTree, debugPoints, debugLines](const Neon::MouseButtonEvent& event) {
-				if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_RELEASE)
+			entity->AddMouseButtonEventHandler([scene, mesh, bspTree, debugPoints, debugLines](const Neon::MouseButtonEvent& event) {
+				if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_DOUBLE_ACTION)
+				{
+					auto camera = scene->GetMainCamera();
+
+					GLint viewport[4];
+					glGetIntegerv(GL_VIEWPORT, viewport);
+					float winX = (float)event.xpos;
+					float winY = (float)viewport[3] - (float)event.ypos;
+
+					auto u = winX / viewport[2] - 0.5f;
+					auto v = winY / viewport[3] - 0.5f;
+
+					auto pp = glm::unProject(
+						glm::vec3(winX, winY, 1),
+						glm::identity<glm::mat4>(),
+						camera->projectionMatrix * camera->viewMatrix,
+						glm::vec4(viewport[0], viewport[1], viewport[2], viewport[3]));
+
+					auto rayOrigin = glm::vec3(glm::inverse(camera->viewMatrix)[3]);
+					auto rayDirection = glm::normalize(pp - rayOrigin);
+
+					debugLines->AddLine(rayOrigin, rayOrigin + rayDirection * 100.0f);
+
+					vector<pair<float, int>> unorderedPickedFaceIndices;
+					auto ib = mesh->GetIndexBuffer();
+					auto noi = ib->Size();
+					for (size_t i = 0; i < noi / 3; i++)
+					{
+						auto v0 = mesh->GetVertex(i * 3 + 0);
+						auto v1 = mesh->GetVertex(i * 3 + 1);
+						auto v2 = mesh->GetVertex(i * 3 + 2);
+
+						glm::vec2 baricenter;
+						float distance = 0.0f;
+						if (glm::intersectRayTriangle(rayOrigin, rayDirection, v0, v1, v2, baricenter, distance))
+						{
+							if (distance > 0) {
+								unorderedPickedFaceIndices.push_back(make_pair(distance, (int)i));
+							}
+						}
+					}
+
+					if (0 < unorderedPickedFaceIndices.size())
+					{
+						struct PickedFacesLess {
+							inline bool operator() (const tuple<float, int>& a, const tuple<float, int>& b) {
+								return get<0>(a) < get<0>(b);
+							}
+						};
+
+						sort(unorderedPickedFaceIndices.begin(), unorderedPickedFaceIndices.end(), PickedFacesLess());
+
+						auto nearestIntersection = rayOrigin + rayDirection * unorderedPickedFaceIndices.front().first;
+
+						camera->centerPosition = nearestIntersection;
+					}
+				}
+				else if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_RELEASE)
 				{
 					auto camera = scene->GetMainCamera();
 
@@ -251,6 +308,7 @@ int main()
 						}
 					}
 				}
+
 				});
 		}
 		});

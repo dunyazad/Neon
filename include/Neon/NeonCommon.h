@@ -67,37 +67,43 @@ namespace Neon
 
 	typedef unsigned long ID;
 
+	class NeonObject;
+
 	struct KeyEvent
 	{
-		GLFWwindow* window;
-		int key;
-		int scancode;
-		int action;
-		int mods;
+		NeonObject* target = nullptr;
+		GLFWwindow* window = nullptr;
+		int key = GLFW_KEY_UNKNOWN;
+		int scancode = -1;
+		int action = -1;
+		int mods = -1;
 	};
 
 	struct MouseButtonEvent
 	{
-		GLFWwindow* window;
-		int button;
-		int action;
-		int mods;
-		double xpos;
-		double ypos;
+		NeonObject* target = nullptr;
+		GLFWwindow* window = nullptr;
+		int button = -1;
+		int action = -1;
+		int mods = -1;
+		double xpos = 0.0;
+		double ypos = 0.0;
 	};
 
 	struct CursorPosEvent
 	{
-		GLFWwindow* window;
-		double xpos;
-		double ypos;
+		NeonObject* target = nullptr;
+		GLFWwindow* window = nullptr;
+		double xpos = 0.0;
+		double ypos = 0.0;
 	};
 
 	struct ScrollEvent
 	{
-		GLFWwindow* window;
-		double xoffset;
-		double yoffset;
+		NeonObject* target = nullptr;
+		GLFWwindow* window = nullptr;
+		double xoffset = 0;
+		double yoffset = 0;
 	};
 
 	class NeonObject
@@ -113,25 +119,25 @@ namespace Neon
 		virtual void OnCursorPosEvent(const CursorPosEvent& event);
 		virtual void OnScrollEvent(const ScrollEvent& event);
 
-		inline void SetKeyEventCallback(function<void(const KeyEvent&)> callback) { keyEventCallback = callback; }
-		inline void SetMouseButtonEventCallback(function<void(const MouseButtonEvent&)> callback) { mouseButtonEventCallback = callback; }
-		inline void SetCursorPosEventCallback(function<void(const CursorPosEvent&)> callback) { cursorPosEventCallback = callback; }
-		inline void SetScrollEventCallback(function<void(const ScrollEvent&)> callback) { scrollEventCallback = callback; }
+		inline void AddKeyEventHandler(function<void(const KeyEvent&)> handler) { keyEventHandlers.push_back(handler); }
+		inline void AddMouseButtonEventHandler(function<void(const MouseButtonEvent&)> handler) { mouseButtonEventHandlers.push_back(handler); }
+		inline void AddCursorPosEventHandler(function<void(const CursorPosEvent&)> handler) { cursorPosEventHandlers.push_back(handler); }
+		inline void AddScrollEventHandler(function<void(const ScrollEvent&)> handler) { scrollEventHandlers.push_back(handler); }
 
 		virtual void OnUpdate(float now, float timeDelta);
 
-		inline void SetUpdateCallback(function<void(float, float)> callback) { updateCallback = callback; }
-		inline void RemoveUpdateCallback() { updateCallback = nullptr; }
+		inline void AddUpdateHandler(function<void(float, float)> handler) { updateHandlers.push_back(handler); }
+		//inline void RemoveUpdateHandler(function<void(float, float)> handler) { updateHandlers.erase(handler); }
 
 	protected:
 		string name;
 
-		function<void(const KeyEvent&)> keyEventCallback;
-		function<void(const MouseButtonEvent&)> mouseButtonEventCallback;
-		function<void(const CursorPosEvent&)> cursorPosEventCallback;
-		function<void(const ScrollEvent&)> scrollEventCallback;
+		vector<function<void(const KeyEvent&)>> keyEventHandlers;
+		vector<function<void(const MouseButtonEvent&)>> mouseButtonEventHandlers;
+		vector<function<void(const CursorPosEvent&)>> cursorPosEventHandlers;
+		vector<function<void(const ScrollEvent&)>> scrollEventHandlers;
 
-		function<void(float, float)> updateCallback;
+		vector<function<void(float, float)>> updateHandlers;
 	};
 
 	class Time

@@ -107,27 +107,42 @@ namespace Neon
 
 	void NeonObject::OnKeyEvent(const KeyEvent& event)
 	{
-		if (keyEventCallback) keyEventCallback(event);
+		for (auto& handler : keyEventHandlers)
+		{
+			handler(event);
+		}
 	}
 
 	void NeonObject::OnMouseButtonEvent(const MouseButtonEvent& event)
 	{
-		if (mouseButtonEventCallback) mouseButtonEventCallback(event);
+		for (auto& handler : mouseButtonEventHandlers)
+		{
+			handler(event);
+		}
 	}
 	
 	void NeonObject::OnCursorPosEvent(const CursorPosEvent& event)
 	{
-		if (cursorPosEventCallback) cursorPosEventCallback(event);
+		for (auto& handler : cursorPosEventHandlers)
+		{
+			handler(event);
+		}
 	}
 	
 	void NeonObject::OnScrollEvent(const ScrollEvent& event)
 	{
-		if (scrollEventCallback) scrollEventCallback(event);
+		for (auto& handler : scrollEventHandlers)
+		{
+			handler(event);
+		}
 	}
 
 	void NeonObject::OnUpdate(float now, float timeDelta)
 	{
-		if (updateCallback) updateCallback(now, timeDelta);
+		for (auto& handler : updateHandlers)
+		{
+			handler(now, timeDelta);
+		}
 	}
 
 
