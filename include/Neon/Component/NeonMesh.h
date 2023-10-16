@@ -42,7 +42,7 @@ namespace Neon
 
 		tuple<size_t, size_t, size_t> AddTriangle(GLuint i0, GLuint i1, GLuint i2);
 		void GetTriangleVertexIndices(size_t triangleIndex, GLuint& i0, GLuint& i1, GLuint& i2);
-
+		
 		size_t AddColor(const glm::vec4& c);
 		const glm::vec4& GetColor(size_t index);
 		void SetColor(size_t index, const glm::vec4& c);
@@ -68,6 +68,8 @@ namespace Neon
 		inline FillMode GetFillMode() { return fillMode; }
 		inline void SetFillMode(FillMode mode) { fillMode = mode; }
 		inline void ToggleFillMode() { int f = fillMode; f++; fillMode = (Mesh::FillMode)(f % ((int)Mesh::FillMode::None + 1)); }
+
+		void ForEachTriangle(function<void(size_t, GLuint, GLuint, GLuint, glm::vec3, glm::vec3, glm::vec3)> callback);
 
 	private:
 		bool visible = true;

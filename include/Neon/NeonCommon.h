@@ -80,6 +80,7 @@ namespace Neon
 	namespace Intersection
 	{
 		bool Equals(const glm::vec3& a, const glm::vec3& b);
+		bool PointInTriangle(const glm::vec3& p, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2);
 		bool LinePlaneIntersection(const glm::vec3& l0, const glm::vec3& l1, const glm::vec3& pn, const glm::vec3& pp, glm::vec3& intersectionPoint);
 	}
 

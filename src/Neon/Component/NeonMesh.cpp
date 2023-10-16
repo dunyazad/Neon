@@ -252,7 +252,7 @@ namespace Neon
 					float z = safe_stof(words[3]);
 
 					auto index = AddVertex(glm::vec3(x * scaleX, y * scaleY, z * scaleZ));
-					AddIndex(index);
+					AddIndex((GLuint)index);
 				}
 				else if (words[0] == "endfacet")
 				{
@@ -336,9 +336,13 @@ namespace Neon
 		auto noi = ib->Size();
 		for (size_t i = 0; i < noi / 3; i++)
 		{
-			auto v0 = GetVertex(i * 3 + 0);
-			auto v1 = GetVertex(i * 3 + 1);
-			auto v2 = GetVertex(i * 3 + 2);
+			auto i0 = ib->GetElement(i * 3 + 0);
+			auto i1 = ib->GetElement(i * 3 + 1);
+			auto i2 = ib->GetElement(i * 3 + 2);
+
+			auto v0 = GetVertex(i0);
+			auto v1 = GetVertex(i1);
+			auto v2 = GetVertex(i2);
 
 			glm::vec2 baricenter;
 			float distance = 0.0f;
@@ -367,6 +371,24 @@ namespace Neon
 		else
 		{
 			return false;
+		}
+	}
+
+	void Mesh::ForEachTriangle(function<void(size_t, GLuint, GLuint, GLuint, glm::vec3, glm::vec3, glm::vec3)> callback)
+	{
+		auto ib = GetIndexBuffer();
+		auto noi = ib->Size();
+		for (size_t i = 0; i < noi / 3; i++)
+		{
+			auto i0 = ib->GetElement(i * 3 + 0);
+			auto i1 = ib->GetElement(i * 3 + 1);
+			auto i2 = ib->GetElement(i * 3 + 2);
+
+			auto v0 = GetVertex(i0);
+			auto v1 = GetVertex(i1);
+			auto v2 = GetVertex(i2);
+
+			callback(i, i0, i1, i2, v0, v1, v2);
 		}
 	}
 }

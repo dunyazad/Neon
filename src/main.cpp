@@ -2,6 +2,9 @@
 
 #include <Neon/Neon.h>
 
+#define CSGJS_HEADER_ONLY
+#include "csgjs_cpp.cpp"
+
 int main()
 {
 	Neon::Application app(1280, 1024);
@@ -106,6 +109,8 @@ int main()
 			entity->AddComponent(shader);
 		}
 
+		csgjs_model cube;
+
 		{
 			auto entity = scene->CreateEntity("Entity/Cube");
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Cube");
@@ -172,8 +177,48 @@ int main()
 					}
 				}
 				});
+
+			//auto bspTree = scene->CreateComponent<Neon::BSPTree<Neon::BSPTriangle>>("Cube BSPTree", mesh);
+			//entity->AddComponent(bspTree);
+			//bspTree->BuildTriangles();
+
+			//bspTree->Traverse(bspTree->triangleRoot, [bspTree, debugTriangles](auto node) {
+			//	debugTriangles->AddTriangle(node->t.v0, node->t.v1, node->t.v2);
+			//	}, []() {});
+
+			
+			//cube.vertices.push_back()
+
+			auto vb = mesh->GetVertexBuffer();
+			auto nb = mesh->GetNormalBuffer();
+			auto nov = vb->Size();
+
+			for (size_t i = 0; i < nov; i++)
+			{
+				auto v = vb->GetElement(i);
+				auto n = nb->GetElement(i);
+
+				csgjs_vertex csgv;
+				csgv.pos.x = v.x;
+				csgv.pos.y = v.y;
+				csgv.pos.z = v.z;
+
+				csgv.normal.x = n.x;
+				csgv.normal.y = n.y;
+				csgv.normal.z = n.z;
+
+				cube.vertices.push_back(csgv);
+			}
+
+			auto ib = mesh->GetIndexBuffer();
+			auto noi = ib->Size();
+			for (size_t i = 0; i < noi; i++)
+			{
+				cube.indices.push_back(ib->GetElement(i));
+			}
 		}
 
+		csgjs_model sphere;
 		{
 			auto entity = scene->CreateEntity("Entity/Sphere");
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Sphere");
@@ -240,6 +285,65 @@ int main()
 					}
 				}
 				});
+
+			auto vb = mesh->GetVertexBuffer();
+			auto nb = mesh->GetNormalBuffer();
+			auto nov = vb->Size();
+
+			for (size_t i = 0; i < nov; i++)
+			{
+				auto v = vb->GetElement(i);
+				auto n = nb->GetElement(i);
+
+				csgjs_vertex csgv;
+				csgv.pos.x = v.x;
+				csgv.pos.y = v.y;
+				csgv.pos.z = v.z;
+
+				csgv.normal.x = n.x;
+				csgv.normal.y = n.y;
+				csgv.normal.z = n.z;
+
+				sphere.vertices.push_back(csgv);
+			}
+
+			auto ib = mesh->GetIndexBuffer();
+			auto noi = ib->Size();
+			for (size_t i = 0; i < noi; i++)
+			{
+				sphere.indices.push_back(ib->GetElement(i));
+			}
+
+			//auto bspTree = scene->CreateComponent<Neon::BSPTree<Neon::BSPTriangle>>("Sphere BSPTree", mesh);
+			//entity->AddComponent(bspTree);
+			//bspTree->BuildTriangles();
+
+			//bspTree->Traverse(bspTree->triangleRoot, [bspTree, debugTriangles](auto node) {
+			//	debugTriangles->AddTriangle(node->t.v0, node->t.v1, node->t.v2);
+			//	}, []() {});
+		}
+
+		{
+			auto result_union = csgjs_union(cube, sphere);
+			auto noi = result_union.indices.size();
+			for (size_t i = 0; i < noi / 3; i++)
+			{
+				auto i0 = result_union.indices[i * 3 + 0];
+				auto i1 = result_union.indices[i * 3 + 1];
+				auto i2 = result_union.indices[i * 3 + 2];
+
+				auto v0 = result_union.vertices[i0];
+				auto v1 = result_union.vertices[i1];
+				auto v2 = result_union.vertices[i2];
+
+				debugTriangles->AddTriangle(
+					glm::vec3(v0.pos.x, v0.pos.y, v0.pos.z),
+					glm::vec3(v1.pos.x, v1.pos.y, v1.pos.z),
+					glm::vec3(v2.pos.x, v2.pos.y, v2.pos.z),
+					glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
+					glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
+					glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+			}
 		}
 
 		/*

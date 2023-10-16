@@ -11,6 +11,7 @@ add_subdirectory("External/glm")
 
 set(source_list
 src/main.cpp
+src/csgjs_cpp.cpp
 
 include/Neon/Neon.h
 src/Neon/Neon.cpp

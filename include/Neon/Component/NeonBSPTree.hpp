@@ -201,6 +201,10 @@ namespace Neon
 				auto b12 = Intersection::LinePlaneIntersection(t.v1, t.v2, this->t.centroid, this->t.normal, i12);
 				auto b20 = Intersection::LinePlaneIntersection(t.v2, t.v0, this->t.centroid, this->t.normal, i20);
 
+				if (b01) b01 = Intersection::PointInTriangle(i01, t.v0, t.v1, t.v2);
+				if (b12) b12 = Intersection::PointInTriangle(i12, t.v0, t.v1, t.v2);
+				if (b20) b20 = Intersection::PointInTriangle(i20, t.v0, t.v1, t.v2);
+
 				if (b01 && b12 && b20)
 				{
 					cout << "!!!!!!!!!! coplanar" << endl;
@@ -342,7 +346,39 @@ namespace Neon
 				}
 				else
 				{
-					cout << "???" << endl;
+					if (b01 && false == b12 && false == b20)
+					{
+						if (Intersection::Equals(i01, t.v0) || Intersection::Equals(i01, t.v1))
+						{
+							return;
+						}
+						else
+						{
+							cout << "???" << endl;
+						}
+					}
+					else if (false == b01 && b12 && false == b20)
+					{
+						if (Intersection::Equals(i12, t.v1) || Intersection::Equals(i12, t.v2))
+						{
+							return;
+						}
+						else
+						{
+							cout << "???" << endl;
+						}
+					}
+					else if (false == b01 && false == b12 && b20)
+					{
+						if (Intersection::Equals(i20, t.v2) || Intersection::Equals(i20, t.v0))
+						{
+							return;
+						}
+						else
+						{
+							cout << "???" << endl;
+						}
+					}
 				}
 			}
 		}

@@ -100,7 +100,34 @@ namespace Neon
 	{
 		bool Equals(const glm::vec3& a, const glm::vec3& b)
 		{
-			return FLT_EPSILON > glm::distance(a, b);
+			return 0.0001f > glm::distance(a, b);
+		}
+
+		bool PointInTriangle(const glm::vec3& p, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2)
+		{
+			glm::vec3 edge1 = v1 - v0;
+			glm::vec3 edge2 = v2 - v0;
+			glm::vec3 h = glm::cross(edge1, edge2);
+			float a = glm::dot(h, edge2);
+
+			if (a == 0.0f) {
+				// The triangle is degenerate (a line or a point)
+				return false;
+			}
+
+			glm::vec3 s = p - v0;
+			float u = glm::dot(s, h) / a;
+			if (u < 0.0f || u > 1.0f) {
+				return false;
+			}
+
+			glm::vec3 q = glm::cross(s, edge1);
+			float v = glm::dot(q, h) / a;
+			if (v < 0.0f || (u + v) > 1.0f) {
+				return false;
+			}
+
+			return true;
 		}
 
 		bool LinePlaneIntersection(const glm::vec3& l0, const glm::vec3& l1, const glm::vec3& pp, const glm::vec3& pn, glm::vec3& intersectionPoint) {
