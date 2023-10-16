@@ -133,6 +133,23 @@ namespace Neon
 		index = buffer->GetElement(bufferIndex);
 	}
 
+	tuple<size_t, size_t, size_t> Mesh::AddTriangle(GLuint i0, GLuint i1, GLuint i2)
+	{
+		auto buffer = GetIndexBuffer();
+		auto bi0 = buffer->AddElement(i0);
+		auto bi1 = buffer->AddElement(i1);
+		auto bi2 = buffer->AddElement(i2);
+		return make_tuple(bi0, bi1, i2);
+	}
+
+	void Mesh::GetTriangleVertexIndices(size_t triangleIndex, GLuint& i0, GLuint& i1, GLuint& i2)
+	{
+		auto buffer = GetIndexBuffer();
+		i0 = buffer->GetElement(triangleIndex * 3 + 0);
+		i1 = buffer->GetElement(triangleIndex * 3 + 1);
+		i2 = buffer->GetElement(triangleIndex * 3 + 2);
+	}
+
 	size_t Mesh::AddColor(const glm::vec4& c)
 	{
 		auto buffer = GetColorBuffer();

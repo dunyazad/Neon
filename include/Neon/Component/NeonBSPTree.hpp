@@ -194,60 +194,60 @@ namespace Neon
 			}
 			else
 			{
-				cout << "intersection" << endl;
+				//cout << "intersection" << endl;
 
-			//	glm::vec3 i01, i12, i20;
-			//	auto b01 = Intersection::LinePlaneIntersection(t.v0, t.v1, this->t.centroid, this->t.normal, i01);
-			//	auto b12 = Intersection::LinePlaneIntersection(t.v1, t.v2, this->t.centroid, this->t.normal, i12);
-			//	auto b20 = Intersection::LinePlaneIntersection(t.v2, t.v0, this->t.centroid, this->t.normal, i20);
+				glm::vec3 i01, i12, i20;
+				auto b01 = Intersection::LinePlaneIntersection(t.v0, t.v1, this->t.centroid, this->t.normal, i01);
+				auto b12 = Intersection::LinePlaneIntersection(t.v1, t.v2, this->t.centroid, this->t.normal, i12);
+				auto b20 = Intersection::LinePlaneIntersection(t.v2, t.v0, this->t.centroid, this->t.normal, i20);
 
-			//	if (b01 && b12 && b20)
-			//	{
-			//		cout << "coplanar" << endl;
-			//	}
-			//	else if (b01 && b12)
-			//	{
-			//		mesh->AddVertex(i01);
-			//		mesh->AddVertex(i12);
+				if (b01 && b12 && b20)
+				{
+					cout << "!!!!!!!!!! coplanar" << endl;
+				}
+				else if (b01 && b12)
+				{
+					auto ii01 = mesh->AddVertex(i01);
+					auto ii12 = mesh->AddVertex(i12);
 
-			//		if ((i01 == t.v0 || i01 == t.v1 || i01 == t.v2) &&
-			//			(i12 == t.v0 || i12 == t.v1 || i12 == t.v2))
-			//		{
-			//			return;
-			//			//return result;
-			//		}
+					if ((i01 == t.v0 || i01 == t.v1 || i01 == t.v2) &&
+						(i12 == t.v0 || i12 == t.v1 || i12 == t.v2))
+					{
+						return;
+						//return result;
+					}
 
-			//		if (i01 == t.v0)
-			//		{
-			//			AddTriangle(t.v0, t.v1, v12);
-			//			AddTriangle(t.v2, t.v0, v12);
+					if (i01 == t.v0)
+					{
+						AddTriangle(t.i0, t.i1, ii12);
+						AddTriangle(t.i2, t.i0, ii12);
 
-			//			RemoveTriangle(triangle);
-			//		}
-			//		else if (i01 == t.v1)
-			//		{
-			//			return result;
-			//		}
-			//		else if (i12 == t.v1)
-			//		{
-			//			return result;
-			//		}
-			//		else if (i12 == t.v2)
-			//		{
-			//			AddTriangle(t.v2, t.v0, i12);
-			//			AddTriangle(t.v1, t.v2, i12);
+						RemoveTriangle(triangle);
+					}
+					else if (i01 == t.v1)
+					{
+						return result;
+					}
+					else if (i12 == t.v1)
+					{
+						return result;
+					}
+					else if (i12 == t.v2)
+					{
+						AddTriangle(t.i2, t.i0, ii12);
+						AddTriangle(t.i1, t.i2, ii12);
 
-			//			RemoveTriangle(triangle);
-			//		}
-			//		else
-			//		{
-			//			AddTriangle(t.v0, i01, i12);
-			//			AddTriangle(t.v0, i12, t.v2);
-			//			AddTriangle(t.v1, i12, i01);
+						RemoveTriangle(triangle);
+					}
+					else
+					{
+						AddTriangle(t.i0, ii01, ii12);
+						AddTriangle(t.i0, ii12, t.i2);
+						AddTriangle(t.i1, ii12, ii01);
 
-			//			RemoveTriangle(triangle);
-			//		}
-			//	}
+						RemoveTriangle(triangle);
+					}
+				}
 			//	else if (b12 && b20)
 			//	{
 			//		AddVertex(i12, { 0.0f, 0.0f, 0.0f, });
