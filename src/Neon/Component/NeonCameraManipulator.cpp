@@ -16,9 +16,9 @@ namespace Neon
 
 	void CameraManipulator::OnKeyEvent(const KeyEvent& event)
 	{
-		if (event.key == GLFW_KEY_LEFT_SHIFT || event.key == GLFW_KEY_RIGHT_SHIFT)
+		if (GLFW_KEY_LEFT_SHIFT == event.key || GLFW_KEY_RIGHT_SHIFT == event.key)
 		{
-			if (event.action == GLFW_PRESS)
+			if (GLFW_PRESS == event.action)
 			{
 				isShiftDown = true;
 			}
@@ -26,6 +26,11 @@ namespace Neon
 			{
 				isShiftDown = false;
 			}
+		}
+
+		if (GLFW_KEY_SPACE == event.key && GLFW_RELEASE == event.action)
+		{
+			ResetRotation();
 		}
 
 		NeonObject::OnKeyEvent(event);
@@ -124,5 +129,10 @@ namespace Neon
 		}
 
 		NeonObject::OnScrollEvent(event);
+	}
+
+	void CameraManipulator::ResetRotation()
+	{
+		camera->rotation = glm::identity<glm::quat>();
 	}
 }

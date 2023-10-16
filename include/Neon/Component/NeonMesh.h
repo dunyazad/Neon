@@ -66,9 +66,6 @@ namespace Neon
 		inline void SetFillMode(FillMode mode) { fillMode = mode; }
 		inline void ToggleFillMode() { int f = fillMode; f++; fillMode = (Mesh::FillMode)(f % ((int)Mesh::FillMode::None + 1)); }
 
-		inline bool IsVisible() const { return visible; }
-		inline void SetVisible(bool visible) { this->visible = visible; }
-
 	private:
 		bool visible = true;
 

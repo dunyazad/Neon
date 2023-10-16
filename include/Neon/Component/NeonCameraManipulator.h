@@ -20,6 +20,8 @@ namespace Neon
 		virtual void OnCursorPosEvent(const CursorPosEvent& event);
 		virtual void OnScrollEvent(const ScrollEvent& event);
 
+		void ResetRotation();
+
 	protected:
 		Entity* cameraEntity = nullptr;
 		Camera* camera = nullptr;

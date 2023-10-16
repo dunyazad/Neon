@@ -51,9 +51,6 @@ namespace Neon
 			if (nullptr == mesh)
 				continue;
 
-			if (false == mesh->IsVisible())
-				continue;
-
 			if (Mesh::FillMode::None == mesh->GetFillMode())
 				continue;
 
@@ -63,11 +60,8 @@ namespace Neon
 
 			shader->Use();
 
-			if (nullptr != camera)
-			{
-				shader->SetUniformFloat4x4("projection", glm::value_ptr(camera->projectionMatrix));
-				shader->SetUniformFloat4x4("view", glm::value_ptr(camera->viewMatrix));
-			}
+			shader->SetUniformFloat4x4("projection", glm::value_ptr(camera->projectionMatrix));
+			shader->SetUniformFloat4x4("view", glm::value_ptr(camera->viewMatrix));
 
 			if (nullptr != light)
 			{
@@ -123,9 +117,6 @@ namespace Neon
 			if (nullptr == mesh)
 				continue;
 
-			if (false == mesh->IsVisible())
-				continue;
-
 			if (Mesh::FillMode::None == mesh->GetFillMode())
 				continue;
 
@@ -135,11 +126,8 @@ namespace Neon
 
 			shader->Use();
 
-			if (nullptr != camera)
-			{
-				shader->SetUniformFloat4x4("projection", glm::value_ptr(camera->projectionMatrix));
-				shader->SetUniformFloat4x4("view", glm::value_ptr(camera->viewMatrix));
-			}
+			shader->SetUniformFloat4x4("projection", glm::value_ptr(camera->projectionMatrix));
+			shader->SetUniformFloat4x4("view", glm::value_ptr(camera->viewMatrix));
 
 			if (nullptr != light)
 			{

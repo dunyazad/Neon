@@ -20,22 +20,6 @@ int main()
 
 		auto scene = app.CreateScene("Scene/Main");
 
-		auto toggleVisibility = [](const Neon::KeyEvent& event)
-		{
-			auto entity = dynamic_cast<Neon::Entity*>(event.target);
-			if (nullptr != entity)
-			{
-				auto mesh = entity->GetComponent<Neon::Mesh>(0);
-				if (nullptr != mesh)
-				{
-					if (GLFW_KEY_ESCAPE == event.key && GLFW_RELEASE == event.action)
-					{
-						mesh->SetVisible(!mesh->IsVisible());
-					}
-				}
-			}
-		};
-
 		auto toggleFillMode = [](const Neon::KeyEvent& event)
 		{
 			auto entity = dynamic_cast<Neon::Entity*>(event.target);
@@ -53,15 +37,12 @@ int main()
 		};
 
 		auto debugPoints = scene->CreateDebugEntity("DebugEntity/Points");
-		debugPoints->AddKeyEventHandler(toggleVisibility);
 		debugPoints->AddKeyEventHandler(toggleFillMode);
 
 		auto debugLines = scene->CreateDebugEntity("DebugEntity/Lines");
-		debugLines->AddKeyEventHandler(toggleVisibility);
 		debugLines->AddKeyEventHandler(toggleFillMode);
 
 		auto debugTriangles = scene->CreateDebugEntity("DebugEntity/Triangles");
-		debugTriangles->AddKeyEventHandler(toggleVisibility);
 		debugTriangles->AddKeyEventHandler(toggleFillMode);
 
 		{
@@ -171,8 +152,6 @@ int main()
 
 			size_t count = 0;
 			verticesBSPTree->Traverse(verticesBSPTree->vertexRoot, [&count, debugTriangles](Neon::BSPTreeVertexNode<glm::vec3>* node) {
-				glPointSize(10.0f);
-
 				count++;
 				},
 				[&count]() {
@@ -233,6 +212,8 @@ int main()
 
 
 	app.OnUpdate([&](double now, double timeDelta) {
+		//glPointSize(cosf(now * 0.005f) * 10.0f + 10.0f);
+
 		//auto t = Neon::Time("Update");
 
 		//fbo->Bind();
