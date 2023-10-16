@@ -57,14 +57,14 @@ namespace Neon
 
 		bool Pick(const Ray& ray, glm::vec3& intersection, size_t& faceIndex);
 
-		enum FillMode { Fill, Line, Point };
+		enum FillMode { Fill, Line, Point, None };
 
 		inline GLenum GetDrawingMode() { return drawingMode; }
 		inline void SetDrawingMode(GLenum mode) { drawingMode = mode; }
 
 		inline FillMode GetFillMode() { return fillMode; }
 		inline void SetFillMode(FillMode mode) { fillMode = mode; }
-		inline void ToggleFillMode() { int f = fillMode; f++; fillMode = (Mesh::FillMode)(f % ((int)Mesh::FillMode::Point + 1)); }
+		inline void ToggleFillMode() { int f = fillMode; f++; fillMode = (Mesh::FillMode)(f % ((int)Mesh::FillMode::None + 1)); }
 
 		inline bool IsVisible() const { return visible; }
 		inline void SetVisible(bool visible) { this->visible = visible; }

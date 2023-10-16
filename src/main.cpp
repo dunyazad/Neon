@@ -163,8 +163,8 @@ int main()
 				}
 				});
 
-			auto trianglesBSPTree = scene->CreateComponent<Neon::BSPTree<Neon::BSPTriangle>>("Triangles BSPTree/Mesh", mesh);
-			trianglesBSPTree->BuildTriangles();
+			//auto trianglesBSPTree = scene->CreateComponent<Neon::BSPTree<Neon::BSPTriangle>>("Triangles BSPTree/Mesh", mesh);
+			//trianglesBSPTree->BuildTriangles();
 
 			auto verticesBSPTree = scene->CreateComponent<Neon::BSPTree<glm::vec3>>("Vertices BSPTree/Mesh", mesh);
 			verticesBSPTree->BuildVertices();
