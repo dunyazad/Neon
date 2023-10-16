@@ -107,6 +107,143 @@ int main()
 		}
 
 		{
+			auto entity = scene->CreateEntity("Entity/Cube");
+			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Cube");
+			entity->AddComponent(mesh);
+
+			mesh->FromSTLFile(Neon::URL::Resource("/stl/cube.stl"));
+			mesh->FillColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+			mesh->RecalculateFaceNormal();
+
+			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", Neon::URL::Resource("/shader/lighting.vs"), Neon::URL::Resource("/shader/lighting.fs"));
+			entity->AddComponent(shader);
+
+			auto transform = scene->CreateComponent<Neon::Transform>("Transform/Cube");
+			entity->AddComponent(transform);
+			entity->AddKeyEventHandler([mesh](const Neon::KeyEvent& event) {
+				if (GLFW_KEY_1 == event.key && GLFW_RELEASE == event.action)
+				{
+					mesh->ToggleFillMode();
+				}
+				});
+
+			entity->AddMouseButtonEventHandler([scene, mesh, debugPoints, debugLines](const Neon::MouseButtonEvent& event) {
+				if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_DOUBLE_ACTION)
+				{
+					auto camera = scene->GetMainCamera();
+
+					auto ray = camera->GetPickingRay(event.xpos, event.ypos);
+
+					glm::vec3 intersection;
+					size_t faceIndex = 0;
+					if (mesh->Pick(ray, intersection, faceIndex))
+					{
+						camera->centerPosition = intersection;
+					}
+				}
+				else if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_RELEASE)
+				{
+					auto camera = scene->GetMainCamera();
+
+					auto ray = camera->GetPickingRay(event.xpos, event.ypos);
+
+					glm::vec3 intersection;
+					size_t faceIndex = 0;
+					if (mesh->Pick(ray, intersection, faceIndex))
+					{
+						debugPoints->Clear();
+
+						debugPoints->AddPoint(intersection, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+						//auto result = verticesBSPTree->GetNearestNode(verticesBSPTree->vertexRoot, intersection, verticesBSPTree->vertexRoot);
+
+						//if (nullptr != result)
+						//{
+						//	verticesBSPTree->Traverse(verticesBSPTree->vertexRoot, [&mesh, result](Neon::BSPTreeVertexNode<glm::vec3>* node) {
+						//		//cout << node->index << endl;
+						//		if (node->t < result->t)
+						//		{
+						//			mesh->SetColor(node->index, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+						//		}
+						//		}, []() {});
+
+						//	//debugPoints->AddPoint(result->t, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+						//}
+					}
+				}
+				});
+		}
+
+		{
+			auto entity = scene->CreateEntity("Entity/Sphere");
+			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Sphere");
+			entity->AddComponent(mesh);
+
+			mesh->FromSTLFile(Neon::URL::Resource("/stl/sphere.stl"), 0.1f, 0.1f, 0.1f);
+			mesh->FillColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+			mesh->RecalculateFaceNormal();
+
+			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", Neon::URL::Resource("/shader/lighting.vs"), Neon::URL::Resource("/shader/lighting.fs"));
+			entity->AddComponent(shader);
+
+			auto transform = scene->CreateComponent<Neon::Transform>("Transform/Sphere");
+			entity->AddComponent(transform);
+			entity->AddKeyEventHandler([mesh](const Neon::KeyEvent& event) {
+				if (GLFW_KEY_1 == event.key && GLFW_RELEASE == event.action)
+				{
+					mesh->ToggleFillMode();
+				}
+				});
+
+			entity->AddMouseButtonEventHandler([scene, mesh, debugPoints, debugLines](const Neon::MouseButtonEvent& event) {
+				if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_DOUBLE_ACTION)
+				{
+					auto camera = scene->GetMainCamera();
+
+					auto ray = camera->GetPickingRay(event.xpos, event.ypos);
+
+					glm::vec3 intersection;
+					size_t faceIndex = 0;
+					if (mesh->Pick(ray, intersection, faceIndex))
+					{
+						camera->centerPosition = intersection;
+					}
+				}
+				else if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_RELEASE)
+				{
+					auto camera = scene->GetMainCamera();
+
+					auto ray = camera->GetPickingRay(event.xpos, event.ypos);
+
+					glm::vec3 intersection;
+					size_t faceIndex = 0;
+					if (mesh->Pick(ray, intersection, faceIndex))
+					{
+						debugPoints->Clear();
+
+						debugPoints->AddPoint(intersection, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+						//auto result = verticesBSPTree->GetNearestNode(verticesBSPTree->vertexRoot, intersection, verticesBSPTree->vertexRoot);
+
+						//if (nullptr != result)
+						//{
+						//	verticesBSPTree->Traverse(verticesBSPTree->vertexRoot, [&mesh, result](Neon::BSPTreeVertexNode<glm::vec3>* node) {
+						//		//cout << node->index << endl;
+						//		if (node->t < result->t)
+						//		{
+						//			mesh->SetColor(node->index, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+						//		}
+						//		}, []() {});
+
+						//	//debugPoints->AddPoint(result->t, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+						//}
+					}
+				}
+				});
+		}
+
+		/*
+		{
 			auto t = Neon::Time("Mesh Loading");
 
 			auto entity = scene->CreateEntity("Entity/Mesh");
@@ -147,10 +284,29 @@ int main()
 			auto trianglesBSPTree = scene->CreateComponent<Neon::BSPTree<Neon::BSPTriangle>>("Triangles BSPTree/Mesh", mesh);
 			trianglesBSPTree->BuildTriangles();
 
+			size_t count = 0;
+			//trianglesBSPTree->Traverse(trianglesBSPTree->triangleRoot, [&count, scene, mesh, trianglesBSPTree, debugTriangles](Neon::BSPTreeTriangleNode<Neon::BSPTriangle>* node) {
+			//	count++;
+			//	GLuint i0, i1, i2;
+			//	auto noi = mesh->GetIndexBuffer()->Size();
+			//	for (size_t i = 0; i < noi / 3; i++)
+			//	{
+			//		mesh->GetTriangleVertexIndices(i, i0, i1, i2);
+			//		auto v0 = mesh->GetVertex(i0);
+			//		auto v1 = mesh->GetVertex(i1);
+			//		auto v2 = mesh->GetVertex(i2);
+
+			//		debugTriangles->AddTriangle(v0, v1, v2);
+			//	}
+			//	},
+			//	[&count]() {
+			//		cout << "total count : " << count << endl;
+			//	});
+
 			auto verticesBSPTree = scene->CreateComponent<Neon::BSPTree<glm::vec3>>("Vertices BSPTree/Mesh", mesh);
 			verticesBSPTree->BuildVertices();
 
-			size_t count = 0;
+			count = 0;
 			verticesBSPTree->Traverse(verticesBSPTree->vertexRoot, [&count, debugTriangles](Neon::BSPTreeVertexNode<glm::vec3>* node) {
 				count++;
 				},
@@ -204,7 +360,7 @@ int main()
 				}
 				});
 
-		}
+		}*/
 		});
 
 

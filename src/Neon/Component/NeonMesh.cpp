@@ -251,8 +251,8 @@ namespace Neon
 					float y = safe_stof(words[2]);
 					float z = safe_stof(words[3]);
 
-					AddVertex(glm::vec3(x * scaleX, y * scaleY, z * scaleZ));
-					AddIndex(vertex_index++);
+					auto index = AddVertex(glm::vec3(x * scaleX, y * scaleY, z * scaleZ));
+					AddIndex(index);
 				}
 				else if (words[0] == "endfacet")
 				{

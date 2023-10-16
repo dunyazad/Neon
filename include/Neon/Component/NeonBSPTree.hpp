@@ -207,8 +207,8 @@ namespace Neon
 				}
 				else if (b01 && b12)
 				{
-					auto ii01 = mesh->AddVertex(i01);
-					auto ii12 = mesh->AddVertex(i12);
+					auto ii01 = (GLuint)mesh->AddVertex(i01);
+					auto ii12 = (GLuint)mesh->AddVertex(i12);
 
 					if ((i01 == t.v0 || i01 == t.v1 || i01 == t.v2) &&
 						(i12 == t.v0 || i12 == t.v1 || i12 == t.v2))
@@ -219,123 +219,131 @@ namespace Neon
 
 					if (i01 == t.v0)
 					{
-						AddTriangle(t.i0, t.i1, ii12);
-						AddTriangle(t.i2, t.i0, ii12);
+						mesh->AddTriangle(t.i0, t.i1, ii12);
+						mesh->AddTriangle(t.i2, t.i0, ii12);
 
-						RemoveTriangle(triangle);
+						//RemoveTriangle(triangle);
 					}
 					else if (i01 == t.v1)
 					{
-						return result;
+						//return result;
+						return;
 					}
 					else if (i12 == t.v1)
 					{
-						return result;
+						//return result;
+						return;
 					}
 					else if (i12 == t.v2)
 					{
-						AddTriangle(t.i2, t.i0, ii12);
-						AddTriangle(t.i1, t.i2, ii12);
+						mesh->AddTriangle(t.i2, t.i0, ii12);
+						mesh->AddTriangle(t.i1, t.i2, ii12);
 
-						RemoveTriangle(triangle);
+						//RemoveTriangle(triangle);
 					}
 					else
 					{
-						AddTriangle(t.i0, ii01, ii12);
-						AddTriangle(t.i0, ii12, t.i2);
-						AddTriangle(t.i1, ii12, ii01);
+						mesh->AddTriangle(t.i0, ii01, ii12);
+						mesh->AddTriangle(t.i0, ii12, t.i2);
+						mesh->AddTriangle(t.i1, ii12, ii01);
 
-						RemoveTriangle(triangle);
+						//RemoveTriangle(triangle);
 					}
 				}
-			//	else if (b12 && b20)
-			//	{
-			//		AddVertex(i12, { 0.0f, 0.0f, 0.0f, });
-			//		AddVertex(i20, { 0.0f, 0.0f, 0.0f, });
+				else if (b12 && b20)
+				{
+					auto ii12 = (GLuint)mesh->AddVertex(i12);
+					auto ii20 = (GLuint)mesh->AddVertex(i20);
 
-			//		if ((i12 == t.v0 || i12 == t.v1 || i12 == t.v2) &&
-			//			(i20 == t.v0 || i20 == t.v1 || i20 == t.v2))
-			//		{
-			//			return result;
-			//		}
+					if ((i12 == t.v0 || i12 == t.v1 || i12 == t.v2) &&
+						(i20 == t.v0 || i20 == t.v1 || i20 == t.v2))
+					{
+						//return result;
+						return;
+					}
 
-			//		if (i12 == t.v1)
-			//		{
-			//			AddTriangle(t.v0, t.v1, i20);
-			//			AddTriangle(t.v1, t.v2, i20);
+					if (i12 == t.v1)
+					{
+						mesh->AddTriangle(t.i0, t.i1, ii20);
+						mesh->AddTriangle(t.i1, t.i2, ii20);
 
-			//			RemoveTriangle(triangle);
-			//		}
-			//		else if (i12 == t.v2)
-			//		{
-			//			return result;
-			//		}
-			//		else if (i20 == t.v2)
-			//		{
-			//			return result;
-			//		}
-			//		else if (i20 == t.v0)
-			//		{
-			//			AddTriangle(t.v0, t.v1, i12);
-			//			AddTriangle(t.v2, t.v0, i12);
+						//RemoveTriangle(triangle);
+					}
+					else if (i12 == t.v2)
+					{
+						//return result;
+						return;
+					}
+					else if (i20 == t.v2)
+					{
+						//return result;
+						return;
+					}
+					else if (i20 == t.v0)
+					{
+						mesh->AddTriangle(t.i0, t.i1, ii12);
+						mesh->AddTriangle(t.i2, t.i0, ii12);
 
-			//			RemoveTriangle(triangle);
-			//		}
-			//		else
-			//		{
-			//			AddTriangle(t.v0, t.v1, i12);
-			//			AddTriangle(t.v0, i12, i20);
-			//			AddTriangle(t.v2, i20, i12);
+						//RemoveTriangle(triangle);
+					}
+					else
+					{
+						mesh->AddTriangle(t.i0, t.i1, ii12);
+						mesh->AddTriangle(t.i0, ii12, ii20);
+						mesh->AddTriangle(t.i2, ii20, ii12);
 
-			//			RemoveTriangle(triangle);
-			//		}
-			//	}
-			//	else if (b20 && b01)
-			//	{
-			//		AddVertex(i20, { 0.0f, 0.0f, 0.0f, });
-			//		AddVertex(i01, { 0.0f, 0.0f, 0.0f, });
+						//RemoveTriangle(triangle);
+					}
+				}
+				else if (b20 && b01)
+				{
+					auto ii20 = (GLuint)mesh->AddVertex(i20);
+					auto ii01 = (GLuint)mesh->AddVertex(i01);
 
-			//		if ((i20 == t.v0 || i20 == t.v1 || i20 == t.v2) &&
-			//			(i01 == t.v0 || i01 == t.v1 || i01 == t.v2))
-			//		{
-			//			return result;
-			//		}
+					if ((i20 == t.v0 || i20 == t.v1 || i20 == t.v2) &&
+						(i01 == t.v0 || i01 == t.v1 || i01 == t.v2))
+					{
+						//return result;
+						return;
+					}
 
-			//		if (i20 == t.v2)
-			//		{
-			//			AddTriangle(t.v2, t.v0, i01);
-			//			AddTriangle(t.v1, t.v2, i01);
+					if (i20 == t.v2)
+					{
+						mesh->AddTriangle(t.i2, t.i0, ii01);
+						mesh->AddTriangle(t.i1, t.i2, ii01);
 
-			//			RemoveTriangle(triangle);
-			//		}
-			//		else if (i20 == t.v0)
-			//		{
-			//			return result;
-			//		}
-			//		else if (i01 == t.v0)
-			//		{
-			//			return result;
-			//		}
-			//		else if (i01 == t.v1)
-			//		{
-			//			AddTriangle(t.v0, t.v1, i20);
-			//			AddTriangle(t.v1, t.v2, i20);
+						//RemoveTriangle(triangle);
+					}
+					else if (i20 == t.v0)
+					{
+						//return result;
+						return;
+					}
+					else if (i01 == t.v0)
+					{
+						//return result;
+						return;
+					}
+					else if (i01 == t.v1)
+					{
+						mesh->AddTriangle(t.i0, t.i1, ii20);
+						mesh->AddTriangle(t.i1, t.i2, ii20);
 
-			//			RemoveTriangle(triangle);
-			//		}
-			//		else
-			//		{
-			//			AddTriangle(t.v1, t.v2, i20);
-			//			AddTriangle(t.v1, i20, i01);
-			//			AddTriangle(t.v0, i01, i20);
+						//RemoveTriangle(triangle);
+					}
+					else
+					{
+						mesh->AddTriangle(t.i1, t.i2, ii20);
+						mesh->AddTriangle(t.i1, ii20, ii01);
+						mesh->AddTriangle(t.i0, ii01, ii20);
 
-			//			RemoveTriangle(triangle);
-			//		}
-			//	}
-			//	else
-			//	{
-			//		cout << "???" << endl;
-			//	}
+						//RemoveTriangle(triangle);
+					}
+				}
+				else
+				{
+					cout << "???" << endl;
+				}
 			}
 		}
 
@@ -445,6 +453,31 @@ namespace Neon
 		void Traverse(BSPTreeVertexNode<T>* node, function<void(BSPTreeVertexNode<T>*)> callback, function<void()> finishCallback)
 		{
 			stack<BSPTreeVertexNode<T>*> nodes;
+			nodes.push(node);
+			while (nodes.empty() == false)
+			{
+				auto currentNode = nodes.top();
+				nodes.pop();
+
+				callback(currentNode);
+
+				if (currentNode->positive)
+				{
+					nodes.push(currentNode->positive);
+				}
+
+				if (currentNode->negative)
+				{
+					nodes.push(currentNode->negative);
+				}
+			}
+
+			finishCallback();
+		}
+
+		void Traverse(BSPTreeTriangleNode<T>* node, function<void(BSPTreeTriangleNode<T>*)> callback, function<void()> finishCallback)
+		{
+			stack<BSPTreeTriangleNode<T>*> nodes;
 			nodes.push(node);
 			while (nodes.empty() == false)
 			{
