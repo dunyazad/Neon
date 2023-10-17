@@ -77,18 +77,6 @@ namespace Neon
 #define DEG2RAD (PI / 180.0f)
 #define RAD2DEG (180.0f / PI)
 
-	struct Vertex
-	{
-		size_t index = -1; // Vertex Buffer Index
-	};
-
-	struct Triangle
-	{
-		Vertex* v0 = nullptr;
-		Vertex* v1 = nullptr;
-		Vertex* v2 = nullptr;
-	};
-
 	struct Ray
 	{
 		glm::vec3 origin = glm::zero<glm::vec3>();
@@ -191,7 +179,7 @@ namespace Neon
 		bool IntersectsTriangle(const glm::vec3& tp0, const glm::vec3& tp1, const glm::vec3& tp2);
 	};
 
-	ostream& operator<<(ostream& os, AABB const& aabb);
+	//ostream& operator<<(ostream& os, AABB const& aabb);
 
 	namespace Intersection
 	{

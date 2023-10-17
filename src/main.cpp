@@ -16,6 +16,10 @@ int main()
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+		glFrontFace(GL_CCW);
+
 		glPointSize(10.0f);
 
 		auto scene = app.CreateScene("Scene/Main");
@@ -119,7 +123,7 @@ int main()
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Cube");
 			entity->AddComponent(mesh);
 
-			mesh->FromSTLFile(Neon::URL::Resource("/stl/cube.stl"));
+			mesh->FromSTLFile(Neon::URL::Resource("/stl/spot.stl"));
 			mesh->FillColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 			mesh->RecalculateFaceNormal();
 

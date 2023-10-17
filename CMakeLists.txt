@@ -11,7 +11,6 @@ add_subdirectory("External/glm")
 
 set(source_list
 src/main.cpp
-src/csgjs_cpp.cpp
 
 include/Neon/Neon.h
 src/Neon/Neon.cpp
@@ -54,6 +53,8 @@ include/Neon/Component/NeonTexture.h
 src/Neon/Component/NeonTexture.cpp
 include/Neon/Component/NeonTransform.h
 src/Neon/Component/NeonTransform.cpp
+include/Neon/Component/NeonVETM.h
+src/Neon/Component/NeonVETM.cpp
 include/Neon/Component/NeonVolume.h
 src/Neon/Component/NeonVolume.cpp
 
