@@ -2,12 +2,12 @@
 
 namespace Neon
 {
-	VETM::VETM(const string& name, Mesh* mesh)
-		: ComponentBase(name), mesh(mesh)
-	{
-	}
+	//VETM::VETM(const string& name, Mesh* mesh)
+	//	: ComponentBase(name), mesh(mesh)
+	//{
+	//}
 
-	VETM::~VETM()
-	{
-	}
+	//VETM::~VETM()
+	//{
+	//}
 }

@@ -7,29 +7,20 @@ namespace Neon
 {
 	class Mesh;
 
-	struct Vertex
-	{
-		size_t index = -1; // Vertex Buffer Index
-	};
-
-	struct Triangle
-	{
-		Vertex* v0 = nullptr;
-		Vertex* v1 = nullptr;
-		Vertex* v2 = nullptr;
-	};
-
+	template<typename V, typename T>
 	class RegularGridCell : public AABB {
 	public:
 		RegularGridCell(const glm::vec3& minPoint = { FLT_MAX, FLT_MAX, FLT_MAX },
-			const glm::vec3& maxPoint = { -FLT_MAX, -FLT_MAX, -FLT_MAX });
+			const glm::vec3& maxPoint = { -FLT_MAX, -FLT_MAX, -FLT_MAX })
+			: AABB(minPoint, maxPoint), index({ IntInfinity, IntInfinity, IntInfinity }) {}
 
 		RegularGridCell(tuple<int, int, int> index,
 			const glm::vec3& minPoint = { FLT_MAX, FLT_MAX, FLT_MAX },
-			const glm::vec3& maxPoint = { -FLT_MAX, -FLT_MAX, -FLT_MAX });
+			const glm::vec3& maxPoint = { -FLT_MAX, -FLT_MAX, -FLT_MAX })
+			: AABB(minPoint, maxPoint), index(index) {}
 
-		inline set<Vertex*>& GetVertices() { return vertices; }
-		inline set<Triangle*>& GetTriangles() { return triangles; }
+		inline set<V*>& GetVertices() { return vertices; }
+		inline set<T*>& GetTriangles() { return triangles; }
 
 		bool operator==(const RegularGridCell& other) const
 		{
@@ -48,11 +39,24 @@ namespace Neon
 	protected:
 		tuple<int, int, int> index;
 
-		set<Vertex*> vertices;
-		set<Triangle*> triangles;
+		set<V*> vertices;
+		set<T*> triangles;
 	};
 
 	class RegularGrid : public AABB, public ComponentBase {
+	public:
+		struct Vertex
+		{
+			size_t index = -1; // Vertex Buffer Index
+		};
+
+		struct Triangle
+		{
+			Vertex* v0 = nullptr;
+			Vertex* v1 = nullptr;
+			Vertex* v2 = nullptr;
+		};
+
 	public:
 		RegularGrid(const string& name, Mesh * mesh, float cellSize);
 		~RegularGrid();
@@ -67,7 +71,7 @@ namespace Neon
 			return make_tuple(x, y, z);
 		}
 
-		inline RegularGridCell* GetCell(const tuple<int, int, int>& index)
+		inline RegularGridCell<Vertex, Triangle>* GetCell(const tuple<int, int, int>& index)
 		{
 			if (cells.count(index) != 0) {
 				return cells[index];
@@ -86,20 +90,20 @@ namespace Neon
 
 		void Build();
 
-		set<RegularGridCell*> GetCellsWithRay(const Ray& ray);
+		set<RegularGridCell<Vertex, Triangle>*> GetCellsWithRay(const Ray& ray);
 
-		inline const map<tuple<int, int, int>, RegularGridCell*>& GetCells() const { return cells; }
+		inline const map<tuple<int, int, int>, RegularGridCell<Vertex, Triangle>*>& GetCells() const { return cells; }
 
 	private:
 		Mesh* mesh = nullptr;
 		float cellSize = 0.5;
 		float cellHalfSize = 0.25;
 
-		map<tuple<int, int, int>, RegularGridCell*> cells;
+		map<tuple<int, int, int>, RegularGridCell<Vertex, Triangle>*> cells;
 
 		vector<Vertex> vertices;
 		vector<Triangle> triangles;
 	};
 
-	//ostream& operator<<(ostream& os, RegularGrid const& volume);
+	typedef RegularGridCell<RegularGrid::Vertex, RegularGrid::Triangle> RGCell;
 }

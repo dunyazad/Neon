@@ -4,12 +4,6 @@
 
 namespace Neon
 {
-	RegularGridCell::RegularGridCell(const glm::vec3& minPoint, const glm::vec3& maxPoint)
-		: AABB(minPoint, maxPoint), index({ IntInfinity, IntInfinity, IntInfinity }) {}
-
-	RegularGridCell::RegularGridCell(tuple<int, int, int> index, const glm::vec3& minPoint, const glm::vec3& maxPoint)
-		: AABB(minPoint, maxPoint), index(index) {}
-
 	RegularGrid::RegularGrid(const string& name, Mesh* mesh, float voxelSize)
 		: ComponentBase(name), mesh(mesh), cellSize(voxelSize), cellHalfSize(voxelSize * 0.5f) {}
 
@@ -37,7 +31,7 @@ namespace Neon
 			auto maxx = float(get<0>(index)) * cellSize + cellHalfSize;
 			auto maxy = float(get<1>(index)) * cellSize + cellHalfSize;
 			auto maxz = float(get<2>(index)) * cellSize + cellHalfSize;
-			auto newVoxel = new RegularGridCell(index, glm::vec3(minx, miny, minz), glm::vec3(maxx, maxy, maxz));
+			auto newVoxel = new RegularGridCell<Vertex, Triangle>(index, glm::vec3(minx, miny, minz), glm::vec3(maxx, maxy, maxz));
 			cells[index] = newVoxel;
 			Expand(position);
 			return index;
@@ -60,7 +54,7 @@ namespace Neon
 			auto maxx = float(get<0>(index)) * cellSize + cellHalfSize;
 			auto maxy = float(get<1>(index)) * cellSize + cellHalfSize;
 			auto maxz = float(get<2>(index)) * cellSize + cellHalfSize;
-			auto newVoxel = new RegularGridCell(index, glm::vec3(minx, miny, minz), glm::vec3(maxx, maxy, maxz));
+			auto newVoxel = new RegularGridCell<Vertex, Triangle>(index, glm::vec3(minx, miny, minz), glm::vec3(maxx, maxy, maxz));
 			newVoxel->GetVertices().insert(vertex);
 			cells[index] = newVoxel;
 			Expand(vertexPosition);
@@ -100,7 +94,7 @@ namespace Neon
 					if (aabb.IntersectsTriangle(p0, p1, p2)) {
 						auto index = make_tuple(x, y, z);
 						if (cells.count(index) == 0) {
-							auto newVoxel = new RegularGridCell(index, aabb.GetMinPoint(), aabb.GetMaxPoint());
+							auto newVoxel = new RegularGridCell<Vertex, Triangle>(index, aabb.GetMinPoint(), aabb.GetMaxPoint());
 							newVoxel->GetTriangles().insert(t);
 							cells[index] = newVoxel;
 						}
@@ -158,17 +152,12 @@ namespace Neon
 		}
 	}
 
-	set<RegularGridCell*> RegularGrid::GetCellsWithRay(const Ray& ray)
+	set<RegularGridCell<RegularGrid::Vertex, RegularGrid::Triangle>*> RegularGrid::GetCellsWithRay(const Ray& ray)
 	{
-		set<RegularGridCell*> candidates;
+		set<RegularGridCell<Vertex, Triangle>*> candidates;
 
 		vector<glm::vec3> intersections;
 		if (IntersectsRay(ray, intersections)) {
-			// for (auto &ip : intersections) {
-			//   HVisualDebugging::AddCube("Debugging", ip, 1, 255, 0, 0);
-			//   cout << "intersects at " << ip << endl;
-			// }
-
 			auto origin = intersections[0];
 			auto direction = glm::normalize(intersections[1] - intersections[0]);
 			origin = origin - direction * cellSize * 2.0f;
@@ -196,11 +185,4 @@ namespace Neon
 
 		return candidates;
 	}
-
-	//ostream& operator<<(ostream& os, RegularGrid const& volume) {
-	//	return os << "volume min : " << volume.GetMinPoint() << endl
-	//		<< "volume max : " << volume.GetMaxPoint() << endl
-	//		<< "volume center : " << volume.GetCenter() << endl
-	//		<< "voxels : " << volume.GetVoxels().size();
-	//}
 }
