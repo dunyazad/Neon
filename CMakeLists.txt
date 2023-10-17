@@ -47,6 +47,8 @@ include/Neon/Component/NeonLight.h
 src/Neon/Component/NeonLight.cpp
 include/Neon/Component/NeonMesh.h
 src/Neon/Component/NeonMesh.cpp
+include/Neon/Component/NeonRegularGrid.h
+src/Neon/Component/NeonRegularGrid.cpp
 include/Neon/Component/NeonShader.h
 src/Neon/Component/NeonShader.cpp
 include/Neon/Component/NeonTexture.h
@@ -55,8 +57,6 @@ include/Neon/Component/NeonTransform.h
 src/Neon/Component/NeonTransform.cpp
 include/Neon/Component/NeonVETM.h
 src/Neon/Component/NeonVETM.cpp
-include/Neon/Component/NeonVolume.h
-src/Neon/Component/NeonVolume.cpp
 
 include/Neon/System/NeonEventSystem.h
 src/Neon/System/NeonEventSystem.cpp

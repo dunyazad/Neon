@@ -21,7 +21,7 @@
 #include <Neon/Component/NeonShader.h>
 #include <Neon/Component/NeonTexture.h>
 #include <Neon/Component/NeonTransform.h>
-#include <Neon/Component/NeonVolume.h>
+#include <Neon/Component/NeonRegularGrid.h>
 
 #include <Neon/System/NeonEventSystem.h>
 #include <Neon/System/NeonRenderSystem.h>
