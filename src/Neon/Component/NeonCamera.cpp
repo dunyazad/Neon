@@ -15,7 +15,7 @@ namespace Neon
 	{
 	}
 
-	void Camera::OnUpdate(float now, float timeDelta)
+	void Camera::OnUpdate(double now, double timeDelta)
 	{
 		auto eye = centerPosition + rotation * glm::vec3(0, 0, distance);
 		position = eye;

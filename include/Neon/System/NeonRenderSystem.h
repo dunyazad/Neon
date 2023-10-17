@@ -13,7 +13,7 @@ namespace Neon
 		RenderSystem(Scene* scene);
 		virtual ~RenderSystem();
 
-		void Frame(float now, float timeDelta);
+		void Frame(double now, double timeDelta);
 
 	private:
 

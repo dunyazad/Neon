@@ -23,7 +23,7 @@ namespace Neon
 	{
 	}
 
-	void RenderSystem::Frame(float now, float timeDelta)
+	void RenderSystem::Frame(double now, double timeDelta)
 	{
 		int display_w, display_h;
 		glfwGetFramebufferSize(scene->GetWindow()->GetGLFWWindow(), &display_w, &display_h);

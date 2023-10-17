@@ -11,7 +11,7 @@ namespace Neon
 	{
 	}
 
-	void Transform::OnUpdate(float now, float timeDelta)
+	void Transform::OnUpdate(double now, double timeDelta)
 	{
 		absoluteTransform = glm::mat4_cast(rotation);
 		absoluteTransform = glm::translate(absoluteTransform, position);

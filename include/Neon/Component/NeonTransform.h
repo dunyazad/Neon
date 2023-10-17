@@ -11,7 +11,7 @@ namespace Neon
 		Transform(const string& name);
 		virtual ~Transform();
 
-		virtual void OnUpdate(float now, float timeDelta);
+		virtual void OnUpdate(double now, double timeDelta);
 
 		glm::vec3 position = glm::zero<glm::vec3>();
 		glm::quat rotation = glm::identity<glm::quat>();

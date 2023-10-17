@@ -40,7 +40,7 @@ namespace Neon
 		size_t AddIndex(GLuint index);
 		void GetIndex(size_t bufferIndex, GLuint& index);
 
-		tuple<size_t, size_t, size_t> AddTriangle(GLuint i0, GLuint i1, GLuint i2);
+		tuple<int, int, int> AddTriangle(GLuint i0, GLuint i1, GLuint i2);
 		void GetTriangleVertexIndices(size_t triangleIndex, GLuint& i0, GLuint& i1, GLuint& i2);
 		
 		size_t AddColor(const glm::vec4& c);

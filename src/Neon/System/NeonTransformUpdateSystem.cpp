@@ -23,7 +23,7 @@ namespace Neon
 	{
 	}
 
-	void TransformUpdateSystem::Frame(float now, float timeDelta)
+	void TransformUpdateSystem::Frame(double now, double timeDelta)
 	{
 		auto components = scene->GetComponents<Transform>();
 		for (auto& component : components)

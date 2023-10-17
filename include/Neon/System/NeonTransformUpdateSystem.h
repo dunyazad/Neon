@@ -13,6 +13,6 @@ namespace Neon
 		TransformUpdateSystem(Scene* scene);
 		virtual ~TransformUpdateSystem();
 
-		void Frame(float now, float timeDelta);
+		void Frame(double now, double timeDelta);
 	};
 }

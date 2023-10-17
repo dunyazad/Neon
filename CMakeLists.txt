@@ -54,6 +54,8 @@ include/Neon/Component/NeonTexture.h
 src/Neon/Component/NeonTexture.cpp
 include/Neon/Component/NeonTransform.h
 src/Neon/Component/NeonTransform.cpp
+include/Neon/Component/NeonVolume.h
+src/Neon/Component/NeonVolume.cpp
 
 include/Neon/System/NeonEventSystem.h
 src/Neon/System/NeonEventSystem.cpp

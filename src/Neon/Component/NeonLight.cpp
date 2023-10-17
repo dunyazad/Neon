@@ -12,7 +12,7 @@ namespace Neon
 	{
 	}
 
-	void Light::OnUpdate(float now, float timeDelta)
+	void Light::OnUpdate(double now, double timeDelta)
 	{
 		ComponentBase::OnUpdate(now, timeDelta);
 	}

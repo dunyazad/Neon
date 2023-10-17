@@ -321,30 +321,40 @@ int main()
 			//bspTree->Traverse(bspTree->triangleRoot, [bspTree, debugTriangles](auto node) {
 			//	debugTriangles->AddTriangle(node->t.v0, node->t.v1, node->t.v2);
 			//	}, []() {});
-		}
 
-		{
-			auto result_union = csgjs_union(sphere, cube);
-			auto noi = result_union.indices.size();
-			for (size_t i = 0; i < noi / 3; i++)
+			auto volume = scene->CreateComponent<Neon::Volume>("Volume/Entity", mesh, 0.05f);
+			volume->Build();
+
+			cout << volume->GetVoxels().size() << " voxels" << endl;
+
+			for (auto& kvp : volume->GetVoxels())
 			{
-				auto i0 = result_union.indices[i * 3 + 0];
-				auto i1 = result_union.indices[i * 3 + 1];
-				auto i2 = result_union.indices[i * 3 + 2];
-
-				auto v0 = result_union.vertices[i0];
-				auto v1 = result_union.vertices[i1];
-				auto v2 = result_union.vertices[i2];
-
-				debugTriangles->AddTriangle(
-					glm::vec3(v0.pos.x, v0.pos.y, v0.pos.z),
-					glm::vec3(v1.pos.x, v1.pos.y, v1.pos.z),
-					glm::vec3(v2.pos.x, v2.pos.y, v2.pos.z),
-					glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
-					glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
-					glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+				debugPoints->AddPoint(kvp.second->center, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 			}
 		}
+
+		//{
+		//	auto result_union = csgjs_union(sphere, cube);
+		//	auto noi = result_union.indices.size();
+		//	for (size_t i = 0; i < noi / 3; i++)
+		//	{
+		//		auto i0 = result_union.indices[i * 3 + 0];
+		//		auto i1 = result_union.indices[i * 3 + 1];
+		//		auto i2 = result_union.indices[i * 3 + 2];
+
+		//		auto v0 = result_union.vertices[i0];
+		//		auto v1 = result_union.vertices[i1];
+		//		auto v2 = result_union.vertices[i2];
+
+		//		debugTriangles->AddTriangle(
+		//			glm::vec3(v0.pos.x, v0.pos.y, v0.pos.z),
+		//			glm::vec3(v1.pos.x, v1.pos.y, v1.pos.z),
+		//			glm::vec3(v2.pos.x, v2.pos.y, v2.pos.z),
+		//			glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
+		//			glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
+		//			glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+		//	}
+		//}
 
 		/*
 		{

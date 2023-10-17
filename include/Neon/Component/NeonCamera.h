@@ -12,7 +12,7 @@ namespace Neon
 		Camera(const string& name, float frameWidth, float frameHeight);
 		virtual ~Camera();
 
-		virtual void OnUpdate(float now, float timeDelta);
+		virtual void OnUpdate(double now, double timeDelta);
 
 		Ray GetPickingRay(double xpos, double ypos);
 

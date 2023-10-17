@@ -133,7 +133,7 @@ namespace Neon
 		index = buffer->GetElement(bufferIndex);
 	}
 
-	tuple<size_t, size_t, size_t> Mesh::AddTriangle(GLuint i0, GLuint i1, GLuint i2)
+	tuple<int, int, int> Mesh::AddTriangle(GLuint i0, GLuint i1, GLuint i2)
 	{
 		auto buffer = GetIndexBuffer();
 		auto bi0 = buffer->AddElement(i0);

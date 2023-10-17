@@ -61,9 +61,33 @@ void _CheckGLError(const char* file, int line);
 
 using namespace std::chrono;
 
+float Trimax(float a, float b, float c);
+float Trimin(float a, float b, float c);
+
 namespace Neon
 {
 	extern json Settings;
+
+#define PI 3.14159265359f
+
+#define IntNAN std::numeric_limits<int>::quiet_NaN()
+#define RealNAN std::numeric_limits<float>::quiet_NaN()
+#define IntInfinity std::numeric_limits<int>::max()
+
+#define DEG2RAD (PI / 180.0f)
+#define RAD2DEG (180.0f / PI)
+
+	struct Vertex
+	{
+		size_t index = -1; // Vertex Buffer Index
+	};
+
+	struct Triangle
+	{
+		Vertex* v0 = nullptr;
+		Vertex* v1 = nullptr;
+		Vertex* v2 = nullptr;
+	};
 
 	struct Ray
 	{
@@ -76,6 +100,98 @@ namespace Neon
 		glm::vec3 point = glm::zero<glm::vec3>();
 		glm::vec3 normal = glm::zero<glm::vec3>();
 	};
+
+	struct AABB
+	{
+		glm::vec3 xyz = { FLT_MAX,  FLT_MAX,  FLT_MAX };
+		glm::vec3 xyZ = { FLT_MAX,  FLT_MAX, -FLT_MAX };
+		glm::vec3 xYz = { FLT_MAX, -FLT_MAX,  FLT_MAX };
+		glm::vec3 xYZ = { FLT_MAX, -FLT_MAX, -FLT_MAX };
+		glm::vec3 Xyz = { -FLT_MAX,  FLT_MAX,  FLT_MAX };
+		glm::vec3 XyZ = { -FLT_MAX,  FLT_MAX, -FLT_MAX };
+		glm::vec3 XYz = { -FLT_MAX, -FLT_MAX,  FLT_MAX };
+		glm::vec3 XYZ = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
+		glm::vec3 center = { 0.0,  0.0,  0.0 };
+		glm::vec3 extents = { 0.0,  0.0,  0.0 };
+
+		AABB(const glm::vec3& minPoint = { FLT_MAX, FLT_MAX, FLT_MAX }, const glm::vec3& maxPoint = { -FLT_MAX, -FLT_MAX, -FLT_MAX });
+
+		void update();
+
+		inline const glm::vec3& GetMinPoint() const { return xyz; }
+		inline const glm::vec3& GetMaxPoint() const { return XYZ; }
+		inline const glm::vec3& GetCenter() const { return center; }
+		inline const glm::vec3& GetExtents() const { return extents; }
+
+		inline void Expand(float x, float y, float z)
+		{
+			if (x < xyz.x) { xyz.x = x; }
+			if (y < xyz.y) { xyz.y = y; }
+			if (z < xyz.z) { xyz.z = z; }
+
+			if (x > XYZ.x) { XYZ.x = x; }
+			if (y > XYZ.y) { XYZ.y = y; }
+			if (z > XYZ.z) { XYZ.z = z; }
+
+			update();
+		}
+
+		inline void Expand(const glm::vec3& p)
+		{
+			if (p.x < xyz.x) { xyz.x = p.x; }
+			if (p.y < xyz.y) { xyz.y = p.y; }
+			if (p.z < xyz.z) { xyz.z = p.z; }
+
+			if (p.x > XYZ.x) { XYZ.x = p.x; }
+			if (p.y > XYZ.y) { XYZ.y = p.y; }
+			if (p.z > XYZ.z) { XYZ.z = p.z; }
+
+			update();
+		}
+
+		inline float GetXLength() const { return XYZ.x - xyz.x; }
+		inline float GetYLength() const { return XYZ.y - xyz.y; }
+		inline float GetZLength() const { return XYZ.z - xyz.z; }
+
+		inline bool Contains(const glm::vec3& p) const
+		{
+			return (xyz.x <= p.x && p.x <= XYZ.x) &&
+				(xyz.y <= p.y && p.y <= XYZ.y) &&
+				(xyz.z <= p.z && p.z <= XYZ.z);
+		}
+
+		inline bool Intersects(const AABB& other) const
+		{
+			if ((xyz.x > other.XYZ.x) && (xyz.y > other.XYZ.y) && (xyz.z > other.XYZ.z)) { return false; }
+			if ((XYZ.x < other.xyz.x) && (XYZ.y < other.xyz.y) && (XYZ.z < other.xyz.z)) { return false; }
+
+			if (Contains(other.xyz)) return true;
+			if (Contains(other.xyZ)) return true;
+			if (Contains(other.xYz)) return true;
+			if (Contains(other.xYZ)) return true;
+			if (Contains(other.Xyz)) return true;
+			if (Contains(other.XyZ)) return true;
+			if (Contains(other.XYz)) return true;
+			if (Contains(other.XYZ)) return true;
+
+			if (other.Contains(xyz)) return true;
+			if (other.Contains(xyZ)) return true;
+			if (other.Contains(xYz)) return true;
+			if (other.Contains(xYZ)) return true;
+			if (other.Contains(Xyz)) return true;
+			if (other.Contains(XyZ)) return true;
+			if (other.Contains(XYz)) return true;
+			if (other.Contains(XYZ)) return true;
+
+			return false;
+		}
+
+		bool IntersectsRay(const Ray& ray, vector<glm::vec3>& intersections);
+
+		bool IntersectsTriangle(const glm::vec3& tp0, const glm::vec3& tp1, const glm::vec3& tp2);
+	};
+
+	ostream& operator<<(ostream& os, AABB const& aabb);
 
 	namespace Intersection
 	{
