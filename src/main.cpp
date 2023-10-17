@@ -2,9 +2,6 @@
 
 #include <Neon/Neon.h>
 
-#define CSGJS_HEADER_ONLY
-#include "csgjs_cpp.cpp"
-
 int main()
 {
 	Neon::Application app(1280, 1024);
@@ -23,21 +20,22 @@ int main()
 
 		auto scene = app.CreateScene("Scene/Main");
 
+#pragma region For Debugging
 		auto toggleFillMode = [](const Neon::KeyEvent& event)
-		{
-			auto entity = dynamic_cast<Neon::Entity*>(event.target);
-			if (nullptr != entity)
 			{
-				auto mesh = entity->GetComponent<Neon::Mesh>(0);
-				if (nullptr != mesh)
+				auto entity = dynamic_cast<Neon::Entity*>(event.target);
+				if (nullptr != entity)
 				{
-					if (GLFW_KEY_2 == event.key && GLFW_RELEASE == event.action)
+					auto mesh = entity->GetComponent<Neon::Mesh>(0);
+					if (nullptr != mesh)
 					{
-						mesh->ToggleFillMode();
+						if (GLFW_KEY_2 == event.key && GLFW_RELEASE == event.action)
+						{
+							mesh->ToggleFillMode();
+						}
 					}
 				}
-			}
-		};
+			};
 
 		auto debugPoints = scene->CreateDebugEntity("DebugEntity/Points");
 		debugPoints->AddKeyEventHandler(toggleFillMode);
@@ -47,7 +45,9 @@ int main()
 
 		auto debugTriangles = scene->CreateDebugEntity("DebugEntity/Triangles");
 		debugTriangles->AddKeyEventHandler(toggleFillMode);
+#pragma endregion
 
+#pragma region Camera
 		{
 			auto entity = scene->CreateEntity("Entity/Main Camera");
 			auto transform = scene->CreateComponent<Neon::Transform>("Transform/Main Camera");
@@ -62,7 +62,9 @@ int main()
 			auto cameraManipulator = scene->CreateComponent<Neon::CameraManipulator>("CameraManipulator/Main", entity, camera);
 			entity->AddComponent(cameraManipulator);
 		}
+#pragma endregion
 
+#pragma region Light
 		{
 			auto entity = scene->CreateEntity("Entity/Main Light");
 
@@ -77,7 +79,9 @@ int main()
 
 			scene->SetMainLight(light);
 		}
+#pragma endregion
 
+#pragma region Guide Axes
 		{
 			auto entity = scene->CreateEntity("Entity/Axes");
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Axes");
@@ -108,8 +112,7 @@ int main()
 			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Color", Neon::URL::Resource("/shader/color.vs"), Neon::URL::Resource("/shader/color.fs"));
 			entity->AddComponent(shader);
 		}
-
-		csgjs_model cube;
+#pragma endregion
 
 		{
 			auto entity = scene->CreateEntity("Entity/Cube");
@@ -159,322 +162,10 @@ int main()
 						debugPoints->Clear();
 
 						debugPoints->AddPoint(intersection, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-
-						//auto result = verticesBSPTree->GetNearestNode(verticesBSPTree->vertexRoot, intersection, verticesBSPTree->vertexRoot);
-
-						//if (nullptr != result)
-						//{
-						//	verticesBSPTree->Traverse(verticesBSPTree->vertexRoot, [&mesh, result](Neon::BSPTreeVertexNode<glm::vec3>* node) {
-						//		//cout << node->index << endl;
-						//		if (node->t < result->t)
-						//		{
-						//			mesh->SetColor(node->index, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-						//		}
-						//		}, []() {});
-
-						//	//debugPoints->AddPoint(result->t, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-						//}
 					}
 				}
 				});
-
-			//auto bspTree = scene->CreateComponent<Neon::BSPTree<Neon::BSPTriangle>>("Cube BSPTree", mesh);
-			//entity->AddComponent(bspTree);
-			//bspTree->BuildTriangles();
-
-			//bspTree->Traverse(bspTree->triangleRoot, [bspTree, debugTriangles](auto node) {
-			//	debugTriangles->AddTriangle(node->t.v0, node->t.v1, node->t.v2);
-			//	}, []() {});
-
-			
-			//cube.vertices.push_back()
-
-			auto vb = mesh->GetVertexBuffer();
-			auto nb = mesh->GetNormalBuffer();
-			auto nov = vb->Size();
-
-			for (size_t i = 0; i < nov; i++)
-			{
-				auto v = vb->GetElement(i);
-				auto n = nb->GetElement(i);
-
-				csgjs_vertex csgv;
-				csgv.pos.x = v.x;
-				csgv.pos.y = v.y;
-				csgv.pos.z = v.z;
-
-				csgv.normal.x = n.x;
-				csgv.normal.y = n.y;
-				csgv.normal.z = n.z;
-
-				cube.vertices.push_back(csgv);
-			}
-
-			auto ib = mesh->GetIndexBuffer();
-			auto noi = ib->Size();
-			for (size_t i = 0; i < noi; i++)
-			{
-				cube.indices.push_back(ib->GetElement(i));
-			}
 		}
-
-		csgjs_model sphere;
-		{
-			auto entity = scene->CreateEntity("Entity/Sphere");
-			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Sphere");
-			entity->AddComponent(mesh);
-
-			mesh->FromSTLFile(Neon::URL::Resource("/stl/sphere.stl"), 0.1f, 0.1f, 0.1f);
-			mesh->FillColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-			mesh->RecalculateFaceNormal();
-
-			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", Neon::URL::Resource("/shader/lighting.vs"), Neon::URL::Resource("/shader/lighting.fs"));
-			entity->AddComponent(shader);
-
-			auto transform = scene->CreateComponent<Neon::Transform>("Transform/Sphere");
-			entity->AddComponent(transform);
-			entity->AddKeyEventHandler([mesh](const Neon::KeyEvent& event) {
-				if (GLFW_KEY_1 == event.key && GLFW_RELEASE == event.action)
-				{
-					mesh->ToggleFillMode();
-				}
-				});
-
-			entity->AddMouseButtonEventHandler([scene, mesh, debugPoints, debugLines](const Neon::MouseButtonEvent& event) {
-				if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_DOUBLE_ACTION)
-				{
-					auto camera = scene->GetMainCamera();
-
-					auto ray = camera->GetPickingRay(event.xpos, event.ypos);
-
-					glm::vec3 intersection;
-					size_t faceIndex = 0;
-					if (mesh->Pick(ray, intersection, faceIndex))
-					{
-						camera->centerPosition = intersection;
-					}
-				}
-				else if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_RELEASE)
-				{
-					auto camera = scene->GetMainCamera();
-
-					auto ray = camera->GetPickingRay(event.xpos, event.ypos);
-
-					glm::vec3 intersection;
-					size_t faceIndex = 0;
-					if (mesh->Pick(ray, intersection, faceIndex))
-					{
-						debugPoints->Clear();
-
-						debugPoints->AddPoint(intersection, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-
-						//auto result = verticesBSPTree->GetNearestNode(verticesBSPTree->vertexRoot, intersection, verticesBSPTree->vertexRoot);
-
-						//if (nullptr != result)
-						//{
-						//	verticesBSPTree->Traverse(verticesBSPTree->vertexRoot, [&mesh, result](Neon::BSPTreeVertexNode<glm::vec3>* node) {
-						//		//cout << node->index << endl;
-						//		if (node->t < result->t)
-						//		{
-						//			mesh->SetColor(node->index, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-						//		}
-						//		}, []() {});
-
-						//	//debugPoints->AddPoint(result->t, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-						//}
-					}
-				}
-				});
-
-			auto vb = mesh->GetVertexBuffer();
-			auto nb = mesh->GetNormalBuffer();
-			auto nov = vb->Size();
-
-			for (size_t i = 0; i < nov; i++)
-			{
-				auto v = vb->GetElement(i);
-				auto n = nb->GetElement(i);
-
-				csgjs_vertex csgv;
-				csgv.pos.x = v.x;
-				csgv.pos.y = v.y;
-				csgv.pos.z = v.z;
-
-				csgv.normal.x = n.x;
-				csgv.normal.y = n.y;
-				csgv.normal.z = n.z;
-
-				sphere.vertices.push_back(csgv);
-			}
-
-			auto ib = mesh->GetIndexBuffer();
-			auto noi = ib->Size();
-			for (size_t i = 0; i < noi; i++)
-			{
-				sphere.indices.push_back(ib->GetElement(i));
-			}
-
-			//auto bspTree = scene->CreateComponent<Neon::BSPTree<Neon::BSPTriangle>>("Sphere BSPTree", mesh);
-			//entity->AddComponent(bspTree);
-			//bspTree->BuildTriangles();
-
-			//bspTree->Traverse(bspTree->triangleRoot, [bspTree, debugTriangles](auto node) {
-			//	debugTriangles->AddTriangle(node->t.v0, node->t.v1, node->t.v2);
-			//	}, []() {});
-
-			auto volume = scene->CreateComponent<Neon::Volume>("Volume/Entity", mesh, 0.05f);
-			volume->Build();
-
-			cout << volume->GetVoxels().size() << " voxels" << endl;
-
-			for (auto& kvp : volume->GetVoxels())
-			{
-				debugPoints->AddPoint(kvp.second->center, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-			}
-		}
-
-		//{
-		//	auto result_union = csgjs_union(sphere, cube);
-		//	auto noi = result_union.indices.size();
-		//	for (size_t i = 0; i < noi / 3; i++)
-		//	{
-		//		auto i0 = result_union.indices[i * 3 + 0];
-		//		auto i1 = result_union.indices[i * 3 + 1];
-		//		auto i2 = result_union.indices[i * 3 + 2];
-
-		//		auto v0 = result_union.vertices[i0];
-		//		auto v1 = result_union.vertices[i1];
-		//		auto v2 = result_union.vertices[i2];
-
-		//		debugTriangles->AddTriangle(
-		//			glm::vec3(v0.pos.x, v0.pos.y, v0.pos.z),
-		//			glm::vec3(v1.pos.x, v1.pos.y, v1.pos.z),
-		//			glm::vec3(v2.pos.x, v2.pos.y, v2.pos.z),
-		//			glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
-		//			glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
-		//			glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-		//	}
-		//}
-
-		/*
-		{
-			auto t = Neon::Time("Mesh Loading");
-
-			auto entity = scene->CreateEntity("Entity/Mesh");
-			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Mesh");
-			entity->AddComponent(mesh);
-			mesh->FromSTLFile(Neon::URL::Resource("/stl/mx.stl"), 0.01f, 0.01f, 0.01f);
-
-			mesh->FillColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-
-			mesh->RecalculateFaceNormal();
-
-			auto noi = mesh->GetIndexBuffer()->Size();
-			for (size_t i = 0; i < noi / 3; i++)
-			{
-				auto i0 = mesh->GetIndexBuffer()->GetElement(i * 3 + 0);
-				auto i1 = mesh->GetIndexBuffer()->GetElement(i * 3 + 1);
-				auto i2 = mesh->GetIndexBuffer()->GetElement(i * 3 + 2);
-
-				auto v0 = mesh->GetVertex(i0);
-				auto v1 = mesh->GetVertex(i1);
-				auto v2 = mesh->GetVertex(i2);
-
-				debugTriangles->AddTriangle(v0, v1, v2, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-			}
-
-			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", Neon::URL::Resource("/shader/lighting.vs"), Neon::URL::Resource("/shader/lighting.fs"));
-			entity->AddComponent(shader);
-
-			auto transform = scene->CreateComponent<Neon::Transform>("Transform/Mesh");
-			entity->AddComponent(transform);
-			entity->AddKeyEventHandler([mesh](const Neon::KeyEvent& event) {
-				if (GLFW_KEY_1 == event.key && GLFW_RELEASE == event.action)
-				{
-					mesh->ToggleFillMode();
-				}
-				});
-
-			auto trianglesBSPTree = scene->CreateComponent<Neon::BSPTree<Neon::BSPTriangle>>("Triangles BSPTree/Mesh", mesh);
-			trianglesBSPTree->BuildTriangles();
-
-			size_t count = 0;
-			//trianglesBSPTree->Traverse(trianglesBSPTree->triangleRoot, [&count, scene, mesh, trianglesBSPTree, debugTriangles](Neon::BSPTreeTriangleNode<Neon::BSPTriangle>* node) {
-			//	count++;
-			//	GLuint i0, i1, i2;
-			//	auto noi = mesh->GetIndexBuffer()->Size();
-			//	for (size_t i = 0; i < noi / 3; i++)
-			//	{
-			//		mesh->GetTriangleVertexIndices(i, i0, i1, i2);
-			//		auto v0 = mesh->GetVertex(i0);
-			//		auto v1 = mesh->GetVertex(i1);
-			//		auto v2 = mesh->GetVertex(i2);
-
-			//		debugTriangles->AddTriangle(v0, v1, v2);
-			//	}
-			//	},
-			//	[&count]() {
-			//		cout << "total count : " << count << endl;
-			//	});
-
-			auto verticesBSPTree = scene->CreateComponent<Neon::BSPTree<glm::vec3>>("Vertices BSPTree/Mesh", mesh);
-			verticesBSPTree->BuildVertices();
-
-			count = 0;
-			verticesBSPTree->Traverse(verticesBSPTree->vertexRoot, [&count, debugTriangles](Neon::BSPTreeVertexNode<glm::vec3>* node) {
-				count++;
-				},
-				[&count]() {
-					cout << "total count : " << count << endl;
-				});
-
-			entity->AddMouseButtonEventHandler([scene, mesh, verticesBSPTree, debugPoints, debugLines](const Neon::MouseButtonEvent& event) {
-				if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_DOUBLE_ACTION)
-				{
-					auto camera = scene->GetMainCamera();
-
-					auto ray = camera->GetPickingRay(event.xpos, event.ypos);
-
-					glm::vec3 intersection;
-					size_t faceIndex = 0;
-					if (mesh->Pick(ray, intersection, faceIndex))
-					{
-						camera->centerPosition = intersection;
-					}
-				}
-				else if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_RELEASE)
-				{
-					auto camera = scene->GetMainCamera();
-
-					auto ray = camera->GetPickingRay(event.xpos, event.ypos);
-
-					glm::vec3 intersection;
-					size_t faceIndex = 0;
-					if (mesh->Pick(ray, intersection, faceIndex))
-					{
-						debugPoints->Clear();
-
-						debugPoints->AddPoint(intersection, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-
-						auto result = verticesBSPTree->GetNearestNode(verticesBSPTree->vertexRoot, intersection, verticesBSPTree->vertexRoot);
-
-						if (nullptr != result)
-						{
-							verticesBSPTree->Traverse(verticesBSPTree->vertexRoot, [&mesh, result](Neon::BSPTreeVertexNode<glm::vec3>* node) {
-								//cout << node->index << endl;
-								if (node->t < result->t)
-								{
-									mesh->SetColor(node->index, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-								}
-								}, []() {});
-
-							//debugPoints->AddPoint(result->t, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-						}
-					}
-				}
-				});
-
-		}*/
 		});
 
 
