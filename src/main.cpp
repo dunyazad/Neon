@@ -324,7 +324,7 @@ int main()
 		}
 
 		{
-			auto result_union = csgjs_union(cube, sphere);
+			auto result_union = csgjs_union(sphere, cube);
 			auto noi = result_union.indices.size();
 			for (size_t i = 0; i < noi / 3; i++)
 			{

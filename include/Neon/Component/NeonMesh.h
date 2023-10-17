@@ -55,6 +55,7 @@ namespace Neon
 		void Unbind();
 
 		void FromSTLFile(const URL& fileURL, float scaleX = 1.0f, float scaleY = 1.0f, float scaleZ = 1.0f);
+		void ToSTLFile(const URL& fileURL, float scaleX = 1.0f, float scaleY = 1.0f, float scaleZ = 1.0f);
 		void RecalculateFaceNormal();
 		void FillColor(const glm::vec4& color);
 

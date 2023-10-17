@@ -303,6 +303,62 @@ namespace Neon
 		}
 	}
 
+	void Mesh::ToSTLFile(const URL& fileURL, float scaleX, float scaleY, float scaleZ)
+	{
+		FILE* fp = nullptr;
+		fopen_s(&fp, fileURL.path.c_str(), "wb");
+
+		if (fp != nullptr)
+		{
+			RecalculateFaceNormal();
+
+			char header[80];
+			memset(header, 0, 80);
+			char header_string[] = "MeshIO";
+			memcpy(header, header_string, 6);
+			fwrite(header, 80, 1, fp);
+
+			auto ib = GetIndexBuffer();
+			int nof = (int)ib->Size() / 3;
+			fwrite(&nof, 4, 1, fp);
+
+			int buffer_index = 0;
+			char* buffer = new char[nof * 50];
+			memset(buffer, 0, nof * 50);
+
+			for (int i = 0; i < nof; i++)
+			{
+				GLuint vi0, vi1, vi2;
+				GetIndex(i * 3, vi0);
+				GetIndex(i * 3 + 1, vi1);
+				GetIndex(i * 3 + 2, vi2);
+
+				auto v0 = GetVertex(vi0);
+				auto v1 = GetVertex(vi1);
+				auto v2 = GetVertex(vi2);
+
+				auto& fn = GetNormal(vi0);
+				short dummy = 0;
+
+				v0.x *= scaleX; v0.y *= scaleY; v0.z *= scaleZ;
+				v1.x *= scaleX; v1.y *= scaleY; v1.z *= scaleZ;
+				v2.x *= scaleX; v2.y *= scaleY; v2.z *= scaleZ;
+
+				memcpy(buffer + buffer_index, &fn, 12); buffer_index += 12;
+				memcpy(buffer + buffer_index, &v0, 12); buffer_index += 12;
+				memcpy(buffer + buffer_index, &v1, 12); buffer_index += 12;
+				memcpy(buffer + buffer_index, &v2, 12); buffer_index += 12;
+				memcpy(buffer + buffer_index, &dummy, 2); buffer_index += 2;
+			}
+
+			fwrite(buffer, nof * 50, 1, fp);
+
+			delete[] buffer;
+	
+			fclose(fp);
+		}
+	}
+
 	void Mesh::RecalculateFaceNormal()
 	{
 		auto noi = GetIndexBuffer()->Size();
