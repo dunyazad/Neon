@@ -119,18 +119,18 @@ int main()
 #pragma endregion
 
 		{
-			auto entity = scene->CreateEntity("Entity/Cube");
-			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Cube");
+			auto entity = scene->CreateEntity("Entity/spot");
+			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/spot");
 			entity->AddComponent(mesh);
 
-			mesh->FromSTLFile(Neon::URL::Resource("/stl/spot.stl"));
+			mesh->FromSTLFile(Neon::URL::Resource("/stl/mesh.stl"));
 			mesh->FillColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 			mesh->RecalculateFaceNormal();
 
 			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", Neon::URL::Resource("/shader/lighting.vs"), Neon::URL::Resource("/shader/lighting.fs"));
 			entity->AddComponent(shader);
 
-			auto transform = scene->CreateComponent<Neon::Transform>("Transform/Cube");
+			auto transform = scene->CreateComponent<Neon::Transform>("Transform/spot");
 			entity->AddComponent(transform);
 			entity->AddKeyEventHandler([mesh](const Neon::KeyEvent& event) {
 				if (GLFW_KEY_1 == event.key && GLFW_RELEASE == event.action)
@@ -169,6 +169,14 @@ int main()
 					}
 				}
 				});
+
+			auto regularGrid = scene->CreateComponent<Neon::RegularGrid>("RegularGrid/spot", mesh, 0.05f);
+			regularGrid->Build();
+
+			for (auto& kvp : regularGrid->GetCells())
+			{
+				debugPoints->AddPoint(kvp.second->center, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+			}
 		}
 		});
 

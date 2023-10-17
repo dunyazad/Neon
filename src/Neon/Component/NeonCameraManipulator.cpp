@@ -101,10 +101,10 @@ namespace Neon
 			auto xAxis = glm::vec3(glm::row(camera->viewMatrix, 0));
 			auto yAxis = glm::vec3(glm::row(camera->viewMatrix, 1));
 
-			transform->position += glm::normalize(xAxis) * (float)-dx * 0.001f;
-			camera->centerPosition += glm::normalize(xAxis) * (float)-dx * 0.001f;
-			transform->position += glm::normalize(yAxis) * (float)dy * 0.001f;
-			camera->centerPosition += glm::normalize(yAxis) * (float)dy * 0.001f;
+			transform->position += glm::normalize(xAxis) * camera->distance * 0.5f * (float)-dx * 0.001f;
+			camera->centerPosition += glm::normalize(xAxis) * camera->distance * 0.5f * (float)-dx * 0.001f;
+			transform->position += glm::normalize(yAxis) * camera->distance * 0.5f * (float)dy * 0.001f;
+			camera->centerPosition += glm::normalize(yAxis) * camera->distance * 0.5f * (float)dy * 0.001f;
 		}
 
 		lastCursorPosX = event.xpos;
