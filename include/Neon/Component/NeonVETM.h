@@ -5,15 +5,15 @@
 
 namespace Neon
 {
-	//class Mesh;
-
-	//struct VETM::Vertex;
-	//struct VETM::Edge;
-	//struct VETM::Triangle;
+	class Mesh;
 
 	//class VETM : public ComponentBase
 	//{
 	//public:
+	//	struct Vertex;
+	//	struct Edge;
+	//	struct Triangle;
+
 	//	struct Vertex
 	//	{
 	//		int id = -1;
@@ -45,6 +45,68 @@ namespace Neon
 	//public:
 	//	VETM(const string& name, Mesh* mesh);
 	//	~VETM();
+
+	//	void Clear();
+	//	void Clone(Mesh& clone);
+
+	//	Vertex* GetVertex(const glm::vec3& position);
+	//	Vertex* AddVertex(const glm::vec3& position, const glm::vec3& normal);
+
+	//	Edge* GetEdge(Vertex* v0, Vertex* v1);
+	//	Edge* AddEdge(Vertex* v0, Vertex* v1);
+	//	Vertex* GetCommonVertex(Edge* e0, Edge* e1);
+
+	//	Triangle* GetTriangle(Vertex* v0, Vertex* v1, Vertex* v2);
+	//	Triangle* AddTriangle(Vertex* v0, Vertex* v1, Vertex* v2);
+	//	void RemoveTriangle(Triangle* triangle);
+
+	//	set<Vertex*> GetAdjacentVertices(Vertex* vertex);
+
+	//	set<Vertex*> GetVerticesInRadius(const glm::vec3& position, float radius);
+
+	//	//float GetDistanceFromEdge(Edge* edge, const glm::vec3& position);
+
+	//	tuple<glm::vec3, glm::vec3, glm::vec3> GetTrianglePoints(Triangle* triangle);
+	//	glm::vec3 GetTriangleCentroid(Triangle* triangle);
+	//	float GetTriangleArea(Triangle* triangle);
+
+	//	void FlipTriangle(Triangle* triangle);
+
+	//	glm::vec3 GetNearestPointOnEdge(Edge* edge, const glm::vec3& position);
+	//	Vertex* GetNearestVertexOnTriangle(Triangle* triangle, const glm::vec3& position);
+	//	//Edge* GetNearestEdgeOnTriangle(Triangle* triangle, const glm::vec3& position);
+	//	set<Triangle*> GetAdjacentTrianglesByEdge(Triangle* triangle);
+	//	set<Triangle*> GetAdjacentTrianglesByVertex(Triangle* triangle);
+	//	set<Triangle*> GetConnectedTriangles(Triangle* triangle);
+
+	//	vector<Mesh*> SeparateConnectedGroup();
+
+	//	vector<vector<Edge*>> GetBorderEdges();
+	//	void FillTrianglesToMakeBorderSmooth(float degreeMax);
+	//	void ExtrudeBorder(const glm::vec3& direction, int segments);
+	//	void GenerateBase();
+	//	void GenerateBaseWithHollow();
+	//	void DeleteSelfintersectingTriangles();
+
+	//	inline float GetTotalArea() const { return totalArea; }
+
+	//	inline const vector<Vertex*>& GetVertices() const { return vertices; }
+	//	inline const set<Edge*>& GetEdges() const { return edges; }
+	//	inline const set<Triangle*>& GetTriangles() const { return triangles; }
+
+	//private:
+	//	//HKDTree kdtree;
+
+	//	int vid = 0;
+	//	int eid = 0;
+	//	int tid = 0;
+
+	//	vector<Vertex*> vertices;
+	//	set<Edge*> edges;
+	//	map<tuple<Vertex*, Vertex*>, Edge*> edgeMapping;
+	//	set<Triangle*> triangles;
+	//	map<tuple<Edge*, Edge*, Edge*>, Triangle*> triangleMapping;
+	//	float totalArea = 0.0;
 
 	//private:
 	//	Mesh* mesh = nullptr;

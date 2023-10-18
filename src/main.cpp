@@ -49,6 +49,9 @@ int main()
 
 		auto debugTriangles = scene->CreateDebugEntity("DebugEntity/Triangles");
 		debugTriangles->AddKeyEventHandler(toggleFillMode);
+
+		auto debugBoxes = scene->CreateDebugEntity("DebugEntity/Boxes");
+		debugBoxes->AddKeyEventHandler(toggleFillMode);
 #pragma endregion
 
 #pragma region Camera
@@ -170,12 +173,14 @@ int main()
 				}
 				});
 
-			auto regularGrid = scene->CreateComponent<Neon::RegularGrid>("RegularGrid/spot", mesh, 0.05f);
+			auto t0 = Neon::Time("Building regulargrid");
+			auto regularGrid = scene->CreateComponent<Neon::RegularGrid>("RegularGrid/spot", mesh, 0.5f);
 			regularGrid->Build();
 
+			auto t1 = Neon::Time("Adding Boxes");
 			for (auto& kvp : regularGrid->GetCells())
 			{
-				debugPoints->AddPoint(kvp.second->center, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+				debugBoxes->AddBox(kvp.second->center, regularGrid->GetCellSize(), regularGrid->GetCellSize(), regularGrid->GetCellSize(), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
 			}
 		}
 		});

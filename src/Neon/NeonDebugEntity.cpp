@@ -69,4 +69,37 @@ namespace Neon
 		mesh->SetDrawingMode(GL_TRIANGLES);
 		mesh->SetFillMode(Mesh::FillMode::Fill);
 	}
+
+	void DebugEntity::AddBox(const glm::vec3& center, float xLength, float yLength, float zLength, const glm::vec4& color)
+	{
+		float halfX = xLength * 0.5f;
+		float halfY = yLength * 0.5f;
+		float halfZ = zLength * 0.5f;
+
+		float nx = center.x - halfX;
+		float ny = center.y - halfY;
+		float nz = center.z - halfZ;
+
+		float px = center.x + halfX;
+		float py = center.y + halfY;
+		float pz = center.z + halfZ;
+
+		AddTriangle(glm::vec3(nx, ny, nz), glm::vec3(nx, py, nz), glm::vec3(px, py, nz), color, color, color);
+		AddTriangle(glm::vec3(nx, ny, nz), glm::vec3(px, py, nz), glm::vec3(px, ny, nz), color, color, color);
+
+		AddTriangle(glm::vec3(nx, ny, pz), glm::vec3(px, ny, pz), glm::vec3(px, py, pz), color, color, color);
+		AddTriangle(glm::vec3(nx, ny, pz), glm::vec3(px, py, pz), glm::vec3(nx, py, pz), color, color, color);
+
+		AddTriangle(glm::vec3(nx, py, pz), glm::vec3(px, py, pz), glm::vec3(px, py, nz), color, color, color);
+		AddTriangle(glm::vec3(nx, py, pz), glm::vec3(px, py, nz), glm::vec3(nx, py, nz), color, color, color);
+
+		AddTriangle(glm::vec3(nx, ny, pz), glm::vec3(px, ny, nz), glm::vec3(px, ny, pz), color, color, color);
+		AddTriangle(glm::vec3(nx, ny, pz), glm::vec3(nx, ny, nz), glm::vec3(px, ny, nz), color, color, color);
+
+		AddTriangle(glm::vec3(px, ny, pz), glm::vec3(px, ny, nz), glm::vec3(px, py, nz), color, color, color);
+		AddTriangle(glm::vec3(px, ny, pz), glm::vec3(px, py, nz), glm::vec3(px, py, pz), color, color, color);
+
+		AddTriangle(glm::vec3(nx, ny, pz), glm::vec3(nx, py, pz), glm::vec3(nx, py, nz), color, color, color);
+		AddTriangle(glm::vec3(nx, ny, pz), glm::vec3(nx, py, nz), glm::vec3(nx, ny, nz), color, color, color);
+	}
 }
