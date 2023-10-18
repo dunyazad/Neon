@@ -51,6 +51,8 @@ include/Neon/Component/NeonRegularGrid.h
 src/Neon/Component/NeonRegularGrid.cpp
 include/Neon/Component/NeonShader.h
 src/Neon/Component/NeonShader.cpp
+include/Neon/Component/NeonSpatialHashing.h
+src/Neon/Component/NeonSpatialHashing.cpp
 include/Neon/Component/NeonTexture.h
 src/Neon/Component/NeonTexture.cpp
 include/Neon/Component/NeonTransform.h

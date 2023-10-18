@@ -174,7 +174,7 @@ int main()
 				});
 
 			auto t0 = Neon::Time("Building regulargrid");
-			auto regularGrid = scene->CreateComponent<Neon::RegularGrid>("RegularGrid/spot", mesh, 0.5f);
+			auto regularGrid = scene->CreateComponent<Neon::SpatialHashing>("RegularGrid/spot", mesh, 0.5f);
 			regularGrid->Build();
 
 			auto t1 = Neon::Time("Adding Boxes");
