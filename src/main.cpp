@@ -120,8 +120,35 @@ int main()
 			entity->AddComponent(shader);
 		}
 #pragma endregion
-
+		
 		{
+			auto entity = scene->CreateEntity("Entity/spot");
+			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/spot");
+			entity->AddComponent(mesh);
+
+			mesh->FromPLYFile(Neon::URL("C:/Resources/TestData/OCT_phantom_1.ply"));
+			cout << "loaded" << endl;
+
+			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", Neon::URL::Resource("/shader/lighting.vs"), Neon::URL::Resource("/shader/lighting.fs"));
+			entity->AddComponent(shader);
+
+			entity->AddKeyEventHandler([mesh](const Neon::KeyEvent& event) {
+				if (GLFW_KEY_1 == event.key && GLFW_RELEASE == event.action)
+				{
+					mesh->ToggleFillMode();
+				}
+				});
+
+			auto nov = mesh->GetVertexBuffer()->Size();
+			for (size_t i = 0; i < nov; i++)
+			{
+				auto v = mesh->GetVertex(i);
+				auto c = mesh->GetColor(i);
+				debugPoints->AddPoint(v, c);
+			}
+		}
+
+	/*	{
 			auto entity = scene->CreateEntity("Entity/spot");
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/spot");
 			entity->AddComponent(mesh);
@@ -129,6 +156,9 @@ int main()
 			mesh->FromSTLFile(Neon::URL::Resource("/stl/mesh.stl"));
 			mesh->FillColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 			mesh->RecalculateFaceNormal();
+
+			scene->GetMainCamera()->centerPosition = mesh->GetAABB().GetCenter();
+			scene->GetMainCamera()->distance = mesh->GetAABB().GetDiagonalLength();
 
 			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", Neon::URL::Resource("/shader/lighting.vs"), Neon::URL::Resource("/shader/lighting.fs"));
 			entity->AddComponent(shader);
@@ -173,7 +203,7 @@ int main()
 				}
 				});
 
-			auto t0 = Neon::Time("Building regulargrid");
+			auto t0 = Neon::Time("Spatial Hashing");
 			auto regularGrid = scene->CreateComponent<Neon::SpatialHashing>("RegularGrid/spot", mesh, 0.5f);
 			regularGrid->Build();
 
@@ -182,7 +212,9 @@ int main()
 			{
 				debugBoxes->AddBox(kvp.second->center, regularGrid->GetCellSize(), regularGrid->GetCellSize(), regularGrid->GetCellSize(), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
 			}
-		}
+		}*/
+
+
 		});
 
 

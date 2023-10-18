@@ -56,6 +56,8 @@ namespace Neon
 
 		void FromSTLFile(const URL& fileURL, float scaleX = 1.0f, float scaleY = 1.0f, float scaleZ = 1.0f);
 		void ToSTLFile(const URL& fileURL, float scaleX = 1.0f, float scaleY = 1.0f, float scaleZ = 1.0f);
+		
+		void FromPLYFile(const URL& fileURL, float scaleX = 1.0f, float scaleY = 1.0f, float scaleZ = 1.0f);
 		void RecalculateFaceNormal();
 		void FillColor(const glm::vec4& color);
 
@@ -70,10 +72,13 @@ namespace Neon
 		inline void SetFillMode(FillMode mode) { fillMode = mode; }
 		inline void ToggleFillMode() { int f = fillMode; f++; fillMode = (Mesh::FillMode)(f % ((int)Mesh::FillMode::None + 1)); }
 
+		inline const AABB& GetAABB() const { return aabb; }
+
 		void ForEachTriangle(function<void(size_t, GLuint, GLuint, GLuint, glm::vec3, glm::vec3, glm::vec3)> callback);
 
 	private:
 		bool visible = true;
+		AABB aabb;
 
 		VertexArrayObject* vao = nullptr;
 		map<VertexBufferObjectBase::BufferType, VertexBufferObjectBase*> bufferObjects;

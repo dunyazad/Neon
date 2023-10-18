@@ -59,6 +59,8 @@ namespace Neon
 			CheckGLError();
 		}
 
+		inline T* Data() { if (0 == elements.size()) return nullptr; else return &(elements[0]); }
+		inline void Resize(size_t size) { elements.resize(size); }
 		inline size_t Size() { return elements.size(); }
 		inline virtual void Clear() { elements.clear(); }
 

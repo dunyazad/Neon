@@ -4,8 +4,8 @@
 
 namespace Neon
 {
-	SpatialHashing::SpatialHashing(const string& name, Mesh* mesh, float voxelSize)
-		: ComponentBase(name), mesh(mesh), cellSize(voxelSize), cellHalfSize(voxelSize * 0.5f) {}
+	SpatialHashing::SpatialHashing(const string& name, Mesh* mesh, float cellSize)
+		: ComponentBase(name), mesh(mesh), cellSize(cellSize), cellHalfSize(cellSize * 0.5f) {}
 
 	SpatialHashing::~SpatialHashing()
 	{
@@ -23,16 +23,16 @@ namespace Neon
 	tuple<int, int, int> SpatialHashing::InsertPoint(const glm::vec3& position)
 	{
 		auto index = GetIndex(position);
-		auto voxel = GetCell(index);
-		if (nullptr == voxel) {
+		auto cell = GetCell(index);
+		if (nullptr == cell) {
 			auto minx = float(get<0>(index)) * cellSize - cellHalfSize;
 			auto miny = float(get<1>(index)) * cellSize - cellHalfSize;
 			auto minz = float(get<2>(index)) * cellSize - cellHalfSize;
 			auto maxx = float(get<0>(index)) * cellSize + cellHalfSize;
 			auto maxy = float(get<1>(index)) * cellSize + cellHalfSize;
 			auto maxz = float(get<2>(index)) * cellSize + cellHalfSize;
-			auto newVoxel = new SpatialHashingCell<Vertex, Triangle>(index, glm::vec3(minx, miny, minz), glm::vec3(maxx, maxy, maxz));
-			cells[index] = newVoxel;
+			auto newCell = new SpatialHashingCell<Vertex, Triangle>(index, glm::vec3(minx, miny, minz), glm::vec3(maxx, maxy, maxz));
+			cells[index] = newCell;
 			Expand(position);
 			return index;
 		}
@@ -46,22 +46,22 @@ namespace Neon
 		auto vertexPosition = mesh->GetVertex(vertex->index);
 
 		auto index = GetIndex(vertexPosition);
-		auto voxel = GetCell(index);
-		if (nullptr == voxel) {
+		auto cell = GetCell(index);
+		if (nullptr == cell) {
 			auto minx = float(get<0>(index)) * cellSize - cellHalfSize;
 			auto miny = float(get<1>(index)) * cellSize - cellHalfSize;
 			auto minz = float(get<2>(index)) * cellSize - cellHalfSize;
 			auto maxx = float(get<0>(index)) * cellSize + cellHalfSize;
 			auto maxy = float(get<1>(index)) * cellSize + cellHalfSize;
 			auto maxz = float(get<2>(index)) * cellSize + cellHalfSize;
-			auto newVoxel = new SpatialHashingCell<Vertex, Triangle>(index, glm::vec3(minx, miny, minz), glm::vec3(maxx, maxy, maxz));
-			newVoxel->GetVertices().insert(vertex);
-			cells[index] = newVoxel;
+			auto newCell = new SpatialHashingCell<Vertex, Triangle>(index, glm::vec3(minx, miny, minz), glm::vec3(maxx, maxy, maxz));
+			newCell->GetVertices().insert(vertex);
+			cells[index] = newCell;
 			Expand(vertexPosition);
 			return index;
 		}
 		else {
-			voxel->GetVertices().insert(vertex);
+			cell->GetVertices().insert(vertex);
 			return index;
 		}
 	}
@@ -94,9 +94,9 @@ namespace Neon
 					if (aabb.IntersectsTriangle(p0, p1, p2)) {
 						auto index = make_tuple(x, y, z);
 						if (cells.count(index) == 0) {
-							auto newVoxel = new SpatialHashingCell<Vertex, Triangle>(index, aabb.GetMinPoint(), aabb.GetMaxPoint());
-							newVoxel->GetTriangles().insert(t);
-							cells[index] = newVoxel;
+							auto newCell = new SpatialHashingCell<Vertex, Triangle>(index, aabb.GetMinPoint(), aabb.GetMaxPoint());
+							newCell->GetTriangles().insert(t);
+							cells[index] = newCell;
 						}
 						else {
 							cells[index]->GetTriangles().insert(t);
@@ -122,9 +122,9 @@ namespace Neon
 		for (int z = get<2>(minIndex); z <= get<2>(maxIndex); z++) {
 			for (int y = get<1>(minIndex); y <= get<1>(maxIndex); y++) {
 				for (int x = get<0>(minIndex); x <= get<0>(maxIndex); x++) {
-					auto voxel = GetCell(make_tuple(x, y, z));
-					if (nullptr != voxel) {
-						voxel->GetTriangles().erase(t);
+					auto cell = GetCell(make_tuple(x, y, z));
+					if (nullptr != cell) {
+						cell->GetTriangles().erase(t);
 					}
 				}
 			}
@@ -169,9 +169,9 @@ namespace Neon
 				for (int z = get<2>(index) - 1; z <= get<2>(index) + 1; ++z) {
 					for (int y = get<1>(index) - 1; y <= get<1>(index) + 1; ++y) {
 						for (int x = get<0>(index) - 1; x <= get<0>(index) + 1; ++x) {
-							auto voxel = GetCell(make_tuple(x, y, z));
-							if (nullptr != voxel) {
-								candidates.insert(voxel);
+							auto cell = GetCell(make_tuple(x, y, z));
+							if (nullptr != cell) {
+								candidates.insert(cell);
 							}
 						}
 					}

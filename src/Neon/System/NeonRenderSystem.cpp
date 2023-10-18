@@ -98,7 +98,25 @@ namespace Neon
 				glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
 			}
 
-			glDrawElements(mesh->GetDrawingMode(), (GLsizei)mesh->GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+			if (0 != mesh->GetIndexBuffer()->Size())
+			{
+				glDrawElements(mesh->GetDrawingMode(), (GLsizei)mesh->GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+			}
+			else
+			{
+				if (mesh->GetFillMode() == Mesh::FillMode::Point)
+				{
+					glDrawArrays(mesh->GetDrawingMode(), 0, (GLsizei)mesh->GetVertexBuffer()->Size());
+				}
+				else if (mesh->GetFillMode() == Mesh::FillMode::Line)
+				{
+					glDrawArrays(mesh->GetDrawingMode(), 0, (GLsizei)mesh->GetVertexBuffer()->Size() / 2);
+				}
+				else if (mesh->GetFillMode() == Mesh::FillMode::Fill)
+				{
+					glDrawArrays(mesh->GetDrawingMode(), 0, (GLsizei)mesh->GetVertexBuffer()->Size() / 3);
+				}
+			}
 
 			if (mesh->GetDrawingMode() != Mesh::Fill)
 			{
@@ -166,7 +184,25 @@ namespace Neon
 				glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
 			}
 
-			glDrawElements(mesh->GetDrawingMode(), (GLsizei)mesh->GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+			if (0 != mesh->GetIndexBuffer()->Size())
+			{
+				glDrawElements(mesh->GetDrawingMode(), (GLsizei)mesh->GetIndexBuffer()->Size(), GL_UNSIGNED_INT, 0);
+			}
+			else
+			{
+				if (mesh->GetFillMode() == Mesh::FillMode::Point)
+				{
+					glDrawArrays(mesh->GetDrawingMode(), 0, (GLsizei)mesh->GetVertexBuffer()->Size());
+				}
+				else if (mesh->GetFillMode() == Mesh::FillMode::Line)
+				{
+					glDrawArrays(mesh->GetDrawingMode(), 0, (GLsizei)mesh->GetVertexBuffer()->Size() / 2);
+				}
+				else if (mesh->GetFillMode() == Mesh::FillMode::Fill)
+				{
+					glDrawArrays(mesh->GetDrawingMode(), 0, (GLsizei)mesh->GetVertexBuffer()->Size() / 3);
+				}
+			}
 
 			if (mesh->GetFillMode() != Mesh::Fill)
 			{

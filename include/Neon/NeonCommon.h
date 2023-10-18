@@ -110,6 +110,7 @@ namespace Neon
 		inline const glm::vec3& GetMaxPoint() const { return XYZ; }
 		inline const glm::vec3& GetCenter() const { return center; }
 		inline const glm::vec3& GetExtents() const { return extents; }
+		inline float GetDiagonalLength() const { return glm::distance(XYZ, xyz); }
 
 		inline void Expand(float x, float y, float z)
 		{
