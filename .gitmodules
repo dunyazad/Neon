@@ -13,3 +13,6 @@
 [submodule "External/json"]
 	path = External/json
 	url = https://github.com/nlohmann/json.git
+[submodule "External/tinyply"]
+	path = External/tinyply
+	url = https://github.com/ddiakopoulos/tinyply.git
