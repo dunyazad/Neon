@@ -20,6 +20,11 @@ namespace Neon
 		cells.clear();
 	}
 
+	void SpatialHashing::Clear()
+	{
+
+	}
+
 	tuple<int, int, int> SpatialHashing::InsertPoint(const glm::vec3& position)
 	{
 		auto index = GetIndex(position);

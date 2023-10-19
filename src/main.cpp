@@ -25,7 +25,22 @@ int main()
 		auto scene = app.CreateScene("Scene/Main");
 
 #pragma region For Debugging
-		auto toggleFillMode = [](const Neon::KeyEvent& event)
+		auto toggleFillMode1 = [](const Neon::KeyEvent& event)
+			{
+				auto entity = dynamic_cast<Neon::Entity*>(event.target);
+				if (nullptr != entity)
+				{
+					auto mesh = entity->GetComponent<Neon::Mesh>(0);
+					if (nullptr != mesh)
+					{
+						if (GLFW_KEY_1 == event.key && GLFW_RELEASE == event.action)
+						{
+							mesh->ToggleFillMode();
+						}
+					}
+				}
+			};
+		auto toggleFillMode2 = [](const Neon::KeyEvent& event)
 			{
 				auto entity = dynamic_cast<Neon::Entity*>(event.target);
 				if (nullptr != entity)
@@ -40,18 +55,64 @@ int main()
 					}
 				}
 			};
+		auto toggleFillMode3 = [](const Neon::KeyEvent& event)
+			{
+				auto entity = dynamic_cast<Neon::Entity*>(event.target);
+				if (nullptr != entity)
+				{
+					auto mesh = entity->GetComponent<Neon::Mesh>(0);
+					if (nullptr != mesh)
+					{
+						if (GLFW_KEY_3 == event.key && GLFW_RELEASE == event.action)
+						{
+							mesh->ToggleFillMode();
+						}
+					}
+				}
+			};
+		auto toggleFillMode4 = [](const Neon::KeyEvent& event)
+			{
+				auto entity = dynamic_cast<Neon::Entity*>(event.target);
+				if (nullptr != entity)
+				{
+					auto mesh = entity->GetComponent<Neon::Mesh>(0);
+					if (nullptr != mesh)
+					{
+						if (GLFW_KEY_4 == event.key && GLFW_RELEASE == event.action)
+						{
+							mesh->ToggleFillMode();
+						}
+					}
+				}
+			};
+
+		auto toggleFillMode5 = [](const Neon::KeyEvent& event)
+			{
+				auto entity = dynamic_cast<Neon::Entity*>(event.target);
+				if (nullptr != entity)
+				{
+					auto mesh = entity->GetComponent<Neon::Mesh>(0);
+					if (nullptr != mesh)
+					{
+						if (GLFW_KEY_5 == event.key && GLFW_RELEASE == event.action)
+						{
+							mesh->ToggleFillMode();
+						}
+					}
+				}
+			};
 
 		auto debugPoints = scene->CreateDebugEntity("DebugEntity/Points");
-		debugPoints->AddKeyEventHandler(toggleFillMode);
+		debugPoints->AddKeyEventHandler(toggleFillMode2);
 
 		auto debugLines = scene->CreateDebugEntity("DebugEntity/Lines");
-		debugLines->AddKeyEventHandler(toggleFillMode);
+		debugLines->AddKeyEventHandler(toggleFillMode3);
 
 		auto debugTriangles = scene->CreateDebugEntity("DebugEntity/Triangles");
-		debugTriangles->AddKeyEventHandler(toggleFillMode);
+		debugTriangles->AddKeyEventHandler(toggleFillMode4);
 
 		auto debugBoxes = scene->CreateDebugEntity("DebugEntity/Boxes");
-		debugBoxes->AddKeyEventHandler(toggleFillMode);
+		debugBoxes->AddKeyEventHandler(toggleFillMode5);
 #pragma endregion
 
 #pragma region Camera
@@ -155,7 +216,7 @@ int main()
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/spot");
 			entity->AddComponent(mesh);
 
-			mesh->FromSTLFile(Neon::URL::Resource("/stl/mesh.stl"));
+			mesh->FromSTLFile(Neon::URL::Resource("/stl/sphere.stl"));
 			mesh->FillColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 			mesh->RecalculateFaceNormal();
 
@@ -171,6 +232,18 @@ int main()
 				if (GLFW_KEY_1 == event.key && GLFW_RELEASE == event.action)
 				{
 					mesh->ToggleFillMode();
+				}
+				else if (GLFW_KEY_KP_ADD == event.key && (GLFW_PRESS == event.action || GLFW_REPEAT == event.action))
+				{
+					GLfloat currentPointSize;
+					glGetFloatv(GL_POINT_SIZE, &currentPointSize);
+					glPointSize(currentPointSize + 1.0f);
+				}
+				else if (GLFW_KEY_KP_SUBTRACT == event.key && (GLFW_PRESS == event.action || GLFW_REPEAT == event.action))
+				{
+					GLfloat currentPointSize;
+					glGetFloatv(GL_POINT_SIZE, &currentPointSize);
+					glPointSize(currentPointSize - 1.0f);
 				}
 				});
 
@@ -198,9 +271,9 @@ int main()
 					size_t faceIndex = 0;
 					if (mesh->Pick(ray, intersection, faceIndex))
 					{
-						debugPoints->Clear();
+						//debugPoints->Clear();
 
-						debugPoints->AddPoint(intersection, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+						//debugPoints->AddPoint(intersection, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 					}
 				}
 				});
@@ -209,7 +282,6 @@ int main()
 			auto cellSize = 0.25f;
 			auto regularGrid = scene->CreateComponent<Neon::RegularGrid>("RegularGrid/spot", mesh, cellSize);
 			regularGrid->Build();
-			//debugBoxes->AddBox(regularGrid->GetCenter(), regularGrid->GetXLength(), regularGrid->GetYLength(), regularGrid->GetZLength(), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
 
 			auto cells = regularGrid->GetCells();
 			for (size_t z = 0; z < regularGrid->GetCellCountZ(); z++)
@@ -218,32 +290,42 @@ int main()
 				{
 					for (size_t x = 0; x < regularGrid->GetCellCountX(); x++)
 					{
-						auto cell = regularGrid->GetCell(make_tuple(x, y, z));
-						if (0 != cell->GetTriangles().size())
+						auto cell = cells[z][y][x];
+						if (0 < cell->GetTriangles().size())
 						{
 							debugBoxes->AddBox(cell->GetCenter(), cell->GetXLength(), cell->GetYLength(), cell->GetZLength(), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+
+							glm::vec3 planePoint = glm::zero<glm::vec3>();
+							glm::vec3 planeNormal = glm::zero<glm::vec3>();
+							for (auto& t : cell->GetTriangles())
+							{
+								auto v0 = mesh->GetVertex(t->v0->index);
+								auto v1 = mesh->GetVertex(t->v1->index);
+								auto v2 = mesh->GetVertex(t->v2->index);
+
+								auto n = glm::normalize(glm::cross(glm::normalize(v1 - v0), glm::normalize(v2 - v0)));
+								auto c = (v0 + v1 + v2) / 3.0f;
+
+								planePoint += c;
+								planeNormal += n;
+							}
+							
+							planePoint /= (float)cell->GetTriangles().size();
+							planeNormal /= (float)cell->GetTriangles().size();
+							planeNormal = normalize(planeNormal);
+
+							//debugPoints->AddPoint(planePoint, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+							debugLines->AddLine(planePoint, planePoint + planeNormal * 0.125f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 						}
 					}
 				}
 			}
 
-			//regularGrid->Build();
-
-			//auto t1 = Neon::Time("Adding Boxes");
-			//for (auto& kvp : regularGrid->GetCells())
-			//{
-			//	debugBoxes->AddBox(kvp.second->center, regularGrid->GetCellSize(), regularGrid->GetCellSize(), regularGrid->GetCellSize(), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-			//}
-
-			//auto t0 = Neon::Time("Spatial Hashing");
-			//auto spatialHashing = scene->CreateComponent<Neon::SpatialHashing>("SpatialHashing/spot", mesh, 0.5f);
-			//spatialHashing->Build();
-
-			//auto t1 = Neon::Time("Adding Boxes");
-			//for (auto& kvp : spatialHashing->GetCells())
-			//{
-			//	debugBoxes->AddBox(kvp.second->center, spatialHashing->GetCellSize(), spatialHashing->GetCellSize(), spatialHashing->GetCellSize(), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-			//}
+			auto result = regularGrid->ExtractSurface(0.0f);
+			for (auto& vs : result)
+			{
+				debugTriangles->AddTriangle(vs[0], vs[1], vs[2], glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f));
+			}
 		}
 
 		});
