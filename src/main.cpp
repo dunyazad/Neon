@@ -16,9 +16,9 @@ int main()
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK);
-		glFrontFace(GL_CCW);
+		//glEnable(GL_CULL_FACE);
+		//glCullFace(GL_BACK);
+		//glFrontFace(GL_CCW);
 
 		glPointSize(10.0f);
 
@@ -121,6 +121,7 @@ int main()
 		}
 #pragma endregion
 		
+		/*
 		{
 			auto entity = scene->CreateEntity("Entity/spot");
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/spot");
@@ -147,8 +148,9 @@ int main()
 				debugPoints->AddPoint(v, c);
 			}
 		}
+		*/
 
-	/*	{
+		{
 			auto entity = scene->CreateEntity("Entity/spot");
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/spot");
 			entity->AddComponent(mesh);
@@ -203,17 +205,46 @@ int main()
 				}
 				});
 
-			auto t0 = Neon::Time("Spatial Hashing");
-			auto regularGrid = scene->CreateComponent<Neon::SpatialHashing>("RegularGrid/spot", mesh, 0.5f);
+			auto t0 = Neon::Time("Regular Grid");
+			auto cellSize = 0.25f;
+			auto regularGrid = scene->CreateComponent<Neon::RegularGrid>("RegularGrid/spot", mesh, cellSize);
 			regularGrid->Build();
+			//debugBoxes->AddBox(regularGrid->GetCenter(), regularGrid->GetXLength(), regularGrid->GetYLength(), regularGrid->GetZLength(), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
 
-			auto t1 = Neon::Time("Adding Boxes");
-			for (auto& kvp : regularGrid->GetCells())
+			auto cells = regularGrid->GetCells();
+			for (size_t z = 0; z < regularGrid->GetCellCountZ(); z++)
 			{
-				debugBoxes->AddBox(kvp.second->center, regularGrid->GetCellSize(), regularGrid->GetCellSize(), regularGrid->GetCellSize(), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+				for (size_t y = 0; y < regularGrid->GetCellCountY(); y++)
+				{
+					for (size_t x = 0; x < regularGrid->GetCellCountX(); x++)
+					{
+						auto cell = regularGrid->GetCell(make_tuple(x, y, z));
+						if (0 != cell->GetTriangles().size())
+						{
+							debugBoxes->AddBox(cell->GetCenter(), cell->GetXLength(), cell->GetYLength(), cell->GetZLength(), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+						}
+					}
+				}
 			}
-		}*/
 
+			//regularGrid->Build();
+
+			//auto t1 = Neon::Time("Adding Boxes");
+			//for (auto& kvp : regularGrid->GetCells())
+			//{
+			//	debugBoxes->AddBox(kvp.second->center, regularGrid->GetCellSize(), regularGrid->GetCellSize(), regularGrid->GetCellSize(), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+			//}
+
+			//auto t0 = Neon::Time("Spatial Hashing");
+			//auto spatialHashing = scene->CreateComponent<Neon::SpatialHashing>("SpatialHashing/spot", mesh, 0.5f);
+			//spatialHashing->Build();
+
+			//auto t1 = Neon::Time("Adding Boxes");
+			//for (auto& kvp : spatialHashing->GetCells())
+			//{
+			//	debugBoxes->AddBox(kvp.second->center, spatialHashing->GetCellSize(), spatialHashing->GetCellSize(), spatialHashing->GetCellSize(), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+			//}
+		}
 
 		});
 

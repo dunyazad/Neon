@@ -12,17 +12,18 @@
 #include <Neon/NeonEntity.h>
 #include <Neon/NeonScene.h>
 
-#include <Neon/Component/NeonBSPTree.hpp>
 #include <Neon/Component/NeonCamera.h>
 #include <Neon/Component/NeonCameraManipulator.h>
 #include <Neon/Component/NeonComponent.h>
 #include <Neon/Component/NeonLight.h>
 #include <Neon/Component/NeonMesh.h>
-#include <Neon/Component/NeonRegularGrid.h>
 #include <Neon/Component/NeonShader.h>
-#include <Neon/Component/NeonSpatialHashing.h>
 #include <Neon/Component/NeonTexture.h>
 #include <Neon/Component/NeonTransform.h>
+
+#include <Neon/Component/SpatialPartitioning/NeonBSPTree.hpp>
+#include <Neon/Component/SpatialPartitioning/NeonRegularGrid.h>
+#include <Neon/Component/SpatialPartitioning/NeonSpatialHashing.h>
 
 #include <Neon/System/NeonEventSystem.h>
 #include <Neon/System/NeonRenderSystem.h>

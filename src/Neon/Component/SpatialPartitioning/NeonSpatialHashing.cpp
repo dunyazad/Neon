@@ -1,4 +1,4 @@
-#include <Neon/Component/NeonSpatialHashing.h>
+#include <Neon/Component/SpatialPartitioning/NeonSpatialHashing.h>
 #include <Neon/Component/NeonMesh.h>
 #include <Neon/NeonVertexBufferObject.hpp>
 

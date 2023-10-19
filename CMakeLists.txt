@@ -37,7 +37,6 @@ include/Neon/NeonVertexBufferObject.hpp
 include/Neon/NeonWindow.h
 src/Neon/NeonWindow.cpp
 
-include/Neon/Component/NeonBSPTree.hpp
 include/Neon/Component/NeonCamera.h
 src/Neon/Component/NeonCamera.cpp
 include/Neon/Component/NeonCameraManipulator.h
@@ -48,18 +47,20 @@ include/Neon/Component/NeonLight.h
 src/Neon/Component/NeonLight.cpp
 include/Neon/Component/NeonMesh.h
 src/Neon/Component/NeonMesh.cpp
-include/Neon/Component/NeonRegularGrid.h
-src/Neon/Component/NeonRegularGrid.cpp
 include/Neon/Component/NeonShader.h
 src/Neon/Component/NeonShader.cpp
-include/Neon/Component/NeonSpatialHashing.h
-src/Neon/Component/NeonSpatialHashing.cpp
 include/Neon/Component/NeonTexture.h
 src/Neon/Component/NeonTexture.cpp
 include/Neon/Component/NeonTransform.h
 src/Neon/Component/NeonTransform.cpp
 include/Neon/Component/NeonVETM.h
 src/Neon/Component/NeonVETM.cpp
+
+include/Neon/Component/SpatialPartitioning/NeonBSPTree.hpp
+include/Neon/Component/SpatialPartitioning/NeonRegularGrid.h
+src/Neon/Component/SpatialPartitioning/NeonRegularGrid.cpp
+include/Neon/Component/SpatialPartitioning/NeonSpatialHashing.h
+src/Neon/Component/SpatialPartitioning/NeonSpatialHashing.cpp
 
 include/Neon/System/NeonEventSystem.h
 src/Neon/System/NeonEventSystem.cpp

@@ -14,7 +14,7 @@ namespace Neon
 			const glm::vec3& maxPoint = { -FLT_MAX, -FLT_MAX, -FLT_MAX })
 			: AABB(minPoint, maxPoint), index({ IntInfinity, IntInfinity, IntInfinity }) {}
 
-		RegularGridCell(tuple<int, int, int> index,
+		RegularGridCell(tuple<size_t, size_t, size_t> index,
 			const glm::vec3& minPoint = { FLT_MAX, FLT_MAX, FLT_MAX },
 			const glm::vec3& maxPoint = { -FLT_MAX, -FLT_MAX, -FLT_MAX })
 			: AABB(minPoint, maxPoint), index(index) {}
@@ -37,7 +37,7 @@ namespace Neon
 		}
 
 	protected:
-		tuple<int, int, int> index;
+		tuple<size_t, size_t, size_t> index;
 
 		set<V*> vertices;
 		set<T*> triangles;
@@ -62,37 +62,50 @@ namespace Neon
 		~RegularGrid();
 
 		inline float GetCellSize() { return cellSize; }
+		inline size_t GetCellCountX() const { return cellCountX; }
+		inline size_t GetCellCountY() const { return cellCountY; }
+		inline size_t GetCellCountZ() const { return cellCountZ; }
 
-		inline tuple<int, int, int> GetIndex(const glm::vec3& position)
+		inline tuple<size_t, size_t, size_t> GetIndex(const glm::vec3& position)
 		{
-			auto x = (int)floorf((position.x + cellHalfSize) / cellSize);
-			auto y = (int)floorf((position.y + cellHalfSize) / cellSize);
-			auto z = (int)floorf((position.z + cellHalfSize) / cellSize);
+			auto x = (size_t)floorf((position.x - this->GetMinPoint().x) / cellSize);
+			auto y = (size_t)floorf((position.y - this->GetMinPoint().y) / cellSize);
+			auto z = (size_t)floorf((position.z - this->GetMinPoint().z) / cellSize);
 			return make_tuple(x, y, z);
 		}
 
-		inline RegularGridCell<Vertex, Triangle>* GetCell(const tuple<int, int, int>& index)
+		inline RegularGridCell<Vertex, Triangle>* GetCell(const tuple<size_t, size_t, size_t>& index)
 		{
-			if (cells.count(index) != 0) {
-				return cells[index];
+			auto x = get<0>(index);
+			auto y = get<1>(index);
+			auto z = get<2>(index);
+
+			if ((0 <= x && x < cellCountX) &&
+				(0 <= y && y < cellCountY) &&
+				(0 <= z && z < cellCountZ))
+			{
+				return cells[z][y][x];
 			}
-			else {
+			else
+			{
 				return nullptr;
 			}
 		}
 
-		tuple<int, int, int> InsertPoint(const glm::vec3& position);
-
-		tuple<int, int, int> InsertVertex(Vertex* vertex);
-		void InsertTriangle(Triangle* t);
-
-		void RemoveTriangle(Triangle* t);
-
 		void Build();
 
-		set<RegularGridCell<Vertex, Triangle>*> GetCellsWithRay(const Ray& ray);
+		tuple<size_t, size_t, size_t> InsertVertex(Vertex* vertex);
+		void InsertTriangle(Triangle* t);
 
-		inline const map<tuple<int, int, int>, RegularGridCell<Vertex, Triangle>*>& GetCells() const { return cells; }
+		inline const vector<Vertex*>& GetVertices() const { return vertices; }
+
+	/*
+		void RemoveTriangle(Triangle* t);
+
+		set<RegularGridCell<Vertex, Triangle>*> GetCellsWithRay(const Ray& ray);
+	*/
+
+		inline const vector<vector<vector<RegularGridCell<Vertex, Triangle>*>>>& GetCells() const { return cells; }
 
 	private:
 		Mesh* mesh = nullptr;
@@ -102,10 +115,12 @@ namespace Neon
 		size_t cellCountY = 0;
 		size_t cellCountZ = 0;
 
-		map<tuple<int, int, int>, RegularGridCell<Vertex, Triangle>*> cells;
+		vector<vector<vector<RegularGridCell<Vertex, Triangle>*>>> cells;
 
-		vector<Vertex> vertices;
-		vector<Triangle> triangles;
+		//map<tuple<int, int, int>, RegularGridCell<Vertex, Triangle>*> cells;
+
+		vector<Vertex*> vertices;
+		vector<Triangle*> triangles;
 	};
 
 	typedef RegularGridCell<RegularGrid::Vertex, RegularGrid::Triangle> RGCell;
