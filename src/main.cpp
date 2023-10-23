@@ -281,7 +281,14 @@ int main()
 			auto t0 = Neon::Time("Regular Grid");
 			auto cellSize = 0.25f;
 			auto regularGrid = scene->CreateComponent<Neon::RegularGrid>("RegularGrid/spot", mesh, cellSize);
+			entity->AddComponent(regularGrid);
 			regularGrid->Build();
+
+			struct GridCell
+			{
+				glm::vec3 vertex[8];
+				float value[8];
+			};
 
 			auto cells = regularGrid->GetCells();
 			for (size_t z = 0; z < regularGrid->GetCellCountZ(); z++)
@@ -293,7 +300,10 @@ int main()
 						auto cell = cells[z][y][x];
 						if (0 < cell->GetTriangles().size())
 						{
-							debugBoxes->AddBox(cell->GetCenter(), cell->GetXLength(), cell->GetYLength(), cell->GetZLength(), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+							if (x == 79 && y == 22 && z == 20)
+							{
+								debugBoxes->AddBox(cell->GetCenter(), cell->GetXLength(), cell->GetYLength(), cell->GetZLength(), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+							}
 
 							glm::vec3 planePoint = glm::zero<glm::vec3>();
 							glm::vec3 planeNormal = glm::zero<glm::vec3>();
@@ -314,12 +324,69 @@ int main()
 							planeNormal /= (float)cell->GetTriangles().size();
 							planeNormal = normalize(planeNormal);
 
-							//debugPoints->AddPoint(planePoint, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-							debugLines->AddLine(planePoint, planePoint + planeNormal * 0.125f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+							GridCell gridCell;
+							gridCell.vertex[0] = cell->xyz;
+							gridCell.vertex[1] = cell->Xyz;
+							gridCell.vertex[2] = cell->XyZ;
+							gridCell.vertex[3] = cell->xyZ;
+							gridCell.vertex[4] = cell->xYz;
+							gridCell.vertex[5] = cell->XYz;
+							gridCell.vertex[6] = cell->XYZ;
+							gridCell.vertex[7] = cell->xYZ;
+							gridCell.value[0] = 1.0f;
+							gridCell.value[1] = 1.0f;
+							gridCell.value[2] = 1.0f;
+							gridCell.value[3] = 1.0f;
+							gridCell.value[4] = 1.0f;
+							gridCell.value[5] = 1.0f;
+							gridCell.value[6] = 1.0f;
+							gridCell.value[7] = 1.0f;
+
+							for (size_t i = 0; i < 8; i++)
+							{
+								if (0 < glm::dot(gridCell.vertex[i] - planePoint, planeNormal))
+								{
+									debugPoints->AddPoint(gridCell.vertex[i], glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+								}
+								else if (0 > glm::dot(gridCell.vertex[i] - planePoint, planeNormal))
+								{
+									//debugPoints->AddPoint(planePoint, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+								}
+								else
+								{
+									//debugPoints->AddPoint(planePoint, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
+								}
+							}
+
+							if (x == 79 && y == 22 && z == 20)
+							{
+								//debugPoints->AddPoint(planePoint, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+								debugLines->AddLine(planePoint, planePoint + planeNormal * 0.125f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+
+							}
 						}
 					}
 				}
 			}
+
+			//regularGrid->AddMouseButtonEventHandler([scene, mesh, regularGrid, debugPoints, debugLines](const Neon::MouseButtonEvent& event) {
+			//	if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_RELEASE)
+			//	{
+			//		auto camera = scene->GetMainCamera();
+
+			//		auto ray = camera->GetPickingRay(event.xpos, event.ypos);
+
+			//		glm::vec3 intersection;
+			//		size_t faceIndex = 0;
+			//		if (mesh->Pick(ray, intersection, faceIndex))
+			//		{
+			//			auto index = regularGrid->GetIndex(intersection);
+
+			//			cout << "x : " << get<0>(index) << " , y : " << get<1>(index) << " , z : " << get<2>(index) << endl;
+			//		}
+			//	}
+			//	});
 
 			auto result = regularGrid->ExtractSurface(0.0f);
 			for (auto& vs : result)
