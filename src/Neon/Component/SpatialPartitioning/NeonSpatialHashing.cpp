@@ -20,10 +20,10 @@ namespace Neon
 		cells.clear();
 	}
 
-	void SpatialHashing::Clear()
-	{
+	//void SpatialHashing::Clear()
+	//{
 
-	}
+	//}
 
 	tuple<int, int, int> SpatialHashing::InsertPoint(const glm::vec3& position)
 	{

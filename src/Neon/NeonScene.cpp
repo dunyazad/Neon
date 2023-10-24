@@ -58,29 +58,28 @@ namespace Neon
 		}
 	}
 
-	DebugEntity* Scene::GetDebugEntity(const string& name)
-	{
-		if (0 != debugEntities.count(name))
-		{
-			return debugEntities[name];
-		}
-		else
-		{
-			return nullptr;
-		}
-	}
-
 	DebugEntity* Scene::CreateDebugEntity(const string& name)
 	{
-		if (0 != debugEntities.count(name))
+		if (0 != debugEntityNameMap.count(name))
 		{
-			return nullptr;
+			return debugEntities[debugEntityNameMap[name]];
 		}
 		else
 		{
 			auto entity = new DebugEntity(name, this);
-			debugEntities[name] = entity;
+			debugEntities.push_back(entity);
+			debugEntityNameMap[name] = debugEntities.size() - 1;
 			return entity;
 		}
+	}
+
+	DebugEntity* Scene::Debug(const string& name)
+	{
+		auto entity = GetDebugEntity(name);
+		if (nullptr == entity)
+		{
+			entity = CreateDebugEntity(name);
+		}
+		return entity;
 	}
 }

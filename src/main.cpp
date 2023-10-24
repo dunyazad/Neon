@@ -23,97 +23,24 @@ int main()
 		glPointSize(10.0f);
 
 		auto scene = app.CreateScene("Scene/Main");
-
-#pragma region For Debugging
-		auto toggleFillMode1 = [](const Neon::KeyEvent& event)
-			{
-				auto entity = dynamic_cast<Neon::Entity*>(event.target);
-				if (nullptr != entity)
-				{
-					auto mesh = entity->GetComponent<Neon::Mesh>(0);
-					if (nullptr != mesh)
+		{
+			auto toggler = scene->CreateEntity("Scene/Toggler");
+			toggler->AddKeyEventHandler([scene](const Neon::KeyEvent& event) {
+				if ((GLFW_KEY_0 <= event.key && GLFW_KEY_9 >= event.key) && GLFW_RELEASE == event.action) {
+					auto debugEntities = scene->GetDebugEntities();
+					if (event.key - GLFW_KEY_0 < debugEntities.size())
 					{
-						if (GLFW_KEY_1 == event.key && GLFW_RELEASE == event.action)
+						auto entity = debugEntities[(event.key - GLFW_KEY_0 + 1) % debugEntities.size()];
+
+						auto mesh = entity->GetComponent<Neon::Mesh>(0);
+						if (nullptr != mesh)
 						{
 							mesh->ToggleFillMode();
 						}
 					}
 				}
-			};
-		auto toggleFillMode2 = [](const Neon::KeyEvent& event)
-			{
-				auto entity = dynamic_cast<Neon::Entity*>(event.target);
-				if (nullptr != entity)
-				{
-					auto mesh = entity->GetComponent<Neon::Mesh>(0);
-					if (nullptr != mesh)
-					{
-						if (GLFW_KEY_2 == event.key && GLFW_RELEASE == event.action)
-						{
-							mesh->ToggleFillMode();
-						}
-					}
-				}
-			};
-		auto toggleFillMode3 = [](const Neon::KeyEvent& event)
-			{
-				auto entity = dynamic_cast<Neon::Entity*>(event.target);
-				if (nullptr != entity)
-				{
-					auto mesh = entity->GetComponent<Neon::Mesh>(0);
-					if (nullptr != mesh)
-					{
-						if (GLFW_KEY_3 == event.key && GLFW_RELEASE == event.action)
-						{
-							mesh->ToggleFillMode();
-						}
-					}
-				}
-			};
-		auto toggleFillMode4 = [](const Neon::KeyEvent& event)
-			{
-				auto entity = dynamic_cast<Neon::Entity*>(event.target);
-				if (nullptr != entity)
-				{
-					auto mesh = entity->GetComponent<Neon::Mesh>(0);
-					if (nullptr != mesh)
-					{
-						if (GLFW_KEY_4 == event.key && GLFW_RELEASE == event.action)
-						{
-							mesh->ToggleFillMode();
-						}
-					}
-				}
-			};
-
-		auto toggleFillMode5 = [](const Neon::KeyEvent& event)
-			{
-				auto entity = dynamic_cast<Neon::Entity*>(event.target);
-				if (nullptr != entity)
-				{
-					auto mesh = entity->GetComponent<Neon::Mesh>(0);
-					if (nullptr != mesh)
-					{
-						if (GLFW_KEY_5 == event.key && GLFW_RELEASE == event.action)
-						{
-							mesh->ToggleFillMode();
-						}
-					}
-				}
-			};
-
-		auto debugPoints = scene->CreateDebugEntity("DebugEntity/Points");
-		debugPoints->AddKeyEventHandler(toggleFillMode2);
-
-		auto debugLines = scene->CreateDebugEntity("DebugEntity/Lines");
-		debugLines->AddKeyEventHandler(toggleFillMode3);
-
-		auto debugTriangles = scene->CreateDebugEntity("DebugEntity/Triangles");
-		debugTriangles->AddKeyEventHandler(toggleFillMode4);
-
-		auto debugBoxes = scene->CreateDebugEntity("DebugEntity/Boxes");
-		debugBoxes->AddKeyEventHandler(toggleFillMode5);
-#pragma endregion
+				});
+		}
 
 #pragma region Camera
 		{
@@ -181,7 +108,7 @@ int main()
 			entity->AddComponent(shader);
 		}
 #pragma endregion
-		
+
 		/*
 		{
 			auto entity = scene->CreateEntity("Entity/spot");
@@ -216,9 +143,42 @@ int main()
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/spot");
 			entity->AddComponent(mesh);
 
-			mesh->FromSTLFile(Neon::URL::Resource("/stl/sphere.stl"));
+			mesh->FromSTLFile(Neon::URL::Resource("/stl/spot.stl"));
 			mesh->FillColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 			mesh->RecalculateFaceNormal();
+
+			//{
+			//	auto noi = mesh->GetIndexBuffer()->Size() / 3;
+
+			//	vector<glm::vec3> vnormals(mesh->GetVertexBuffer()->Size());
+			//	vector<int> vnormalRefs(mesh->GetVertexBuffer()->Size());
+
+			//	for (size_t i = 0; i < noi; i++)
+			//	{
+			//		GLuint i0, i1, i2;
+			//		mesh->GetTriangleVertexIndices(i, i0, i1, i2);
+
+			//		auto v0 = mesh->GetVertex(i0);
+			//		auto v1 = mesh->GetVertex(i1);
+			//		auto v2 = mesh->GetVertex(i2);
+
+			//		auto normal = glm::normalize(glm::cross(glm::normalize(v1 - v0), glm::normalize(v2 - v0)));
+			//		vnormals[i0] += normal;
+			//		vnormals[i1] += normal;
+			//		vnormals[i2] += normal;
+
+			//		vnormalRefs[i0] += 1;
+			//		vnormalRefs[i1] += 1;
+			//		vnormalRefs[i2] += 1;
+			//	}
+
+			//	for (size_t i = 0; i < vnormals.size(); i++)
+			//	{
+			//		auto v = mesh->GetVertex(i);
+			//		auto tv = v + vnormals[i] / (float)vnormalRefs[i] * -0.05f;
+			//		mesh->SetVertex(i, tv);
+			//	}
+			//}
 
 			scene->GetMainCamera()->centerPosition = mesh->GetAABB().GetCenter();
 			scene->GetMainCamera()->distance = mesh->GetAABB().GetDiagonalLength();
@@ -229,7 +189,7 @@ int main()
 			auto transform = scene->CreateComponent<Neon::Transform>("Transform/spot");
 			entity->AddComponent(transform);
 			entity->AddKeyEventHandler([mesh](const Neon::KeyEvent& event) {
-				if (GLFW_KEY_1 == event.key && GLFW_RELEASE == event.action)
+				if (GLFW_KEY_ESCAPE == event.key && GLFW_RELEASE == event.action)
 				{
 					mesh->ToggleFillMode();
 				}
@@ -247,7 +207,7 @@ int main()
 				}
 				});
 
-			entity->AddMouseButtonEventHandler([scene, mesh, debugPoints, debugLines](const Neon::MouseButtonEvent& event) {
+			entity->AddMouseButtonEventHandler([scene, mesh](const Neon::MouseButtonEvent& event) {
 				if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_DOUBLE_ACTION)
 				{
 					auto camera = scene->GetMainCamera();
@@ -278,120 +238,132 @@ int main()
 				}
 				});
 
+			return;
+
 			auto t0 = Neon::Time("Regular Grid");
-			auto cellSize = 0.25f;
+			auto trimin = Trimin(mesh->GetAABB().GetXLength(), mesh->GetAABB().GetYLength(), mesh->GetAABB().GetZLength());
+			auto cellSize = trimin * 0.01f;
 			auto regularGrid = scene->CreateComponent<Neon::RegularGrid>("RegularGrid/spot", mesh, cellSize);
 			entity->AddComponent(regularGrid);
 			regularGrid->Build();
 
-			struct GridCell
+			/*
 			{
-				glm::vec3 vertex[8];
-				float value[8];
-			};
+				int breakCount = 7;
+				int count = 0;
 
-			auto cells = regularGrid->GetCells();
-			for (size_t z = 0; z < regularGrid->GetCellCountZ(); z++)
-			{
-				for (size_t y = 0; y < regularGrid->GetCellCountY(); y++)
+				auto cells = regularGrid->GetCells();
+				for (size_t z = 0; z < regularGrid->GetCellCountZ(); z++)
 				{
-					for (size_t x = 0; x < regularGrid->GetCellCountX(); x++)
+					for (size_t y = 0; y < regularGrid->GetCellCountY(); y++)
 					{
-						auto cell = cells[z][y][x];
-						if (0 < cell->GetTriangles().size())
+						for (size_t x = 0; x < regularGrid->GetCellCountX(); x++)
 						{
-							if (x == 79 && y == 22 && z == 20)
+							auto cell = regularGrid->GetCell(make_tuple(x, y, z));
+							if (nullptr != cell)
 							{
-								debugBoxes->AddBox(cell->GetCenter(), cell->GetXLength(), cell->GetYLength(), cell->GetZLength(), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-							}
-
-							glm::vec3 planePoint = glm::zero<glm::vec3>();
-							glm::vec3 planeNormal = glm::zero<glm::vec3>();
-							for (auto& t : cell->GetTriangles())
-							{
-								auto v0 = mesh->GetVertex(t->v0->index);
-								auto v1 = mesh->GetVertex(t->v1->index);
-								auto v2 = mesh->GetVertex(t->v2->index);
-
-								auto n = glm::normalize(glm::cross(glm::normalize(v1 - v0), glm::normalize(v2 - v0)));
-								auto c = (v0 + v1 + v2) / 3.0f;
-
-								planePoint += c;
-								planeNormal += n;
-							}
-							
-							planePoint /= (float)cell->GetTriangles().size();
-							planeNormal /= (float)cell->GetTriangles().size();
-							planeNormal = normalize(planeNormal);
-
-							GridCell gridCell;
-							gridCell.vertex[0] = cell->xyz;
-							gridCell.vertex[1] = cell->Xyz;
-							gridCell.vertex[2] = cell->XyZ;
-							gridCell.vertex[3] = cell->xyZ;
-							gridCell.vertex[4] = cell->xYz;
-							gridCell.vertex[5] = cell->XYz;
-							gridCell.vertex[6] = cell->XYZ;
-							gridCell.vertex[7] = cell->xYZ;
-							gridCell.value[0] = 1.0f;
-							gridCell.value[1] = 1.0f;
-							gridCell.value[2] = 1.0f;
-							gridCell.value[3] = 1.0f;
-							gridCell.value[4] = 1.0f;
-							gridCell.value[5] = 1.0f;
-							gridCell.value[6] = 1.0f;
-							gridCell.value[7] = 1.0f;
-
-							for (size_t i = 0; i < 8; i++)
-							{
-								if (0 < glm::dot(gridCell.vertex[i] - planePoint, planeNormal))
+								if (0 < cell->GetTriangles().size())
 								{
-									debugPoints->AddPoint(gridCell.vertex[i], glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-								}
-								else if (0 > glm::dot(gridCell.vertex[i] - planePoint, planeNormal))
-								{
-									//debugPoints->AddPoint(planePoint, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-								}
-								else
-								{
-									//debugPoints->AddPoint(planePoint, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
+									count++;
+									if (breakCount == count)
+									{
+										cout << "x : " << x << " , y : " << y << " , z : " << z << endl;
+
+										scene->Debug("voxels")->AddBox(cell->GetCenter(), cell->GetXLength(), cell->GetYLength(), cell->GetZLength(), glm::blue);
+									}
 								}
 							}
+							if (breakCount == count) break;
+						}
+						if (breakCount == count) break;
+					}
+					if (breakCount == count) break;
+				}
+			}
+			*/
 
-							if (x == 79 && y == 22 && z == 20)
+			/*
+			{
+				auto cells = regularGrid->GetCells();
+				auto cell = cells[1][0][1];
+
+				struct GridCell
+				{
+					glm::vec3 vertex[8];
+					float value[8];
+				};
+
+				GridCell gridCell;
+				gridCell.vertex[0] = cell->xyz;
+				gridCell.vertex[1] = cell->Xyz;
+				gridCell.vertex[2] = cell->XyZ;
+				gridCell.vertex[3] = cell->xyZ;
+				gridCell.vertex[4] = cell->xYz;
+				gridCell.vertex[5] = cell->XYz;
+				gridCell.vertex[6] = cell->XYZ;
+				gridCell.vertex[7] = cell->xYZ;
+				gridCell.value[0] = 1.0f;
+				gridCell.value[1] = 1.0f;
+				gridCell.value[2] = 1.0f;
+				gridCell.value[3] = 1.0f;
+				gridCell.value[4] = 1.0f;
+				gridCell.value[5] = 1.0f;
+				gridCell.value[6] = 1.0f;
+				gridCell.value[7] = 1.0f;
+
+				for (size_t i = 0; i < 8; i++)
+				{
+					//float distance = FLT_MAX;
+
+					for (auto& t : cell->GetTriangles())
+					{
+						auto v0 = mesh->GetVertex(t->v0->index);
+						auto v1 = mesh->GetVertex(t->v1->index);
+						auto v2 = mesh->GetVertex(t->v2->index);
+
+
+						if ((cell->Contains(v0) == false && cell->Contains(v1) == false && cell->Contains(v2) == false) || 
+							(cell->Contains(v0) && cell->Contains(v1) == false && cell->Contains(v2) == false) ||
+							(cell->Contains(v1) && cell->Contains(v2) == false && cell->Contains(v0) == false) ||
+							(cell->Contains(v2) && cell->Contains(v0) == false && cell->Contains(v1) == false))
+						{
+							auto n = glm::normalize(glm::cross(glm::normalize(v1 - v0), glm::normalize(v2 - v0)));
+							auto c = (v0 + v1 + v2) / 3.0f;
+
+							if (0 <= glm::dot(gridCell.vertex[i] - c, n))
 							{
-								//debugPoints->AddPoint(planePoint, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-								debugLines->AddLine(planePoint, planePoint + planeNormal * 0.125f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-
-
+								gridCell.value[i] = -1.0f;
 							}
+
+							scene->Debug("faces")->AddTriangle(v0, v1, v2);
 						}
 					}
 				}
 			}
+			*/
 
-			//regularGrid->AddMouseButtonEventHandler([scene, mesh, regularGrid, debugPoints, debugLines](const Neon::MouseButtonEvent& event) {
-			//	if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_RELEASE)
-			//	{
-			//		auto camera = scene->GetMainCamera();
+			regularGrid->AddMouseButtonEventHandler([scene, mesh, regularGrid](const Neon::MouseButtonEvent& event) {
+				if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_RELEASE)
+				{
+					auto camera = scene->GetMainCamera();
 
-			//		auto ray = camera->GetPickingRay(event.xpos, event.ypos);
+					auto ray = camera->GetPickingRay(event.xpos, event.ypos);
 
-			//		glm::vec3 intersection;
-			//		size_t faceIndex = 0;
-			//		if (mesh->Pick(ray, intersection, faceIndex))
-			//		{
-			//			auto index = regularGrid->GetIndex(intersection);
+					glm::vec3 intersection;
+					size_t faceIndex = 0;
+					if (mesh->Pick(ray, intersection, faceIndex))
+					{
+						auto index = regularGrid->GetIndex(intersection);
 
-			//			cout << "x : " << get<0>(index) << " , y : " << get<1>(index) << " , z : " << get<2>(index) << endl;
-			//		}
-			//	}
-			//	});
+						cout << "x : " << get<0>(index) << " , y : " << get<1>(index) << " , z : " << get<2>(index) << endl;
+					}
+				}
+				});
 
 			auto result = regularGrid->ExtractSurface(0.0f);
 			for (auto& vs : result)
 			{
-				debugTriangles->AddTriangle(vs[0], vs[1], vs[2], glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f));
+				scene->Debug("Result")->AddTriangle(vs[0], vs[1], vs[2], glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f));
 			}
 		}
 

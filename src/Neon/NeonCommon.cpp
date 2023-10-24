@@ -78,6 +78,51 @@ bool operator > (const glm::vec3& a, const glm::vec3& b)
 	}
 }
 
+namespace glm
+{
+	float distancePointToTriangle(const glm::vec3& point, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2) {
+		// Calculate the triangle edges
+		glm::vec3 edge1 = v1 - v0;
+		glm::vec3 edge2 = v2 - v0;
+
+		// Calculate the normal of the triangle
+		glm::vec3 normal = glm::cross(edge1, edge2);
+
+		// Project the point onto the plane defined by the triangle
+		glm::vec3 toPoint = point - v0;
+		float d = glm::dot(normal, toPoint);
+		glm::vec3 projectedPoint = point - d * normal;
+
+		// Check if the projected point is inside the triangle
+		glm::vec3 edge0 = v2 - v1;
+		glm::vec3 edge1_to_projected = projectedPoint - v1;
+		glm::vec3 edge2_to_projected = projectedPoint - v2;
+
+		float dot00 = glm::dot(edge0, edge0);
+		float dot01 = glm::dot(edge0, edge1_to_projected);
+		float dot02 = glm::dot(edge0, edge2_to_projected);
+		float dot11 = glm::dot(edge1, edge1);
+		float dot12 = glm::dot(edge1, edge2_to_projected);
+
+		// Compute barycentric coordinates
+		float invDenom = 1.0f / (dot00 * dot11 - dot01 * dot01);
+		float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+		float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+
+		// If the point is inside the triangle, the distance is the distance from the projected point
+		// to the point itself. Otherwise, it's the distance to the closest triangle edge.
+		if (u >= 0.0f && v >= 0.0f && u + v <= 1.0f) {
+			return glm::distance(projectedPoint, point);
+		}
+		else {
+			float distToEdge1 = glm::distance(point, v0 + u * edge1);
+			float distToEdge2 = glm::distance(point, v0 + v * edge2);
+			float distToEdge3 = glm::distance(point, v1 + v * edge0);
+			return std::min(distToEdge1, std::min(distToEdge2, distToEdge3));
+		}
+	}
+}
+
 void _CheckGLError(const char* file, int line)
 {
 	GLenum err(glGetError());
@@ -370,6 +415,36 @@ namespace Neon
 
 			intersectionPoint = l0 + t * lineDirection;
 			return true;
+		}
+
+		bool TriangleTriangleIntersection(
+			const glm::vec3& a0, const glm::vec3& a1, const glm::vec3& a2,
+			const glm::vec3& b0, const glm::vec3& b1, const glm::vec3& b2,
+			glm::vec3& i0, glm::vec3& i1)
+		{
+			int coplanar = 0;
+			real source[3], target[3];
+			if (tri_tri_intersection_test_3d(
+				(real*)(&a0),
+				(real*)(&a1),
+				(real*)(&a2),
+				(real*)(&b0),
+				(real*)(&b1),
+				(real*)(&b2),
+				&coplanar, source, target))
+			{
+				i0.x = source[0];
+				i0.y = source[1];
+				i0.z = source[2];
+
+				i1.x = target[0];
+				i1.y = target[1];
+				i1.z = target[2];
+
+				return true;
+			}
+
+			return false;
 		}
 	}
 

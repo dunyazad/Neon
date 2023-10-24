@@ -103,10 +103,10 @@ namespace Neon
 			kvp.second->OnKeyEvent(e);
 		}
 
-		for (auto& kvp : scene->GetDebugEntities())
+		for (auto& entity : scene->GetDebugEntities())
 		{
-			KeyEvent e{ kvp.second, event.window, event.key, event.scancode, event.action, event.mods };
-			kvp.second->OnKeyEvent(e);
+			KeyEvent e{ entity, event.window, event.key, event.scancode, event.action, event.mods };
+			entity->OnKeyEvent(e);
 		}
 	}
 
@@ -163,10 +163,10 @@ namespace Neon
 			kvp.second->OnMouseButtonEvent(e);
 		}
 
-		for (auto& kvp : scene->GetDebugEntities())
+		for (auto& entity : scene->GetDebugEntities())
 		{
 			MouseButtonEvent e{
-				kvp.second,
+				entity,
 				event.window,
 				event.button,
 				doubleClicked ? GLFW_DOUBLE_ACTION : event.action,
@@ -174,7 +174,7 @@ namespace Neon
 				lastMouseX,
 				lastMouseY };
 
-			kvp.second->OnMouseButtonEvent(e);
+			entity->OnMouseButtonEvent(e);
 		}
 	}
 
@@ -189,10 +189,10 @@ namespace Neon
 			kvp.second->OnCursorPosEvent(e);
 		}
 
-		for (auto& kvp : scene->GetDebugEntities())
+		for (auto& entity : scene->GetDebugEntities())
 		{
-			CursorPosEvent e{ kvp.second, event.window, event.xpos, event.ypos };
-			kvp.second->OnCursorPosEvent(e);
+			CursorPosEvent e{ entity, event.window, event.xpos, event.ypos };
+			entity->OnCursorPosEvent(e);
 		}
 	}
 
@@ -204,10 +204,10 @@ namespace Neon
 			kvp.second->OnScrollEvent(e);
 		}
 
-		for (auto& kvp : scene->GetDebugEntities())
+		for (auto& entity : scene->GetDebugEntities())
 		{
-			ScrollEvent e{ kvp.second, event.window, event.xoffset, event.yoffset };
-			kvp.second->OnScrollEvent(e);
+			ScrollEvent e{ entity, event.window, event.xoffset, event.yoffset };
+			entity->OnScrollEvent(e);
 		}
 	}
 }

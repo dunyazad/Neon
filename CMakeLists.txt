@@ -36,6 +36,8 @@ src/Neon/NeonVertexArrayObject.cpp
 include/Neon/NeonVertexBufferObject.hpp
 include/Neon/NeonWindow.h
 src/Neon/NeonWindow.cpp
+include/Neon/TriangleTriangleOverlap.h
+src/Neon/TriangleTriangleOverlap.cpp
 
 include/Neon/Component/NeonCamera.h
 src/Neon/Component/NeonCamera.cpp

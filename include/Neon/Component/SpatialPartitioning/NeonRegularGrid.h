@@ -107,6 +107,8 @@ namespace Neon
 
 		inline const vector<vector<vector<RegularGridCell<Vertex, Triangle>*>>>& GetCells() const { return cells; }
 
+		vector<vector<glm::vec3>> RegularGrid::ExtractSurface(float isolevel);
+
 	private:
 		Mesh* mesh = nullptr;
 		float cellSize = 0.5;

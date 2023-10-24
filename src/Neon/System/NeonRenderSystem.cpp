@@ -125,9 +125,8 @@ namespace Neon
 		}
 
 		auto debugEntities = scene->GetDebugEntities();
-		for (auto& kvp : debugEntities)
+		for (auto& entity : debugEntities)
 		{
-			auto entity = kvp.second;
 			if (nullptr == entity)
 				continue;
 

@@ -24,8 +24,10 @@ namespace Neon
 		Entity* GetEntity(const string& name);
 		Entity* CreateEntity(const string& name);
 
-		DebugEntity* GetDebugEntity(const string& name);
+		//DebugEntity* GetDebugEntity(const string& name);
 		DebugEntity* CreateDebugEntity(const string& name);
+
+		DebugEntity* Debug(const string& name);
 
 		template <class T, typename... Args>
 		T* CreateComponent(const std::string& name, Args... args)
@@ -90,7 +92,8 @@ namespace Neon
 		}
 
 		inline const map<string, Entity*>& GetEntities() const { return entities; }
-		inline const map<string, DebugEntity*>& GetDebugEntities() const { return debugEntities; }
+		inline const vector<DebugEntity*>& GetDebugEntities() const { return debugEntities; }
+		inline DebugEntity* GetDebugEntity(const string& name) { if (0 == debugEntityNameMap.count(name)) return nullptr; else return debugEntities[debugEntityNameMap[name]]; }
 		template<typename T> vector<ComponentBase*>& GetComponents() { return components[&typeid(T)]; }
 
 		void Frame(double now, double timeDelta);
@@ -108,7 +111,8 @@ namespace Neon
 		bool active = true;
 		Window* window;
 		map<string, Entity*> entities;
-		map<string, DebugEntity*> debugEntities;
+		map<string, size_t> debugEntityNameMap;
+		vector<DebugEntity*> debugEntities;
 		map<const type_info*, vector<ComponentBase*>> components;
 		map<string, ComponentBase*> componentNameMapping;
 

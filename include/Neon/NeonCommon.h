@@ -23,6 +23,8 @@
 #include <vector>
 using namespace std;
 
+#include <Neon/TriangleTriangleOverlap.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -41,6 +43,23 @@ ostream& operator << (ostream& o, const glm::quat& q);
 
 bool operator < (const glm::vec3& a, const glm::vec3& b);
 bool operator > (const glm::vec3& a, const glm::vec3& b);
+
+namespace glm
+{
+	inline glm::vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
+	inline glm::vec4 black(0.0f, 0.0f, 0.0f, 1.0f);
+	inline glm::vec4 darkgray(0.25f, 0.25f, 0.25f, 1.0f);
+	inline glm::vec4 gray(0.5f, 0.5f, 0.5f, 1.0f);
+	inline glm::vec4 lightgray(0.75f, 0.75f, 0.75f, 1.0f);
+	inline glm::vec4 red(1.0f, 0.0f, 0.0f, 1.0f);
+	inline glm::vec4 green(0.0f, 1.0f, 0.0f, 1.0f);
+	inline glm::vec4 blue(0.0f, 0.0f, 1.0f, 1.0f);
+	inline glm::vec4 yellow(1.0f, 1.0f, 0.0f, 1.0f);
+	inline glm::vec4 cyan(0.0f, 1.0f, 1.0f, 1.0f);
+	inline glm::vec4 magenta(1.0f, 0.0f, 1.0f, 1.0f);
+
+	float distancePointToTriangle(const glm::vec3& point, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2);
+}
 
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
@@ -187,6 +206,10 @@ namespace Neon
 		bool Equals(const glm::vec3& a, const glm::vec3& b);
 		bool PointInTriangle(const glm::vec3& p, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2);
 		bool LinePlaneIntersection(const glm::vec3& l0, const glm::vec3& l1, const glm::vec3& pn, const glm::vec3& pp, glm::vec3& intersectionPoint);
+		bool TriangleTriangleIntersection(
+			const glm::vec3& a0, const glm::vec3& a1, const glm::vec3& a2,
+			const glm::vec3& b0, const glm::vec3& b1, const glm::vec3& b2,
+			glm::vec3& i0, glm::vec3& i1);
 	}
 
 	typedef unsigned long ID;
