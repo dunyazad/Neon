@@ -71,6 +71,10 @@ namespace Neon
 			auto x = (size_t)floorf((position.x - this->GetMinPoint().x) / cellSize);
 			auto y = (size_t)floorf((position.y - this->GetMinPoint().y) / cellSize);
 			auto z = (size_t)floorf((position.z - this->GetMinPoint().z) / cellSize);
+			if ((x < 0 || x > cellCountX) || (y < 0 || y > cellCountY) || (z < 0 || z > cellCountZ))
+			{
+				cout << "WTF" << endl;
+			}
 			return make_tuple(x, y, z);
 		}
 

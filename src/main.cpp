@@ -2,6 +2,20 @@
 
 #include <Neon/Neon.h>
 
+#include "MC33.h"
+#include "MC33.cpp"
+#include "surface.cpp"
+#include "grid3d.cpp"
+
+
+
+
+
+
+
+
+
+
 int main()
 {
 	Neon::Application app(1280, 1024);
@@ -36,6 +50,7 @@ int main()
 						if (nullptr != mesh)
 						{
 							mesh->ToggleFillMode();
+							cout << "Toggle Fill Mode : " << mesh->GetName() << endl;
 						}
 					}
 				}
@@ -147,38 +162,42 @@ int main()
 			mesh->FillColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 			mesh->RecalculateFaceNormal();
 
-			//{
-			//	auto noi = mesh->GetIndexBuffer()->Size() / 3;
+			{
+				float offsetDistance = -0.1f;
 
-			//	vector<glm::vec3> vnormals(mesh->GetVertexBuffer()->Size());
-			//	vector<int> vnormalRefs(mesh->GetVertexBuffer()->Size());
+				auto noi = mesh->GetIndexBuffer()->Size() / 3;
 
-			//	for (size_t i = 0; i < noi; i++)
-			//	{
-			//		GLuint i0, i1, i2;
-			//		mesh->GetTriangleVertexIndices(i, i0, i1, i2);
+				vector<glm::vec3> vnormals(mesh->GetVertexBuffer()->Size());
+				vector<int> vnormalRefs(mesh->GetVertexBuffer()->Size());
 
-			//		auto v0 = mesh->GetVertex(i0);
-			//		auto v1 = mesh->GetVertex(i1);
-			//		auto v2 = mesh->GetVertex(i2);
+				for (size_t i = 0; i < noi; i++)
+				{
+					GLuint i0, i1, i2;
+					mesh->GetTriangleVertexIndices(i, i0, i1, i2);
 
-			//		auto normal = glm::normalize(glm::cross(glm::normalize(v1 - v0), glm::normalize(v2 - v0)));
-			//		vnormals[i0] += normal;
-			//		vnormals[i1] += normal;
-			//		vnormals[i2] += normal;
+					auto v0 = mesh->GetVertex(i0);
+					auto v1 = mesh->GetVertex(i1);
+					auto v2 = mesh->GetVertex(i2);
 
-			//		vnormalRefs[i0] += 1;
-			//		vnormalRefs[i1] += 1;
-			//		vnormalRefs[i2] += 1;
-			//	}
+					auto normal = glm::normalize(glm::cross(glm::normalize(v1 - v0), glm::normalize(v2 - v0)));
+					vnormals[i0] += normal;
+					vnormals[i1] += normal;
+					vnormals[i2] += normal;
 
-			//	for (size_t i = 0; i < vnormals.size(); i++)
-			//	{
-			//		auto v = mesh->GetVertex(i);
-			//		auto tv = v + vnormals[i] / (float)vnormalRefs[i] * -0.05f;
-			//		mesh->SetVertex(i, tv);
-			//	}
-			//}
+					vnormalRefs[i0] += 1;
+					vnormalRefs[i1] += 1;
+					vnormalRefs[i2] += 1;
+
+					scene->Debug("original")->AddTriangle(v0, v1, v2);
+				}
+
+				for (size_t i = 0; i < vnormals.size(); i++)
+				{
+					auto v = mesh->GetVertex(i);
+					auto tv = v + vnormals[i] / (float)vnormalRefs[i] * offsetDistance;
+					mesh->SetVertex(i, tv);
+				}
+			}
 
 			scene->GetMainCamera()->centerPosition = mesh->GetAABB().GetCenter();
 			scene->GetMainCamera()->distance = mesh->GetAABB().GetDiagonalLength();
@@ -242,10 +261,78 @@ int main()
 
 			auto t0 = Neon::Time("Regular Grid");
 			auto trimin = Trimin(mesh->GetAABB().GetXLength(), mesh->GetAABB().GetYLength(), mesh->GetAABB().GetZLength());
-			auto cellSize = trimin * 0.01f;
+			auto cellSize = trimin * 0.005f;
 			auto regularGrid = scene->CreateComponent<Neon::RegularGrid>("RegularGrid/spot", mesh, cellSize);
 			entity->AddComponent(regularGrid);
 			regularGrid->Build();
+
+			{
+				//grid3d G;
+				//G.read_dat_file("C:\\Resources\\3D\\dat\\hazelnuts\\hnut_uint.dat");
+
+				auto fn = [regularGrid, mesh](double x, double y, double z) -> double{
+					//const double radius = 1.0;
+					//const double cx = 2.0, cy = 2.0, cz = 2.0;
+					//x -= cx; y -= cy; z -= cz;
+					//return radius * radius - x * x - y * y - z * z;
+
+					auto index = regularGrid->GetIndex(glm::vec3(x, y, z));
+					auto cell = regularGrid->GetCell(index);
+					if (cell)
+					{
+						for (auto& t : cell->GetTriangles())
+						{
+							auto v0 = mesh->GetVertex(t->v0->index);
+							auto v1 = mesh->GetVertex(t->v1->index);
+							auto v2 = mesh->GetVertex(t->v2->index);
+
+							glm::vec3 centroid = (v0 + v1 + v2) / 3.0f;
+							auto normal = glm::normalize(glm::cross(glm::normalize(v1 - v0), glm::normalize(v2 - v0)));
+
+							auto p = glm::vec3(x, y, z);
+							if (0 <= glm::dot(normal, p - centroid))
+							{
+								return 1.0;
+							}
+						}
+					}
+					else
+					{
+						return 0.0;
+					}
+					};
+
+				auto aabbMin = regularGrid->GetMinPoint();
+				auto aabbMax = regularGrid->GetMaxPoint();
+
+				grid3d G;
+				G.generate_grid_from_lambda(aabbMin.x, aabbMin.y, aabbMin.z, // coordinates of the grid origin
+					aabbMax.x, aabbMax.y, aabbMax.z, // coordinates of the opposite corner
+					cellSize, cellSize, cellSize, // steps
+					fn);
+
+				MC33 MC;
+				MC.set_grid3d(G);
+
+				surface S;
+				MC.calculate_isosurface(S, 0.0f);
+
+				auto not = S.get_num_triangles();
+				cout << "not : " << not << endl;
+				for (unsigned int i = 0; i < not; i++)
+				{
+					auto tis = S.getTriangle(i);
+					auto v0 = S.getVertex(tis[0]);
+					auto v1 = S.getVertex(tis[1]);
+					auto v2 = S.getVertex(tis[2]);
+
+					scene->Debug("MC33")->AddTriangle(
+						glm::vec3(v0[0], v0[1], v0[2]), 
+						glm::vec3(v1[0], v1[1], v1[2]), 
+						glm::vec3(v2[0], v2[1], v2[2]), 
+						glm::green, glm::green, glm::green);
+				}
+			}
 
 			/*
 			{
@@ -360,11 +447,11 @@ int main()
 				}
 				});
 
-			auto result = regularGrid->ExtractSurface(0.0f);
-			for (auto& vs : result)
-			{
-				scene->Debug("Result")->AddTriangle(vs[0], vs[1], vs[2], glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f));
-			}
+			//auto result = regularGrid->ExtractSurface(0.0f);
+			//for (auto& vs : result)
+			//{
+			//	scene->Debug("Result")->AddTriangle(vs[0], vs[1], vs[2], glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f));
+			//}
 		}
 
 		});
