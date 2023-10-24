@@ -162,6 +162,7 @@ int main()
 			mesh->FillColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 			mesh->RecalculateFaceNormal();
 
+			/*
 			{
 				float offsetDistance = -0.1f;
 
@@ -198,6 +199,7 @@ int main()
 					mesh->SetVertex(i, tv);
 				}
 			}
+			*/
 
 			scene->GetMainCamera()->centerPosition = mesh->GetAABB().GetCenter();
 			scene->GetMainCamera()->distance = mesh->GetAABB().GetDiagonalLength();
@@ -256,6 +258,39 @@ int main()
 					}
 				}
 				});
+
+			{
+				auto vetm = scene->CreateComponent<Neon::VETM>("VETM/Mesh", mesh);
+				entity->AddComponent(vetm);
+
+				map<GLuint, Neon::VETM::Vertex*> vertexMapping;
+				auto nov = mesh->GetVertexBuffer()->Size();
+				for (size_t i = 0; i < nov; i++)
+				{
+					auto v = mesh->GetVertex(i);
+					vertexMapping[i] = vetm->AddVertex(v, { 0.0f, 0.0f, 0.0f });
+				}
+
+				auto noi = mesh->GetIndexBuffer()->Size() / 3;
+				for (size_t i = 0; i < noi; i++)
+				{
+					GLuint i0, i1, i2;
+					mesh->GetTriangleVertexIndices(i, i0, i1, i2);
+
+					auto v0 = vertexMapping[i0];
+					auto v1 = vertexMapping[i1];
+					auto v2 = vertexMapping[i2];
+
+					vetm->AddTriangle(v0, v1, v2);
+				}
+
+				for (auto& t : vetm->GetTriangles())
+				{
+					scene->Debug("VETM")->AddTriangle(t->v0->p, t->v1->p, t->v2->p, glm::darkgray, glm::darkgray, glm::darkgray);
+				}
+			}
+
+			
 
 			return;
 

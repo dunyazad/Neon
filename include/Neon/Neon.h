@@ -20,6 +20,7 @@
 #include <Neon/Component/NeonShader.h>
 #include <Neon/Component/NeonTexture.h>
 #include <Neon/Component/NeonTransform.h>
+#include <Neon/Component/NeonVETM.h>
 
 #include <Neon/Component/SpatialPartitioning/NeonBSPTree.hpp>
 #include <Neon/Component/SpatialPartitioning/NeonRegularGrid.h>
