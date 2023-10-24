@@ -120,7 +120,7 @@ namespace Neon
 
 		void FlipTriangle(Triangle* triangle);
 
-		glm::vec3 GetNearestPointOnEdge(Edge* edge, const glm::vec3& position);
+		//glm::vec3 GetNearestPointOnEdge(Edge* edge, const glm::vec3& position);
 		Vertex* GetNearestVertexOnTriangle(Triangle* triangle, const glm::vec3& position);
 		//Edge* GetNearestEdgeOnTriangle(Triangle* triangle, const glm::vec3& position);
 		set<Triangle*> GetAdjacentTrianglesByEdge(Triangle* triangle);
