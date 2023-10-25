@@ -1693,4 +1693,26 @@ namespace Neon
 
 		//TE(DeleteSelfintersectingTriangles)
 	}
+
+	void VETM::ApplyToMesh()
+	{
+		mesh->Clear();
+
+		map<Vertex*, size_t> vertexMapping;
+		for (auto& v : vertices)
+		{
+			vertexMapping[v] = mesh->AddVertex(v->p);
+		}
+
+		for (auto& t : triangles)
+		{
+			auto i0 = vertexMapping[t->v0];
+			auto i1 = vertexMapping[t->v1];
+			auto i2 = vertexMapping[t->v2];
+
+			mesh->AddTriangle(i0, i1, i2);
+		}
+
+		mesh->RecalculateFaceNormal();
+	}
 }

@@ -139,6 +139,8 @@ namespace Neon
 		void GenerateBaseWithHollow();
 		void DeleteSelfintersectingTriangles();
 
+		void ApplyToMesh();
+
 		inline float GetTotalArea() const { return totalArea; }
 
 		inline const vector<Vertex*>& GetVertices() const { return vertices; }

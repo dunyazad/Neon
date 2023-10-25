@@ -299,18 +299,12 @@ int main()
 				//}
 
 				{
-					Neon::Time("GetBorderEdges");
+					Neon::Time("GenerateBase");
 
-					auto foundBorderEdges = vetm->GetBorderEdges();
+					vetm->GenerateBase();
 
-					cout << "Found Border Edges : " << foundBorderEdges.size() << endl;
+					vetm->ApplyToMesh();
 				}
-
-				//{
-				//	Neon::Time("GenerateBase");
-
-				//	vetm->GenerateBase();
-				//}
 
 				{
 					Neon::Time("Visulaize VETM");
@@ -322,12 +316,9 @@ int main()
 				}
 			}
 
-			return;
-
-
 			Neon::Time("Regular Grid");
 			auto trimin = Trimin(mesh->GetAABB().GetXLength(), mesh->GetAABB().GetYLength(), mesh->GetAABB().GetZLength());
-			auto cellSize = trimin * 0.005f;
+			auto cellSize = trimin * 0.01f;
 			auto regularGrid = scene->CreateComponent<Neon::RegularGrid>("RegularGrid/spot", mesh, cellSize);
 			entity->AddComponent(regularGrid);
 
