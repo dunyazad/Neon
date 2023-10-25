@@ -8,6 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_subdirectory("External/glfw")
 add_subdirectory("External/glm")
+#add_subdirectory("External/OpenMesh")
 add_subdirectory("External/tinyply")
 
 set(source_list
@@ -99,6 +100,9 @@ target_include_directories(Neon PUBLIC
 )
 
 target_link_libraries(Neon glfw)
+#target_link_libraries(Neon $<$<CONFIG:Debug>:OpenMeshCored>)
+#target_link_libraries(Neon $<$<CONFIG:Release>:OpenMeshCore>)
+
 target_link_libraries(Neon tinyply)
 
 function(assign_source_group)

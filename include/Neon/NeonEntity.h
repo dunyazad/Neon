@@ -29,6 +29,14 @@ namespace Neon
 		}
 
 		template<typename T>
+		T* GetComponent()
+		{
+			auto cv = components[&typeid(T)];
+			if (0 == cv.size()) return nullptr;
+			else return (T*)cv[0];
+		}
+
+		template<typename T>
 		T* GetComponent(int index)
 		{
 			auto cv = components[&typeid(T)];

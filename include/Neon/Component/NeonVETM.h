@@ -97,6 +97,8 @@ namespace Neon
 		void Clear();
 		void Clone(Mesh& clone);
 
+		void Build();
+
 		Vertex* GetVertex(const glm::vec3& position);
 		Vertex* AddVertex(const glm::vec3& position, const glm::vec3& normal);
 
@@ -121,6 +123,7 @@ namespace Neon
 		void FlipTriangle(Triangle* triangle);
 
 		//glm::vec3 GetNearestPointOnEdge(Edge* edge, const glm::vec3& position);
+		Vertex* GetNearestVertex(const glm::vec3& position);
 		Vertex* GetNearestVertexOnTriangle(Triangle* triangle, const glm::vec3& position);
 		//Edge* GetNearestEdgeOnTriangle(Triangle* triangle, const glm::vec3& position);
 		set<Triangle*> GetAdjacentTrianglesByEdge(Triangle* triangle);

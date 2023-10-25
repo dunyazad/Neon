@@ -2,6 +2,8 @@
 #include <Neon/Component/NeonMesh.h>
 #include <Neon/Component/SpatialPartitioning/NeonSpatialHashing.h>
 
+#include <Neon/NeonVertexBufferObject.hpp>
+
 namespace Neon
 {
 	void VETM::KDTree::Clear()
@@ -182,6 +184,32 @@ namespace Neon
 		for (auto& t : triangles)
 		{
 			clone.AddTriangle(vertexMapping[t->v0], vertexMapping[t->v1], vertexMapping[t->v2]);
+		}
+	}
+
+	void VETM::Build()
+	{
+		Clear();
+
+		map<GLuint, Neon::VETM::Vertex*> vertexMapping;
+		auto nov = mesh->GetVertexBuffer()->Size();
+		for (size_t i = 0; i < nov; i++)
+		{
+			auto v = mesh->GetVertex(i);
+			vertexMapping[i] = AddVertex(v, { 0.0f, 0.0f, 0.0f });
+		}
+
+		auto noi = mesh->GetIndexBuffer()->Size() / 3;
+		for (size_t i = 0; i < noi; i++)
+		{
+			GLuint i0, i1, i2;
+			mesh->GetTriangleVertexIndices(i, i0, i1, i2);
+
+			auto v0 = vertexMapping[i0];
+			auto v1 = vertexMapping[i1];
+			auto v2 = vertexMapping[i2];
+
+			AddTriangle(v0, v1, v2);
 		}
 	}
 
@@ -474,6 +502,12 @@ namespace Neon
 	//	auto ray = HRay(edge->v0->position, edge->v1->position - edge->v0->position);
 	//	return ray.GetNearestPointOnRay(position);
 	//}
+
+	VETM::Vertex* VETM::GetNearestVertex(const glm::vec3& position)
+	{
+		auto node = kdtree.FindNearestNeighborNode(position);
+		return node->GetVertex();
+	}
 
 	VETM::Vertex* VETM::GetNearestVertexOnTriangle(Triangle* triangle, const glm::vec3& position)
 	{

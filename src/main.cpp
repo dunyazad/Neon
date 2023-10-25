@@ -228,7 +228,7 @@ int main()
 				}
 				});
 
-			entity->AddMouseButtonEventHandler([scene, mesh](const Neon::MouseButtonEvent& event) {
+			entity->AddMouseButtonEventHandler([entity, scene, mesh](const Neon::MouseButtonEvent& event) {
 				if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_DOUBLE_ACTION)
 				{
 					auto camera = scene->GetMainCamera();
@@ -255,6 +255,23 @@ int main()
 						//debugPoints->Clear();
 
 						//debugPoints->AddPoint(intersection, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+						auto vetm = entity->GetComponent<Neon::VETM>();
+						auto vertex = vetm->GetNearestVertex(intersection);
+
+						scene->Debug("Points")->Clear();
+						scene->Debug("Points")->AddPoint(vertex->p, glm::red);
+
+						for (auto& e : vertex->edges)
+						{
+							if (2 > e->triangles.size())
+							{
+								scene->Debug("Lines")->Clear();
+								scene->Debug("Lines")->AddLine(e->v0->p, e->v1->p, glm::green, glm::green);
+							}
+
+							cout << e->id << " : " << e->triangles.size() << endl;
+						}
 					}
 				}
 				});
@@ -263,32 +280,7 @@ int main()
 			{
 				auto vetm = scene->CreateComponent<Neon::VETM>("VETM/Mesh", mesh);
 				entity->AddComponent(vetm);
-
-				{
-					Neon::Time("Intialize VETM");
-
-					map<GLuint, Neon::VETM::Vertex*> vertexMapping;
-					auto nov = mesh->GetVertexBuffer()->Size();
-					for (size_t i = 0; i < nov; i++)
-					{
-						auto v = mesh->GetVertex(i);
-						vertexMapping[i] = vetm->AddVertex(v, { 0.0f, 0.0f, 0.0f });
-					}
-
-					auto noi = mesh->GetIndexBuffer()->Size() / 3;
-					for (size_t i = 0; i < noi; i++)
-					{
-						GLuint i0, i1, i2;
-						mesh->GetTriangleVertexIndices(i, i0, i1, i2);
-
-						auto v0 = vertexMapping[i0];
-						auto v1 = vertexMapping[i1];
-						auto v2 = vertexMapping[i2];
-
-						vetm->AddTriangle(v0, v1, v2);
-					}
-				}
-
+				vetm->Build();
 				//{
 				//	set<Neon::VETM::Edge*> borderEdges;
 
@@ -302,19 +294,19 @@ int main()
 				//	}
 				//}
 
-				{
-					Neon::Time("GetBorderEdges");
+				//{
+				//	Neon::Time("GetBorderEdges");
 
-					auto foundBorderEdges = vetm->GetBorderEdges();
+				//	auto foundBorderEdges = vetm->GetBorderEdges();
 
-					cout << "Found Border Edges : " << foundBorderEdges.size() << endl;
-				}
+				//	cout << "Found Border Edges : " << foundBorderEdges.size() << endl;
+				//}
 
-				{
-					Neon::Time("GenerateBase");
+				//{
+				//	Neon::Time("GenerateBase");
 
-					vetm->GenerateBase();
-				}
+				//	vetm->GenerateBase();
+				//}
 
 				{
 					Neon::Time("Visulaize VETM");
