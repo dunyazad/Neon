@@ -1714,5 +1714,6 @@ namespace Neon
 		}
 
 		mesh->RecalculateFaceNormal();
+		mesh->FillColor(glm::white);
 	}
 }

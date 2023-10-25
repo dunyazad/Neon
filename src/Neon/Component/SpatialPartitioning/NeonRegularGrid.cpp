@@ -557,6 +557,7 @@ namespace Neon
 					auto cell = GetCell(make_tuple(x, y, z));
 					if (nullptr == cell)
 						continue;
+
 					{
 						GRIDCELL gridCell;
 						gridCell.p[0] = cell->xyz - cellHalfSize;

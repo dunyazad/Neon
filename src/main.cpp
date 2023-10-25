@@ -277,7 +277,6 @@ int main()
 				}
 				});
 
-
 			{
 				auto vetm = scene->CreateComponent<Neon::VETM>("VETM/Mesh", mesh);
 				entity->AddComponent(vetm);
@@ -306,14 +305,14 @@ int main()
 					vetm->ApplyToMesh();
 				}
 
-				{
-					Neon::Time("Visulaize VETM");
+				//{
+				//	Neon::Time("Visulaize VETM");
 
-					for (auto& t : vetm->GetTriangles())
-					{
-						scene->Debug("VETM")->AddTriangle(t->v0->p, t->v1->p, t->v2->p, glm::darkgray, glm::darkgray, glm::darkgray);
-					}
-				}
+				//	for (auto& t : vetm->GetTriangles())
+				//	{
+				//		scene->Debug("VETM")->AddTriangle(t->v0->p, t->v1->p, t->v2->p, glm::darkgray, glm::darkgray, glm::darkgray);
+				//	}
+				//}
 			}
 
 			Neon::Time("Regular Grid");
@@ -324,12 +323,12 @@ int main()
 
 			regularGrid->Build();
 
-			//regularGrid->ForEachCell([scene](Neon::RGCell* cell, int x, int y, int z) {
-			//	if (0 < cell->GetTriangles().size())
-			//	{
-			//		scene->Debug("Cells")->AddBox(cell->GetCenter(), cell->GetXLength(), cell->GetYLength(), cell->GetZLength(), glm::blue);
-			//	}
-			//	});
+			regularGrid->ForEachCell([scene](Neon::RGCell* cell, int x, int y, int z) {
+				if (0 < cell->GetTriangles().size())
+				{
+					scene->Debug("Cells")->AddBox(cell->GetCenter(), cell->GetXLength(), cell->GetYLength(), cell->GetZLength(), glm::blue);
+				}
+				});
 
 			regularGrid->AddMouseButtonEventHandler([scene, mesh, regularGrid](const Neon::MouseButtonEvent& event) {
 				if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_RELEASE)
@@ -517,6 +516,13 @@ int main()
 			auto result = regularGrid->ExtractSurface(0.0f);
 			for (auto& vs : result)
 			{
+				if ((vs[0].y + 0.0001f >= regularGrid->GetMaxPoint().y) ||
+					(vs[1].y + 0.0001f >= regularGrid->GetMaxPoint().y) ||
+					(vs[2].y + 0.0001f >= regularGrid->GetMaxPoint().y))
+				{
+					continue;
+				}
+
 				scene->Debug("Result")->AddTriangle(vs[0], vs[1], vs[2], glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f));
 			}
 		}
