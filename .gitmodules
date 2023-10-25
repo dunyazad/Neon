@@ -16,6 +16,3 @@
 [submodule "External/tinyply"]
 	path = External/tinyply
 	url = https://github.com/ddiakopoulos/tinyply.git
-[submodule "External/OpenMesh"]
-	path = External/OpenMesh
-	url = https://gitlab.vci.rwth-aachen.de:9000/OpenMesh/OpenMesh.git
