@@ -33,6 +33,7 @@ namespace Neon
 		if (nullptr == root)
 			return nullptr;
 
+		nearestNeighborNode = root;
 		nearestNeighbor = root->GetVertex();
 		nearestNeighborDistance = glm::length(query - root->GetVertex()->p);
 		FindNearestNeighborRecursive(root, query, 0);

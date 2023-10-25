@@ -261,16 +261,17 @@ int main()
 
 						scene->Debug("Points")->Clear();
 						scene->Debug("Points")->AddPoint(vertex->p, glm::red);
+						scene->Debug("Points")->AddPoint(intersection, glm::white);
 
+						scene->Debug("Lines")->Clear();
+						cout << "---------------------------------------" << endl;
 						for (auto& e : vertex->edges)
 						{
 							if (2 > e->triangles.size())
 							{
-								scene->Debug("Lines")->Clear();
 								scene->Debug("Lines")->AddLine(e->v0->p, e->v1->p, glm::green, glm::green);
+								cout << e->id << " : " << e->triangles.size() << endl;
 							}
-
-							cout << e->id << " : " << e->triangles.size() << endl;
 						}
 					}
 				}
@@ -281,6 +282,7 @@ int main()
 				auto vetm = scene->CreateComponent<Neon::VETM>("VETM/Mesh", mesh);
 				entity->AddComponent(vetm);
 				vetm->Build();
+	
 				//{
 				//	set<Neon::VETM::Edge*> borderEdges;
 
@@ -290,17 +292,19 @@ int main()
 				//		{
 				//			//borderEdges.insert(edge);
 				//			scene->Debug("Border")->AddLine(edge->v0->p, edge->v1->p, glm::red, glm::red);
+				//			scene->Debug("Border Points")->AddPoint(edge->v0->p, glm::green);
+				//			scene->Debug("Border Points")->AddPoint(edge->v1->p, glm::green);
 				//		}
 				//	}
 				//}
 
-				//{
-				//	Neon::Time("GetBorderEdges");
+				{
+					Neon::Time("GetBorderEdges");
 
-				//	auto foundBorderEdges = vetm->GetBorderEdges();
+					auto foundBorderEdges = vetm->GetBorderEdges();
 
-				//	cout << "Found Border Edges : " << foundBorderEdges.size() << endl;
-				//}
+					cout << "Found Border Edges : " << foundBorderEdges.size() << endl;
+				}
 
 				//{
 				//	Neon::Time("GenerateBase");
