@@ -158,7 +158,7 @@ int main()
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/spot");
 			entity->AddComponent(mesh);
 
-			mesh->FromSTLFile(Neon::URL::Resource("/stl/spot.stl"));
+			mesh->FromSTLFile(Neon::URL::Resource("/stl/mesh.stl"));
 			mesh->FillColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 			mesh->RecalculateFaceNormal();
 
@@ -259,48 +259,110 @@ int main()
 				}
 				});
 
+
 			{
 				auto vetm = scene->CreateComponent<Neon::VETM>("VETM/Mesh", mesh);
 				entity->AddComponent(vetm);
 
-				map<GLuint, Neon::VETM::Vertex*> vertexMapping;
-				auto nov = mesh->GetVertexBuffer()->Size();
-				for (size_t i = 0; i < nov; i++)
 				{
-					auto v = mesh->GetVertex(i);
-					vertexMapping[i] = vetm->AddVertex(v, { 0.0f, 0.0f, 0.0f });
+					Neon::Time("Intialize VETM");
+
+					map<GLuint, Neon::VETM::Vertex*> vertexMapping;
+					auto nov = mesh->GetVertexBuffer()->Size();
+					for (size_t i = 0; i < nov; i++)
+					{
+						auto v = mesh->GetVertex(i);
+						vertexMapping[i] = vetm->AddVertex(v, { 0.0f, 0.0f, 0.0f });
+					}
+
+					auto noi = mesh->GetIndexBuffer()->Size() / 3;
+					for (size_t i = 0; i < noi; i++)
+					{
+						GLuint i0, i1, i2;
+						mesh->GetTriangleVertexIndices(i, i0, i1, i2);
+
+						auto v0 = vertexMapping[i0];
+						auto v1 = vertexMapping[i1];
+						auto v2 = vertexMapping[i2];
+
+						vetm->AddTriangle(v0, v1, v2);
+					}
 				}
 
-				auto noi = mesh->GetIndexBuffer()->Size() / 3;
-				for (size_t i = 0; i < noi; i++)
+				//{
+				//	set<Neon::VETM::Edge*> borderEdges;
+
+				//	for (auto& edge : vetm->GetEdges())
+				//	{
+				//		if (edge->triangles.size() < 2)
+				//		{
+				//			//borderEdges.insert(edge);
+				//			scene->Debug("Border")->AddLine(edge->v0->p, edge->v1->p, glm::red, glm::red);
+				//		}
+				//	}
+				//}
+
 				{
-					GLuint i0, i1, i2;
-					mesh->GetTriangleVertexIndices(i, i0, i1, i2);
+					Neon::Time("GetBorderEdges");
 
-					auto v0 = vertexMapping[i0];
-					auto v1 = vertexMapping[i1];
-					auto v2 = vertexMapping[i2];
+					auto foundBorderEdges = vetm->GetBorderEdges();
 
-					vetm->AddTriangle(v0, v1, v2);
+					cout << "Found Border Edges : " << foundBorderEdges.size() << endl;
 				}
 
-				for (auto& t : vetm->GetTriangles())
 				{
-					scene->Debug("VETM")->AddTriangle(t->v0->p, t->v1->p, t->v2->p, glm::darkgray, glm::darkgray, glm::darkgray);
+					Neon::Time("GenerateBase");
+
+					vetm->GenerateBase();
+				}
+
+				{
+					Neon::Time("Visulaize VETM");
+
+					for (auto& t : vetm->GetTriangles())
+					{
+						scene->Debug("VETM")->AddTriangle(t->v0->p, t->v1->p, t->v2->p, glm::darkgray, glm::darkgray, glm::darkgray);
+					}
 				}
 			}
 
-			
-
 			return;
 
-			auto t0 = Neon::Time("Regular Grid");
+
+			Neon::Time("Regular Grid");
 			auto trimin = Trimin(mesh->GetAABB().GetXLength(), mesh->GetAABB().GetYLength(), mesh->GetAABB().GetZLength());
 			auto cellSize = trimin * 0.005f;
 			auto regularGrid = scene->CreateComponent<Neon::RegularGrid>("RegularGrid/spot", mesh, cellSize);
 			entity->AddComponent(regularGrid);
+
 			regularGrid->Build();
 
+			//regularGrid->ForEachCell([scene](Neon::RGCell* cell, int x, int y, int z) {
+			//	if (0 < cell->GetTriangles().size())
+			//	{
+			//		scene->Debug("Cells")->AddBox(cell->GetCenter(), cell->GetXLength(), cell->GetYLength(), cell->GetZLength(), glm::blue);
+			//	}
+			//	});
+
+			regularGrid->AddMouseButtonEventHandler([scene, mesh, regularGrid](const Neon::MouseButtonEvent& event) {
+				if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_RELEASE)
+				{
+					auto camera = scene->GetMainCamera();
+
+					auto ray = camera->GetPickingRay(event.xpos, event.ypos);
+
+					glm::vec3 intersection;
+					size_t faceIndex = 0;
+					if (mesh->Pick(ray, intersection, faceIndex))
+					{
+						auto index = regularGrid->GetIndex(intersection);
+
+						cout << "x : " << get<0>(index) << " , y : " << get<1>(index) << " , z : " << get<2>(index) << endl;
+					}
+				}
+				});
+
+			/*
 			{
 				//grid3d G;
 				//G.read_dat_file("C:\\Resources\\3D\\dat\\hazelnuts\\hnut_uint.dat");
@@ -368,6 +430,7 @@ int main()
 						glm::green, glm::green, glm::green);
 				}
 			}
+			*/
 
 			/*
 			{
@@ -464,29 +527,11 @@ int main()
 			}
 			*/
 
-			regularGrid->AddMouseButtonEventHandler([scene, mesh, regularGrid](const Neon::MouseButtonEvent& event) {
-				if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_RELEASE)
-				{
-					auto camera = scene->GetMainCamera();
-
-					auto ray = camera->GetPickingRay(event.xpos, event.ypos);
-
-					glm::vec3 intersection;
-					size_t faceIndex = 0;
-					if (mesh->Pick(ray, intersection, faceIndex))
-					{
-						auto index = regularGrid->GetIndex(intersection);
-
-						cout << "x : " << get<0>(index) << " , y : " << get<1>(index) << " , z : " << get<2>(index) << endl;
-					}
-				}
-				});
-
-			//auto result = regularGrid->ExtractSurface(0.0f);
-			//for (auto& vs : result)
-			//{
-			//	scene->Debug("Result")->AddTriangle(vs[0], vs[1], vs[2], glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f));
-			//}
+			auto result = regularGrid->ExtractSurface(0.0f);
+			for (auto& vs : result)
+			{
+				scene->Debug("Result")->AddTriangle(vs[0], vs[1], vs[2], glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f));
+			}
 		}
 
 		});

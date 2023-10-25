@@ -16,3 +16,6 @@
 [submodule "External/tinyply"]
 	path = External/tinyply
 	url = https://github.com/ddiakopoulos/tinyply.git
+[submodule "External/pmp-library"]
+	path = External/pmp-library
+	url = https://github.com/pmp-library/pmp-library.git

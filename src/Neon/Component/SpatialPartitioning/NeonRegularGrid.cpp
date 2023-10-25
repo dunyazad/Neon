@@ -542,6 +542,10 @@ namespace Neon
 
 	vector<vector<glm::vec3>> RegularGrid::ExtractSurface(float isolevel)
 	{
+		Neon::Time("ExtractSurface");
+
+		auto cellHalfSize = cellSize * 0.5f;
+
 		vector<vector<glm::vec3>> result;
 
 		for (size_t z = 0; z < cellCountZ; z++)
@@ -551,24 +555,18 @@ namespace Neon
 				for (size_t x = 0; x < cellCountX; x++)
 				{
 					auto cell = GetCell(make_tuple(x, y, z));
-					if (0 != cell->GetTriangles().size())
+					if (nullptr == cell)
+						continue;
 					{
-						if (x == 2 && y == 3 && z == 0)
-						{
-							cout << "found" << endl;
-						}
-
-						////	debugBoxes->AddBox(cell->GetCenter(), cell->GetXLength(), cell->GetYLength(), cell->GetZLength(), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-
 						GRIDCELL gridCell;
-						gridCell.p[0] = cell->xyz;
-						gridCell.p[1] = cell->Xyz;
-						gridCell.p[2] = cell->XyZ;
-						gridCell.p[3] = cell->xyZ;
-						gridCell.p[4] = cell->xYz;
-						gridCell.p[5] = cell->XYz;
-						gridCell.p[6] = cell->XYZ;
-						gridCell.p[7] = cell->xYZ;
+						gridCell.p[0] = cell->xyz - cellHalfSize;
+						gridCell.p[1] = cell->Xyz - cellHalfSize;
+						gridCell.p[2] = cell->XyZ - cellHalfSize;
+						gridCell.p[3] = cell->xyZ - cellHalfSize;
+						gridCell.p[4] = cell->xYz - cellHalfSize;
+						gridCell.p[5] = cell->XYz - cellHalfSize;
+						gridCell.p[6] = cell->XYZ - cellHalfSize;
+						gridCell.p[7] = cell->xYZ - cellHalfSize;
 						gridCell.val[0] = 1.0f;
 						gridCell.val[1] = 1.0f;
 						gridCell.val[2] = 1.0f;
@@ -580,32 +578,13 @@ namespace Neon
 
 						for (size_t i = 0; i < 8; i++)
 						{
-							//float distance = FLT_MAX;
-
-							for (auto& t : cell->GetTriangles())
+							auto pcell = GetCell(GetIndex(gridCell.p[i]));
+							if (nullptr != pcell)
 							{
-								auto v0 = mesh->GetVertex(t->v0->index);
-								auto v1 = mesh->GetVertex(t->v1->index);
-								auto v2 = mesh->GetVertex(t->v2->index);
-
-								//if ((cell->Contains(v0) && cell->Contains(v1) == false && cell->Contains(v2) == false) ||
-								//	(cell->Contains(v1) && cell->Contains(v2) == false && cell->Contains(v0) == false) ||
-								//	(cell->Contains(v2) && cell->Contains(v0) == false && cell->Contains(v1) == false))
-								//{
-								auto n = glm::normalize(glm::cross(glm::normalize(v1 - v0), glm::normalize(v2 - v0)));
-								auto c = (v0 + v1 + v2) / 3.0f;
-
-								if (0 <= glm::dot(gridCell.p[i] - c, n))
+								if (0 < pcell->GetTriangles().size())
 								{
-									
-
-									gridCell.val[i] += -1.0f;
+									gridCell.val[i] = -1.0f;
 								}
-								else
-								{
-									gridCell.val[i] += 1.0f;
-								}
-								//}
 							}
 						}
 
@@ -617,50 +596,72 @@ namespace Neon
 							auto v1 = triangles[i].p[1];
 							auto v2 = triangles[i].p[2];
 
-							result.push_back({ triangles[i].p[0], triangles[i].p[2], triangles[i].p[1] });
+							result.push_back({ triangles[i].p[0], triangles[i].p[1], triangles[i].p[2] });
+						}
+					}
+					if (x == cellCountX - 1 || y == cellCountY - 1 || z == cellCountZ - 1)
+					{
+						GRIDCELL gridCell;
+						gridCell.p[0] = cell->xyz + cellHalfSize;
+						gridCell.p[1] = cell->Xyz + cellHalfSize;
+						gridCell.p[2] = cell->XyZ + cellHalfSize;
+						gridCell.p[3] = cell->xyZ + cellHalfSize;
+						gridCell.p[4] = cell->xYz + cellHalfSize;
+						gridCell.p[5] = cell->XYz + cellHalfSize;
+						gridCell.p[6] = cell->XYZ + cellHalfSize;
+						gridCell.p[7] = cell->xYZ + cellHalfSize;
+						gridCell.val[0] = 1.0f;
+						gridCell.val[1] = 1.0f;
+						gridCell.val[2] = 1.0f;
+						gridCell.val[3] = 1.0f;
+						gridCell.val[4] = 1.0f;
+						gridCell.val[5] = 1.0f;
+						gridCell.val[6] = 1.0f;
+						gridCell.val[7] = 1.0f;
+
+						for (size_t i = 0; i < 8; i++)
+						{
+							auto pcell = GetCell(GetIndex(gridCell.p[i]));
+							if (nullptr != pcell)
+							{
+								if (0 < pcell->GetTriangles().size())
+								{
+									gridCell.val[i] = -1.0f;
+								}
+							}
 						}
 
-						//for (size_t i = 0; i < 8; i++)
-						//{
-						//	//float distance = FLT_MAX;
+						TRIANGLE triangles[16];
+						int not = Polygonise(gridCell, isolevel, (TRIANGLE*)triangles);
+						for (size_t i = 0; i < not; i++)
+						{
+							auto v0 = triangles[i].p[0];
+							auto v1 = triangles[i].p[1];
+							auto v2 = triangles[i].p[2];
 
-						//	for (auto& t : cell->GetTriangles())
-						//	{
-						//		auto v0 = mesh->GetVertex(t->v0->index);
-						//		auto v1 = mesh->GetVertex(t->v1->index);
-						//		auto v2 = mesh->GetVertex(t->v2->index);
-
-						//		//if ((cell->Contains(v0) && cell->Contains(v1) == false && cell->Contains(v2) == false) ||
-						//		//	(cell->Contains(v1) && cell->Contains(v2) == false && cell->Contains(v0) == false) ||
-						//		//	(cell->Contains(v2) && cell->Contains(v0) == false && cell->Contains(v1) == false))
-						//		//{
-						//			auto n = glm::normalize(glm::cross(glm::normalize(v1 - v0), glm::normalize(v2 - v0)));
-						//			auto c = (v0 + v1 + v2) / 3.0f;
-
-						//			if (0 <= glm::dot(gridCell.vertex[i] - c, n))
-						//			{
-						//				gridCell.value[i] = -1.0f;
-						//			}
-						//		//}
-						//	}
-						//}
-
-						//auto triangles = triangulate_cell(gridCell, isolevel);
-						//for (auto& vs : triangles)
-						//{
-						//	auto v0 = vs[2];
-						//	auto v1 = vs[1];
-						//	auto v2 = vs[0];
-
-						//	result.push_back({v0, v1, v2});
-						//	//result.push_back({ v0, v2, v1 });
-						//}
+							result.push_back({ triangles[i].p[0], triangles[i].p[1], triangles[i].p[2] });
+						}
 					}
 				}
 			}
 		}
 
 		return result;
+	}
+
+	void RegularGrid::ForEachCell(function<void(RegularGridCell<Vertex, Triangle>*, size_t, size_t, size_t)> callback)
+	{
+		for (size_t z = 0; z < cellCountZ; z++)
+		{
+			for (size_t y = 0; y < cellCountY; y++)
+			{
+				for (size_t x = 0; x < cellCountX; x++)
+				{
+					auto cell = GetCell(make_tuple(x, y, z));
+					callback(cell, x, y, z);
+				}
+			}
+		}
 	}
 
 	//void RegularGrid::RemoveTriangle(Triangle* t)

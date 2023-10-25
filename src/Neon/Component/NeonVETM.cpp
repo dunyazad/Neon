@@ -638,8 +638,13 @@ namespace Neon
 			vector<Edge*> border;
 			Edge* seed = *borderEdges.begin();
 			Edge* currentEdge = seed;
+			set<Edge*> visited;
 			do
 			{
+				if (0 != visited.count(currentEdge))
+					break;
+
+				visited.insert(currentEdge);
 				border.push_back(currentEdge);
 				borderEdges.erase(currentEdge);
 
@@ -649,6 +654,8 @@ namespace Neon
 					{
 						if (ne->id != currentEdge->id)
 						{
+							//cout << "currentEdge->id : " << currentEdge->id << endl;
+
 							currentEdge = ne;
 							break;
 						}
@@ -986,146 +993,161 @@ namespace Neon
 
 			AABB aabb;
 #pragma region Determine direction
-			for (size_t i = 0; i < borderEdges.size(); i++)
 			{
-				auto ce = borderEdges[i];
-				auto ne = borderEdges[(i + 1) % borderEdges.size()];
-				auto cv = GetCommonVertex(ce, ne);
-				VETM::Vertex* v0 = nullptr;
-				VETM::Vertex* v1 = nullptr;
-				VETM::Vertex* v2 = nullptr;
-				if (ce->v0 == cv) v0 = ce->v1;
-				else v0 = ce->v0;
-				v1 = cv;
-				if (ne->v0 == cv) v2 = ne->v1;
-				else v2 = ne->v0;
-
-				borderVertices.push_back(v1);
-
-				auto e = borderEdges[i];
-				auto t = *e->triangles.begin();
-				auto d = glm::vec3{ 0.0f, 0.0f, 0.0f, };
-				aabb.Expand(e->v0->p);
-				aabb.Expand(e->v1->p);
-
-				if (t->v0 == e->v0 && t->v1 == e->v1 || t->v0 == e->v1 && t->v1 == e->v0)
+				Neon::Time("Determine direction");
+				for (size_t i = 0; i < borderEdges.size(); i++)
 				{
-					d = normalize((e->v0->p + e->v1->p) * 0.5f - t->v2->p);
-				}
-				else if (t->v1 == e->v0 && t->v2 == e->v1 || t->v2 == e->v1 && t->v1 == e->v0)
-				{
-					d = normalize((e->v0->p + e->v1->p) * 0.5f - t->v0->p);
-				}
-				else if (t->v2 == e->v0 && t->v0 == e->v1 || t->v0 == e->v1 && t->v2 == e->v0)
-				{
-					d = normalize((e->v0->p + e->v1->p) * 0.5f - t->v1->p);
+					auto ce = borderEdges[i];
+					auto ne = borderEdges[(i + 1) % borderEdges.size()];
+					auto cv = GetCommonVertex(ce, ne);
+					VETM::Vertex* v0 = nullptr;
+					VETM::Vertex* v1 = nullptr;
+					VETM::Vertex* v2 = nullptr;
+					if (ce->v0 == cv) v0 = ce->v1;
+					else v0 = ce->v0;
+					v1 = cv;
+					if (ne->v0 == cv) v2 = ne->v1;
+					else v2 = ne->v0;
+
+					borderVertices.push_back(v1);
+
+					auto e = borderEdges[i];
+					auto t = *e->triangles.begin();
+					auto d = glm::vec3{ 0.0f, 0.0f, 0.0f, };
+					aabb.Expand(e->v0->p);
+					aabb.Expand(e->v1->p);
+
+					if (t->v0 == e->v0 && t->v1 == e->v1 || t->v0 == e->v1 && t->v1 == e->v0)
+					{
+						d = normalize((e->v0->p + e->v1->p) * 0.5f - t->v2->p);
+					}
+					else if (t->v1 == e->v0 && t->v2 == e->v1 || t->v2 == e->v1 && t->v1 == e->v0)
+					{
+						d = normalize((e->v0->p + e->v1->p) * 0.5f - t->v0->p);
+					}
+					else if (t->v2 == e->v0 && t->v0 == e->v1 || t->v0 == e->v1 && t->v2 == e->v0)
+					{
+						d = normalize((e->v0->p + e->v1->p) * 0.5f - t->v1->p);
+					}
+
+					direction += d;
 				}
 
-				direction += d;
-			}
-
-			direction = normalize(direction);
-			if (abs(direction.x) > abs(direction.y) && abs(direction.x) > abs(direction.z))
-			{
-				if (0 < direction.x) direction = glm::vec3{ 1.0f, 0.0f, 0.0f };
-				else direction = glm::vec3{ -1.0f, 0.0f, 0.0f };
-			}
-			else if (abs(direction.y) > abs(direction.x) && abs(direction.y) > abs(direction.z))
-			{
-				if (0 < direction.y) direction = glm::vec3{ 0.0f, 1.0f, 0.0f };
-				else direction = glm::vec3{ 0.0f, -1.0f, 0.0f };
-			}
-			else if (abs(direction.z) > abs(direction.x) && abs(direction.z) > abs(direction.y))
-			{
-				if (0 < direction.z) direction = glm::vec3{ 0.0f, 0.0f, 1.0f };
-				else direction = glm::vec3{ 0.0f, 0.0f, -1.0f };
+				direction = normalize(direction);
+				if (abs(direction.x) > abs(direction.y) && abs(direction.x) > abs(direction.z))
+				{
+					if (0 < direction.x) direction = glm::vec3{ 1.0f, 0.0f, 0.0f };
+					else direction = glm::vec3{ -1.0f, 0.0f, 0.0f };
+				}
+				else if (abs(direction.y) > abs(direction.x) && abs(direction.y) > abs(direction.z))
+				{
+					if (0 < direction.y) direction = glm::vec3{ 0.0f, 1.0f, 0.0f };
+					else direction = glm::vec3{ 0.0f, -1.0f, 0.0f };
+				}
+				else if (abs(direction.z) > abs(direction.x) && abs(direction.z) > abs(direction.y))
+				{
+					if (0 < direction.z) direction = glm::vec3{ 0.0f, 0.0f, 1.0f };
+					else direction = glm::vec3{ 0.0f, 0.0f, -1.0f };
+				}
 			}
 #pragma endregion
 
 #pragma region Border Smoothing
-			for (size_t n = 0; n < iteration; n++)
 			{
-				for (size_t i = 0; i < borderVertices.size(); i++)
-				{
-					auto v0 = borderVertices[i];
-					auto v1 = borderVertices[(i + 1) % borderVertices.size()];
-					auto v2 = borderVertices[(i + 2) % borderVertices.size()];
+				Neon::Time("Border Smoothing");
 
-					v1->p = 0.5f * (v0->p + v2->p);
+				for (size_t n = 0; n < iteration; n++)
+				{
+					for (size_t i = 0; i < borderVertices.size(); i++)
+					{
+						auto v0 = borderVertices[i];
+						auto v1 = borderVertices[(i + 1) % borderVertices.size()];
+						auto v2 = borderVertices[(i + 2) % borderVertices.size()];
+
+						v1->p = 0.5f * (v0->p + v2->p);
+					}
 				}
 			}
 #pragma endregion
 
 #pragma region Calculate distances
 			vector<float> distances;
-			for (size_t i = 0; i < borderVertices.size(); i++)
 			{
-				auto v = borderVertices[i];
+				Neon::Time("Calculate distances");
 
-				if (abs(direction.x) > 0)
+				for (size_t i = 0; i < borderVertices.size(); i++)
 				{
-					if (direction.x > 0)
+					auto v = borderVertices[i];
+
+					if (abs(direction.x) > 0)
 					{
-						distances.push_back(aabb.GetMaxPoint().x - v->p.x);
+						if (direction.x > 0)
+						{
+							distances.push_back(aabb.GetMaxPoint().x - v->p.x);
+						}
+						else
+						{
+							distances.push_back(aabb.GetMinPoint().x - v->p.x);
+						}
 					}
-					else
+					else if (abs(direction.y) > 0)
 					{
-						distances.push_back(aabb.GetMinPoint().x - v->p.x);
+						if (direction.y > 0)
+						{
+							distances.push_back(aabb.GetMaxPoint().y - v->p.y);
+						}
+						else
+						{
+							distances.push_back(aabb.GetMinPoint().y - v->p.y);
+						}
 					}
-				}
-				else if (abs(direction.y) > 0)
-				{
-					if (direction.y > 0)
+					else if (abs(direction.z) > 0)
 					{
-						distances.push_back(aabb.GetMaxPoint().y - v->p.y);
-					}
-					else
-					{
-						distances.push_back(aabb.GetMinPoint().y - v->p.y);
-					}
-				}
-				else if (abs(direction.z) > 0)
-				{
-					if (direction.z > 0)
-					{
-						distances.push_back(aabb.GetMaxPoint().z - v->p.z);
-					}
-					else
-					{
-						distances.push_back(aabb.GetMinPoint().z - v->p.z);
+						if (direction.z > 0)
+						{
+							distances.push_back(aabb.GetMaxPoint().z - v->p.z);
+						}
+						else
+						{
+							distances.push_back(aabb.GetMinPoint().z - v->p.z);
+						}
 					}
 				}
 			}
 #pragma endregion
 
 #pragma region Create Base Wall
-			for (size_t n = 0; n < segments; n++)
 			{
-				vector<Vertex*> newVertices;
-				for (size_t i = 0; i < borderVertices.size(); i++)
+				Neon::Time("Create Base Wall");
+
+				for (size_t n = 0; n < segments; n++)
 				{
-					auto v0 = borderVertices[i];
-					auto v1 = borderVertices[(i + 1) % borderVertices.size()];
+					vector<Vertex*> newVertices;
+					for (size_t i = 0; i < borderVertices.size(); i++)
+					{
+						auto v0 = borderVertices[i];
+						auto v1 = borderVertices[(i + 1) % borderVertices.size()];
 
-					auto d0 = (distances[i]) / float(segments);
-					auto d1 = (distances[(i + 1) % borderVertices.size()]) / float(segments);
+						auto d0 = (distances[i]) / float(segments);
+						auto d1 = (distances[(i + 1) % borderVertices.size()]) / float(segments);
 
-					d0 += stretch / float(segments);
-					d1 += stretch / float(segments);
+						d0 += stretch / float(segments);
+						d1 += stretch / float(segments);
 
-					auto p0 = v0->p + direction * d0;
-					auto p1 = v1->p + direction * d1;
+						auto p0 = v0->p + direction * d0;
+						auto p1 = v1->p + direction * d1;
 
-					auto nv0 = AddVertex(p0, { 0.0f, 0.0f, 0.0f });
-					auto nv1 = AddVertex(p1, { 0.0f, 0.0f, 0.0f });
-					AddTriangle(v0, nv1, v1);
-					AddTriangle(v0, nv0, nv1);
+						auto nv0 = AddVertex(p0, { 0.0f, 0.0f, 0.0f });
+						auto nv1 = AddVertex(p1, { 0.0f, 0.0f, 0.0f });
+						AddTriangle(v0, nv1, v1);
+						AddTriangle(v0, nv0, nv1);
 
-					newVertices.push_back(nv0);
+						newVertices.push_back(nv0);
+					}
+					swap(borderVertices, newVertices);
+					newVertices.clear();
+					newVertices.resize(borderVertices.size());
 				}
-				swap(borderVertices, newVertices);
-				newVertices.clear();
-				newVertices.resize(borderVertices.size());
 			}
 #pragma endregion
 

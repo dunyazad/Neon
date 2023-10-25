@@ -73,7 +73,7 @@ namespace Neon
 			auto z = (size_t)floorf((position.z - this->GetMinPoint().z) / cellSize);
 			if ((x < 0 || x > cellCountX) || (y < 0 || y > cellCountY) || (z < 0 || z > cellCountZ))
 			{
-				cout << "WTF" << endl;
+				//cout << "WTF" << endl;
 			}
 			return make_tuple(x, y, z);
 		}
@@ -112,6 +112,8 @@ namespace Neon
 		inline const vector<vector<vector<RegularGridCell<Vertex, Triangle>*>>>& GetCells() const { return cells; }
 
 		vector<vector<glm::vec3>> RegularGrid::ExtractSurface(float isolevel);
+
+		void ForEachCell(function<void(RegularGridCell<Vertex, Triangle>*, size_t, size_t, size_t)> callback);
 
 	private:
 		Mesh* mesh = nullptr;
