@@ -1088,6 +1088,26 @@ namespace Neon
 			}
 #pragma endregion
 
+			set<Vertex*> toSmooth;
+			for (size_t i = 0; i < borderVertices.size(); i++)
+			{
+				auto v = borderVertices[i];
+				auto avs = GetAdjacentVertices(v);
+
+				toSmooth.insert(avs.begin(), avs.end());
+			}
+
+			set<Vertex*> seeds(toSmooth.begin(), toSmooth.end());
+			for (auto& v : seeds)
+			{
+				auto avs = GetAdjacentVertices(v);
+				toSmooth.insert(avs.begin(), avs.end());
+			}
+			for (size_t i = 0; i < borderVertices.size(); i++)
+			{
+				toSmooth.erase(borderVertices[i]);
+			}
+
 #pragma region Border Smoothing
 			{
 				Neon::Time("Border Smoothing");
@@ -1183,6 +1203,31 @@ namespace Neon
 					swap(borderVertices, newVertices);
 					newVertices.clear();
 					newVertices.resize(borderVertices.size());
+				}
+			}
+#pragma endregion
+
+#pragma region Border Smoothing
+			{
+				Neon::Time("Border Adjacent Vertices Smoothing");
+
+				for (size_t n = 0; n < iteration; n++)
+				{
+					for (size_t n = 0; n < iteration; n++)
+					{
+						for (auto& v : toSmooth)
+						{
+							auto p = glm::zero<glm::vec3>();
+							auto avs = GetAdjacentVertices(v);
+							for (auto& av : avs)
+							{
+								p += av->p;
+							}
+							p /= avs.size();
+
+							v->p = 0.5f * (p + v->p);
+						}
+					}
 				}
 			}
 #pragma endregion
