@@ -811,14 +811,19 @@ namespace Neon
 		auto noi = GetIndexBuffer()->Size();
 		for (int i = 0; i < noi / 3; i++)
 		{
-			auto v0 = GetVertex(i * 3 + 0);
-			auto v1 = GetVertex(i * 3 + 1);
-			auto v2 = GetVertex(i * 3 + 2);
+			GLuint i0, i1, i2;
+			GetIndex(i * 3 + 0, i0);
+			GetIndex(i * 3 + 1, i1);
+			GetIndex(i * 3 + 2, i2);
+
+			auto v0 = GetVertex(i0);
+			auto v1 = GetVertex(i1);
+			auto v2 = GetVertex(i2);
 
 			auto normal = glm::normalize(glm::cross(glm::normalize(v1 - v0), glm::normalize(v2 - v0)));
-			SetNormal(i * 3 + 0, normal);
-			SetNormal(i * 3 + 1, normal);
-			SetNormal(i * 3 + 2, normal);
+			SetNormal(i0, normal);
+			SetNormal(i1, normal);
+			SetNormal(i2, normal);
 		}
 	}
 

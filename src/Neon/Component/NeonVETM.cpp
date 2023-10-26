@@ -1020,7 +1020,7 @@ namespace Neon
 
 		for (size_t k = 0; k < foundBorderEdges.size(); k++)
 		{
-			glm::vec3 direction;
+			glm::vec3 direction = glm::zero<glm::vec3>();
 
 			vector<Edge*> borderEdges = foundBorderEdges[k];
 
@@ -1067,6 +1067,7 @@ namespace Neon
 
 					direction += d;
 				}
+				direction /= borderEdges.size();
 
 				direction = normalize(direction);
 				if (abs(direction.x) > abs(direction.y) && abs(direction.x) > abs(direction.z))
