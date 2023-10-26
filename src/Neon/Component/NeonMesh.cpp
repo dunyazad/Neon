@@ -808,6 +808,9 @@ namespace Neon
 
 	void Mesh::RecalculateFaceNormal()
 	{
+		auto nov = GetVertexBuffer()->Size();
+		GetNormalBuffer()->Resize(nov);
+
 		auto noi = GetIndexBuffer()->Size();
 		for (int i = 0; i < noi / 3; i++)
 		{

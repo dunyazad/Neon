@@ -1703,6 +1703,7 @@ namespace Neon
 		for (auto& v : vertices)
 		{
 			vertexMapping[v] = mesh->AddVertex(v->p);
+			mesh->AddColor(glm::white);
 		}
 
 		for (auto& t : triangles)
@@ -1715,6 +1716,5 @@ namespace Neon
 		}
 
 		mesh->RecalculateFaceNormal();
-		mesh->FillColor(glm::white);
 	}
 }

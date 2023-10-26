@@ -2,20 +2,6 @@
 
 #include <Neon/Neon.h>
 
-#include "MC33.h"
-#include "MC33.cpp"
-#include "surface.cpp"
-#include "grid3d.cpp"
-
-
-
-
-
-
-
-
-
-
 int main()
 {
 	Neon::Application app(1280, 1024);
@@ -282,27 +268,27 @@ int main()
 				entity->AddComponent(vetm);
 				vetm->Build();
 	
-				//{
-				//	set<Neon::VETM::Edge*> borderEdges;
-
-				//	for (auto& edge : vetm->GetEdges())
-				//	{
-				//		if (edge->triangles.size() < 2)
-				//		{
-				//			//borderEdges.insert(edge);
-				//			scene->Debug("Border")->AddLine(edge->v0->p, edge->v1->p, glm::red, glm::red);
-				//			scene->Debug("Border Points")->AddPoint(edge->v0->p, glm::green);
-				//			scene->Debug("Border Points")->AddPoint(edge->v1->p, glm::green);
-				//		}
-				//	}
-				//}
-
 				{
 					Neon::Time("GenerateBase");
 
 					vetm->GenerateBase();
 
 					vetm->ApplyToMesh();
+				}
+
+				{
+					set<Neon::VETM::Edge*> borderEdges;
+
+					for (auto& edge : vetm->GetEdges())
+					{
+						if (edge->triangles.size() < 2)
+						{
+							//borderEdges.insert(edge);
+							scene->Debug("Border")->AddLine(edge->v0->p, edge->v1->p, glm::red, glm::red);
+							scene->Debug("Border Points")->AddPoint(edge->v0->p, glm::green);
+							scene->Debug("Border Points")->AddPoint(edge->v1->p, glm::green);
+						}
+					}
 				}
 
 				//{
@@ -314,6 +300,8 @@ int main()
 				//	}
 				//}
 			}
+
+			return;
 
 			Neon::Time("Regular Grid");
 			auto trimin = Trimin(mesh->GetAABB().GetXLength(), mesh->GetAABB().GetYLength(), mesh->GetAABB().GetZLength());
