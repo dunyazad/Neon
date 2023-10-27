@@ -6,7 +6,7 @@
 namespace Neon
 {
 	Scene::Scene(const string& name, Window* window)
-		: name(name), window(window), transformUpdateSystem(this), renderSystem(this), eventSystem(this)
+		: name(name), window(window), entityUpdateSystem(this), renderSystem(this), eventSystem(this)
 	{
 	}
 
@@ -28,7 +28,7 @@ namespace Neon
 
 	void Scene::Frame(double now, double timeDelta)
 	{
-		transformUpdateSystem.Frame(now, timeDelta);
+		entityUpdateSystem.Frame(now, timeDelta);
 		renderSystem.Frame(now, timeDelta);
 	}
 

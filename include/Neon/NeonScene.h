@@ -1,10 +1,10 @@
 #pragma once
 
 #include <Neon/NeonCommon.h>
-#include <Neon/System/NeonSystem.h>
+#include <Neon/System/NeonEntityUpdateSystem.h>
 #include <Neon/System/NeonEventSystem.h>
 #include <Neon/System/NeonRenderSystem.h>
-#include <Neon/System/NeonTransformUpdateSystem.h>
+#include <Neon/System/NeonSystem.h>
 
 namespace Neon
 {
@@ -95,6 +95,7 @@ namespace Neon
 		inline const vector<DebugEntity*>& GetDebugEntities() const { return debugEntities; }
 		inline DebugEntity* GetDebugEntity(const string& name) { if (0 == debugEntityNameMap.count(name)) return nullptr; else return debugEntities[debugEntityNameMap[name]]; }
 		template<typename T> vector<ComponentBase*>& GetComponents() { return components[&typeid(T)]; }
+		map<const type_info*, vector<ComponentBase*>>& GetAllComponents() { return components; }
 
 		void Frame(double now, double timeDelta);
 
@@ -119,7 +120,7 @@ namespace Neon
 		Camera* mainCamera = nullptr;
 		Light* mainLight = nullptr;
 
-		TransformUpdateSystem transformUpdateSystem;
+		EntityUpdateSystem entityUpdateSystem;
 		RenderSystem renderSystem;
 		EventSystem eventSystem;
 	};

@@ -67,14 +67,14 @@ src/Neon/Component/SpatialPartitioning/NeonRegularGrid.cpp
 include/Neon/Component/SpatialPartitioning/NeonSpatialHashing.h
 src/Neon/Component/SpatialPartitioning/NeonSpatialHashing.cpp
 
+include/Neon/System/NeonEntityUpdateSystem.h
+src/Neon/System/NeonEntityUpdateSystem.cpp
 include/Neon/System/NeonEventSystem.h
 src/Neon/System/NeonEventSystem.cpp
 include/Neon/System/NeonRenderSystem.h
 src/Neon/System/NeonRenderSystem.cpp
 include/Neon/System/NeonSystem.h
 src/Neon/System/NeonSystem.cpp
-include/Neon/System/NeonTransformUpdateSystem.h
-src/Neon/System/NeonTransformUpdateSystem.cpp
 )
 
 #add_library(Neon

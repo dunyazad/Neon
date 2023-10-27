@@ -7,11 +7,11 @@ namespace Neon
 {
 	class Scene;
 
-	class TransformUpdateSystem : public SystemBase
+	class EntityUpdateSystem : public SystemBase
 	{
 	public:
-		TransformUpdateSystem(Scene* scene);
-		virtual ~TransformUpdateSystem();
+		EntityUpdateSystem(Scene* scene);
+		virtual ~EntityUpdateSystem();
 
 		void Frame(double now, double timeDelta);
 	};

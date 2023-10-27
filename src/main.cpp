@@ -7,8 +7,8 @@ int main()
 	Neon::Application app(1280, 1024);
 	Neon::URL::ChangeDirectory("..");
 
-	Neon::Image* imageB = nullptr;
-	Neon::Image* imageC = nullptr;
+	double elapsed = 0.0;
+	int index = 0;
 
 	app.OnInitialize([&]() {
 		auto t = Neon::Time("Initialize");
@@ -140,6 +140,8 @@ int main()
 		*/
 
 		{
+			auto entity = scene->CreateEntity("borderLines");
+
 			auto fs = ifstream("border_points.bson", std::ios::in | std::ios::binary | std::ios::ate);
 			std::streampos size = fs.tellg();
 			fs.seekg(0, std::ios::beg);
@@ -149,18 +151,30 @@ int main()
 
 			auto jo = json::from_bson(buffer);
 			vector<glm::vec3> pts;
+			Neon::AABB aabb;
 			if (jo.contains("points") && jo["points"].is_array())
 			{
 				for (auto& vd : jo["points"])
 				{
-					pts.push_back(glm::vec3(vd["x"], vd["y"], vd["z"]));
+					auto v = glm::vec3(vd["x"], vd["y"], vd["z"]);
+					aabb.Expand(v);
+					pts.push_back(v);
 				}
+
+				scene->GetMainCamera()->centerPosition = aabb.GetCenter();
 			}
 
-			for (auto& v : pts)
-			{
-				cout << v << endl;
-			}
+			entity->AddUpdateHandler([scene, pts, &elapsed, &index](double now, double timeDelta) {
+				if (index > pts.size() - 1)
+				{
+					index = 0;
+					scene->Debug("border lines")->Clear();
+				}
+
+				scene->Debug("border lines")->AddLine(pts[index], pts[(index + 1) % pts.size()], glm::red, glm::blue);
+				index++;
+
+				});
 
 			return;
 		}
@@ -416,10 +430,6 @@ int main()
 
 	app.OnTerminate([&]() {
 		auto t = Neon::Time("Terminate");
-
-		SAFE_DELETE(imageB);
-		SAFE_DELETE(imageC);
-
 		});
 
 	app.Run();
