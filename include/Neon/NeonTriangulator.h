@@ -7,12 +7,9 @@ namespace Neon
 	class Triangulator
 	{
 	public:
-		Triangulator(vector<glm::vec3> points);
+		Triangulator();
 		~Triangulator();
 
-		void Triangulate();
-
-	private:
-		vector<glm::vec3> points;
+		vector<GLuint> Triangulate(const vector<glm::vec3>& points);
 	};
 }

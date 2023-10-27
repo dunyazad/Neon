@@ -1,12 +1,13 @@
 #pragma once
 
 #include <Neon/NeonCommon.h>
-#include <Neon/NeonWindow.h>
+#include <Neon/NeonImage.h>
+#include <Neon/NeonTriangulator.h>
+#include <Neon/NeonURL.h>
 #include <Neon/NeonVertexArrayObject.h>
 #include <Neon/NeonVertexBufferObject.hpp>
-#include <Neon/NeonImage.h>
 #include <Neon/NeonFrameBufferObject.h>
-#include <Neon/NeonURL.h>
+#include <Neon/NeonWindow.h>
 
 #include <Neon/NeonDebugEntity.h>
 #include <Neon/NeonEntity.h>

@@ -177,6 +177,9 @@ int main()
 
 				});
 
+			Neon::Triangulator triangulator;
+			triangulator.Triangulate(pts);
+
 			return;
 		}
 
