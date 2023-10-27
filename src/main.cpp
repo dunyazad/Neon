@@ -7,7 +7,8 @@ int main()
 	Neon::Application app(1280, 1024);
 	Neon::URL::ChangeDirectory("..");
 
-	double elapsed = 0.0;
+	//app.GetWindow()->UseVSync(false);
+
 	int index = 0;
 
 	app.OnInitialize([&]() {
@@ -164,7 +165,7 @@ int main()
 				scene->GetMainCamera()->centerPosition = aabb.GetCenter();
 			}
 
-			entity->AddUpdateHandler([scene, pts, &elapsed, &index](double now, double timeDelta) {
+			entity->AddUpdateHandler([scene, pts, &index](double now, double timeDelta) {
 				if (index > pts.size() - 1)
 				{
 					index = 0;

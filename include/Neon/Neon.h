@@ -49,6 +49,8 @@ namespace Neon
 		Scene* CreateScene(const string& name);
 		Scene* GetScene(const string& name);
 
+		inline Window* GetWindow() { return window; }
+
 	private:
 		function<void()> onInitializeFunction;
 		function<void(double, double)> onUpdateFunction;
