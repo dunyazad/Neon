@@ -140,6 +140,32 @@ int main()
 		*/
 
 		{
+			auto fs = ifstream("border_points.bson", std::ios::in | std::ios::binary | std::ios::ate);
+			std::streampos size = fs.tellg();
+			fs.seekg(0, std::ios::beg);
+			vector<uint8_t> buffer(size);
+			fs.read((char*)&buffer[0], size);
+			fs.close();
+
+			auto jo = json::from_bson(buffer);
+			vector<glm::vec3> pts;
+			if (jo.contains("points") && jo["points"].is_array())
+			{
+				for (auto& vd : jo["points"])
+				{
+					pts.push_back(glm::vec3(vd["x"], vd["y"], vd["z"]));
+				}
+			}
+
+			for (auto& v : pts)
+			{
+				cout << v << endl;
+			}
+
+			return;
+		}
+
+		{
 			auto entity = scene->CreateEntity("Entity/spot");
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/spot");
 			entity->AddComponent(mesh);
@@ -276,19 +302,29 @@ int main()
 					vetm->ApplyToMesh();
 				}
 
-				{
-					set<Neon::VETM::Edge*> borderEdges;
+				//mesh->ToSTLFile("C:\\Resources\\3D\\STL\\Result.stl");
 
-					for (auto& edge : vetm->GetEdges())
+				vector<glm::vec3> borderVertices;
+				{
+					auto borderEdges = vetm->GetBorderEdges();
+
+					for (auto& edge : borderEdges[0])
 					{
-						if (edge->triangles.size() < 2)
-						{
-							//borderEdges.insert(edge);
-							scene->Debug("Border")->AddLine(edge->v0->p, edge->v1->p, glm::red, glm::red);
-							scene->Debug("Border Points")->AddPoint(edge->v0->p, glm::green);
-							scene->Debug("Border Points")->AddPoint(edge->v1->p, glm::green);
-						}
+						borderVertices.push_back(edge->v0->p);
+
+						//scene->Debug("Border")->AddLine(edge->v0->p, edge->v1->p, glm::red, glm::blue);
+						//scene->Debug("Border Points")->AddPoint(edge->v0->p, glm::green);
+						//scene->Debug("Border Points")->AddPoint(edge->v1->p, glm::green);
 					}
+				}
+
+				{
+					json jsonObject;
+					jsonObject["points"] = borderVertices;
+					auto binData = json::to_bson(jsonObject);
+					auto fs = ofstream("border_points.bson", std::ios::out | std::ios::binary);
+					fs.write((char*)&binData[0], binData.size() * sizeof(binData[0]));
+					fs.close();
 				}
 
 				//{
@@ -311,7 +347,7 @@ int main()
 
 			regularGrid->Build();
 
-			regularGrid->ForEachCell([scene](Neon::RGCell* cell, int x, int y, int z) {
+			regularGrid->ForEachCell([scene](Neon::RGCell* cell, size_t x, size_t y, size_t z) {
 				if (0 < cell->GetTriangles().size())
 				{
 					scene->Debug("Cells")->AddBox(cell->GetCenter(), cell->GetXLength(), cell->GetYLength(), cell->GetZLength(), glm::blue);
@@ -335,171 +371,6 @@ int main()
 					}
 				}
 				});
-
-			/*
-			{
-				//grid3d G;
-				//G.read_dat_file("C:\\Resources\\3D\\dat\\hazelnuts\\hnut_uint.dat");
-
-				auto fn = [regularGrid, mesh](double x, double y, double z) -> double{
-					//const double radius = 1.0;
-					//const double cx = 2.0, cy = 2.0, cz = 2.0;
-					//x -= cx; y -= cy; z -= cz;
-					//return radius * radius - x * x - y * y - z * z;
-
-					auto index = regularGrid->GetIndex(glm::vec3(x, y, z));
-					auto cell = regularGrid->GetCell(index);
-					if (cell)
-					{
-						for (auto& t : cell->GetTriangles())
-						{
-							auto v0 = mesh->GetVertex(t->v0->index);
-							auto v1 = mesh->GetVertex(t->v1->index);
-							auto v2 = mesh->GetVertex(t->v2->index);
-
-							glm::vec3 centroid = (v0 + v1 + v2) / 3.0f;
-							auto normal = glm::normalize(glm::cross(glm::normalize(v1 - v0), glm::normalize(v2 - v0)));
-
-							auto p = glm::vec3(x, y, z);
-							if (0 <= glm::dot(normal, p - centroid))
-							{
-								return 1.0;
-							}
-						}
-					}
-					else
-					{
-						return 0.0;
-					}
-					};
-
-				auto aabbMin = regularGrid->GetMinPoint();
-				auto aabbMax = regularGrid->GetMaxPoint();
-
-				grid3d G;
-				G.generate_grid_from_lambda(aabbMin.x, aabbMin.y, aabbMin.z, // coordinates of the grid origin
-					aabbMax.x, aabbMax.y, aabbMax.z, // coordinates of the opposite corner
-					cellSize, cellSize, cellSize, // steps
-					fn);
-
-				MC33 MC;
-				MC.set_grid3d(G);
-
-				surface S;
-				MC.calculate_isosurface(S, 0.0f);
-
-				auto not = S.get_num_triangles();
-				cout << "not : " << not << endl;
-				for (unsigned int i = 0; i < not; i++)
-				{
-					auto tis = S.getTriangle(i);
-					auto v0 = S.getVertex(tis[0]);
-					auto v1 = S.getVertex(tis[1]);
-					auto v2 = S.getVertex(tis[2]);
-
-					scene->Debug("MC33")->AddTriangle(
-						glm::vec3(v0[0], v0[1], v0[2]), 
-						glm::vec3(v1[0], v1[1], v1[2]), 
-						glm::vec3(v2[0], v2[1], v2[2]), 
-						glm::green, glm::green, glm::green);
-				}
-			}
-			*/
-
-			/*
-			{
-				int breakCount = 7;
-				int count = 0;
-
-				auto cells = regularGrid->GetCells();
-				for (size_t z = 0; z < regularGrid->GetCellCountZ(); z++)
-				{
-					for (size_t y = 0; y < regularGrid->GetCellCountY(); y++)
-					{
-						for (size_t x = 0; x < regularGrid->GetCellCountX(); x++)
-						{
-							auto cell = regularGrid->GetCell(make_tuple(x, y, z));
-							if (nullptr != cell)
-							{
-								if (0 < cell->GetTriangles().size())
-								{
-									count++;
-									if (breakCount == count)
-									{
-										cout << "x : " << x << " , y : " << y << " , z : " << z << endl;
-
-										scene->Debug("voxels")->AddBox(cell->GetCenter(), cell->GetXLength(), cell->GetYLength(), cell->GetZLength(), glm::blue);
-									}
-								}
-							}
-							if (breakCount == count) break;
-						}
-						if (breakCount == count) break;
-					}
-					if (breakCount == count) break;
-				}
-			}
-			*/
-
-			/*
-			{
-				auto cells = regularGrid->GetCells();
-				auto cell = cells[1][0][1];
-
-				struct GridCell
-				{
-					glm::vec3 vertex[8];
-					float value[8];
-				};
-
-				GridCell gridCell;
-				gridCell.vertex[0] = cell->xyz;
-				gridCell.vertex[1] = cell->Xyz;
-				gridCell.vertex[2] = cell->XyZ;
-				gridCell.vertex[3] = cell->xyZ;
-				gridCell.vertex[4] = cell->xYz;
-				gridCell.vertex[5] = cell->XYz;
-				gridCell.vertex[6] = cell->XYZ;
-				gridCell.vertex[7] = cell->xYZ;
-				gridCell.value[0] = 1.0f;
-				gridCell.value[1] = 1.0f;
-				gridCell.value[2] = 1.0f;
-				gridCell.value[3] = 1.0f;
-				gridCell.value[4] = 1.0f;
-				gridCell.value[5] = 1.0f;
-				gridCell.value[6] = 1.0f;
-				gridCell.value[7] = 1.0f;
-
-				for (size_t i = 0; i < 8; i++)
-				{
-					//float distance = FLT_MAX;
-
-					for (auto& t : cell->GetTriangles())
-					{
-						auto v0 = mesh->GetVertex(t->v0->index);
-						auto v1 = mesh->GetVertex(t->v1->index);
-						auto v2 = mesh->GetVertex(t->v2->index);
-
-
-						if ((cell->Contains(v0) == false && cell->Contains(v1) == false && cell->Contains(v2) == false) || 
-							(cell->Contains(v0) && cell->Contains(v1) == false && cell->Contains(v2) == false) ||
-							(cell->Contains(v1) && cell->Contains(v2) == false && cell->Contains(v0) == false) ||
-							(cell->Contains(v2) && cell->Contains(v0) == false && cell->Contains(v1) == false))
-						{
-							auto n = glm::normalize(glm::cross(glm::normalize(v1 - v0), glm::normalize(v2 - v0)));
-							auto c = (v0 + v1 + v2) / 3.0f;
-
-							if (0 <= glm::dot(gridCell.vertex[i] - c, n))
-							{
-								gridCell.value[i] = -1.0f;
-							}
-
-							scene->Debug("faces")->AddTriangle(v0, v1, v2);
-						}
-					}
-				}
-			}
-			*/
 
 			auto result = regularGrid->ExtractSurface(0.0f);
 			for (auto& vs : result)

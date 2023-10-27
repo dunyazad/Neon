@@ -10,17 +10,17 @@ float Trimin(float a, float b, float c) {
 
 ostream& operator << (ostream& o, const glm::vec2& v)
 {
-	return o << v.x << " " << v.y;
+	return o << "(" << v.x << ", " << v.y << ")";
 }
 
 ostream& operator << (ostream& o, const glm::vec3& v)
 {
-	return o << v.x << " " << v.y << " " << v.z;
+	return o << "(" << v.x << ", " << v.y << ", " << v.z << ")";
 }
 
 ostream& operator << (ostream& o, const glm::vec4& v)
 {
-	return o << v.x << "\t" << v.y << "\t" << v.z << "\t" << v.w;
+	return o << "(" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << ")";
 }
 
 ostream& operator << (ostream& o, const glm::mat3& m)
@@ -35,7 +35,7 @@ ostream& operator << (ostream& o, const glm::mat4& m)
 
 ostream& operator << (ostream& o, const glm::quat& q)
 {
-	return o << q.w << "\t" << q.x << "\t" << q.y << "\t" << q.z;
+	return o << "(" << q.w << ", " << q.x << ", " << q.y << ", " << q.z << ")";
 }
 
 bool operator < (const glm::vec3& a, const glm::vec3& b)
@@ -121,6 +121,19 @@ namespace glm
 			return std::min(distToEdge1, std::min(distToEdge2, distToEdge3));
 		}
 	}
+
+	void to_json(json& j, const glm::vec3& p)
+	{
+		j = { {"x", p.x}, {"y", p.y} , {"z", p.z} };
+	}
+
+	void from_json(json& j, glm::vec3& p)
+	{
+		p.x = j.at("x").get<float>();
+		p.y = j.at("y").get<float>();
+		p.z = j.at("z").get<float>();
+	}
+
 }
 
 void _CheckGLError(const char* file, int line)

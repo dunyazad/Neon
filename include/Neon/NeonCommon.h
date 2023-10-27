@@ -25,6 +25,10 @@ using namespace std;
 
 #include <Neon/TriangleTriangleOverlap.h>
 
+
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -59,14 +63,15 @@ namespace glm
 	inline glm::vec4 magenta(1.0f, 0.0f, 1.0f, 1.0f);
 
 	float distancePointToTriangle(const glm::vec3& point, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2);
+
+	void to_json(json& j, const glm::vec3& p);
+	void from_json(json& j, glm::vec3& p);
+
 }
 
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
-
-#include <nlohmann/json.hpp>
-using json = nlohmann::json;
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>

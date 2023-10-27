@@ -30,6 +30,8 @@ include/Neon/NeonImage.h
 src/Neon/NeonImage.cpp
 include/Neon/NeonScene.h
 src/Neon/NeonScene.cpp
+include/Neon/NeonTriangulator.h
+src/Neon/NeonTriangulator.cpp
 include/Neon/NeonURL.h
 src/Neon/NeonURL.cpp
 include/Neon/NeonVertexArrayObject.h
