@@ -178,7 +178,12 @@ int main()
 				});
 
 			Neon::Triangulator triangulator;
-			triangulator.Triangulate(pts);
+			vector<glm::vec2> points;
+			for (auto& v : pts)
+			{
+				points.push_back(glm::vec2(v.x, v.z));
+			}
+			triangulator.Triangulate(points);
 
 			return;
 		}

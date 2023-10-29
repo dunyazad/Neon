@@ -8,6 +8,16 @@ float Trimin(float a, float b, float c) {
 	return std::min(std::min(a, b), c);
 }
 
+namespace glm
+{
+	bool isClockwise(const glm::vec2 a, const glm::vec2 b, const glm::vec2 c)
+	{
+		glm::mat2 m(b - a, c - a);
+		auto determinant = glm::determinant(m);
+		return determinant > 0.0f;
+	}
+}
+
 ostream& operator << (ostream& o, const glm::vec2& v)
 {
 	return o << "(" << v.x << ", " << v.y << ")";

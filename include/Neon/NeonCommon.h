@@ -50,6 +50,8 @@ bool operator > (const glm::vec3& a, const glm::vec3& b);
 
 namespace glm
 {
+	bool isClockwise(const glm::vec2 a, const glm::vec2 b, const glm::vec2 c);
+
 	inline glm::vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
 	inline glm::vec4 black(0.0f, 0.0f, 0.0f, 1.0f);
 	inline glm::vec4 darkgray(0.25f, 0.25f, 0.25f, 1.0f);
