@@ -16,3 +16,6 @@
 [submodule "External/tinyply"]
 	path = External/tinyply
 	url = https://github.com/ddiakopoulos/tinyply.git
+[submodule "External/earcut.hpp"]
+	path = External/earcut.hpp
+	url = https://github.com/mapbox/earcut.hpp.git

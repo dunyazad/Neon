@@ -93,6 +93,7 @@ ${source_list})
 
 target_include_directories(Neon PUBLIC 
 "External"
+"External/earcut.hpp/include"
 "External/glad"
 "External/glm"
 "External/imgui"

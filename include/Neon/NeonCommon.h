@@ -90,6 +90,8 @@ using namespace std::chrono;
 float Trimax(float a, float b, float c);
 float Trimin(float a, float b, float c);
 
+#define Clamp(x, a, b) if((x) < (a)) (x) = (a); else if ((x) > (b)) (x) = (b);
+
 namespace Neon
 {
 	extern json Settings;

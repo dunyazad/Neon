@@ -140,6 +140,7 @@ int main()
 		}
 		*/
 
+		/*
 		{
 			auto entity = scene->CreateEntity("borderLines");
 
@@ -183,10 +184,24 @@ int main()
 			{
 				points.push_back(glm::vec2(v.x, v.z));
 			}
-			triangulator.Triangulate(points);
+			auto result = triangulator.Triangulate(points);
 
-			return;
+			for (size_t i = 0; i < result.size() / 3; i++)
+			{
+				auto i0 = result[i * 3 + 0];
+				auto i1 = result[i * 3 + 1];
+				auto i2 = result[i * 3 + 2];
+
+				auto v0 = pts[i0];
+				auto v1 = pts[i1];
+				auto v2 = pts[i2];
+
+				scene->Debug("triangulated")->AddTriangle(v0, v2, v1);
+			}
+
+			//return;
 		}
+		*/
 
 		{
 			auto entity = scene->CreateEntity("Entity/spot");
@@ -322,7 +337,7 @@ int main()
 
 					vetm->GenerateBase();
 
-					vetm->ApplyToMesh();
+					//vetm->ApplyToMesh();
 				}
 
 				//mesh->ToSTLFile("C:\\Resources\\3D\\STL\\Result.stl");
@@ -341,14 +356,41 @@ int main()
 					}
 				}
 
+				Neon::Triangulator triangulator;
+				vector<glm::vec2> points;
+				for (auto& v : borderVertices)
 				{
-					json jsonObject;
-					jsonObject["points"] = borderVertices;
-					auto binData = json::to_bson(jsonObject);
-					auto fs = ofstream("border_points.bson", std::ios::out | std::ios::binary);
-					fs.write((char*)&binData[0], binData.size() * sizeof(binData[0]));
-					fs.close();
+					points.push_back(glm::vec2(v.x, v.z));
 				}
+				auto result = triangulator.Triangulate(points);
+
+				for (size_t i = 0; i < result.size() / 3; i++)
+				{
+					auto i0 = result[i * 3 + 0];
+					auto i1 = result[i * 3 + 1];
+					auto i2 = result[i * 3 + 2];
+
+					auto v0 = borderVertices[i0];
+					auto v1 = borderVertices[i1];
+					auto v2 = borderVertices[i2];
+
+					//scene->Debug("triangulated")->AddTriangle(v0, v2, v1);
+					auto nv0 = vetm->AddVertex(v0, glm::zero<glm::vec3>());
+					auto nv1 = vetm->AddVertex(v1, glm::zero<glm::vec3>());
+					auto nv2 = vetm->AddVertex(v2, glm::zero<glm::vec3>());
+					vetm->AddTriangle(nv0, nv2, nv1);
+				}
+
+				vetm->ApplyToMesh();
+
+				//{
+				//	json jsonObject;
+				//	jsonObject["points"] = borderVertices;
+				//	auto binData = json::to_bson(jsonObject);
+				//	auto fs = ofstream("border_points.bson", std::ios::out | std::ios::binary);
+				//	fs.write((char*)&binData[0], binData.size() * sizeof(binData[0]));
+				//	fs.close();
+				//}
 
 				//{
 				//	Neon::Time("Visulaize VETM");
@@ -360,7 +402,7 @@ int main()
 				//}
 			}
 
-			return;
+			//return;
 
 			Neon::Time("Regular Grid");
 			auto trimin = Trimin(mesh->GetAABB().GetXLength(), mesh->GetAABB().GetYLength(), mesh->GetAABB().GetZLength());
@@ -370,12 +412,12 @@ int main()
 
 			regularGrid->Build();
 
-			regularGrid->ForEachCell([scene](Neon::RGCell* cell, size_t x, size_t y, size_t z) {
-				if (0 < cell->GetTriangles().size())
-				{
-					scene->Debug("Cells")->AddBox(cell->GetCenter(), cell->GetXLength(), cell->GetYLength(), cell->GetZLength(), glm::blue);
-				}
-				});
+			//regularGrid->ForEachCell([scene](Neon::RGCell* cell, size_t x, size_t y, size_t z) {
+			//	if (0 < cell->GetTriangles().size())
+			//	{
+			//		scene->Debug("Cells")->AddBox(cell->GetCenter(), cell->GetXLength(), cell->GetYLength(), cell->GetZLength(), glm::blue);
+			//	}
+			//	});
 
 			regularGrid->AddMouseButtonEventHandler([scene, mesh, regularGrid](const Neon::MouseButtonEvent& event) {
 				if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_RELEASE)
@@ -395,18 +437,29 @@ int main()
 				}
 				});
 
-			auto result = regularGrid->ExtractSurface(0.0f);
-			for (auto& vs : result)
-			{
-				if ((vs[0].y + 0.0001f >= regularGrid->GetMaxPoint().y) ||
-					(vs[1].y + 0.0001f >= regularGrid->GetMaxPoint().y) ||
-					(vs[2].y + 0.0001f >= regularGrid->GetMaxPoint().y))
-				{
-					continue;
-				}
+			regularGrid->SelectOutsideCells();
+			regularGrid->InvertSelectedCells();
+			regularGrid->ShrinkSelectedCells(10);
 
-				scene->Debug("Result")->AddTriangle(vs[0], vs[1], vs[2], glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f));
-			}
+			regularGrid->ForEachCell([scene](Neon::RGCell* cell, size_t x, size_t y, size_t z) {
+				if (cell->selected)
+				{
+					scene->Debug("Outside")->AddBox(cell->GetCenter(), cell->GetXLength(), cell->GetYLength(), cell->GetZLength(), glm::red);
+				}
+				});
+
+			//auto result = regularGrid->ExtractSurface(0.0f);
+			//for (auto& vs : result)
+			//{
+			//	if ((vs[0].y + 0.0001f >= regularGrid->GetMaxPoint().y) ||
+			//		(vs[1].y + 0.0001f >= regularGrid->GetMaxPoint().y) ||
+			//		(vs[2].y + 0.0001f >= regularGrid->GetMaxPoint().y))
+			//	{
+			//		continue;
+			//	}
+
+			//	scene->Debug("Result")->AddTriangle(vs[0], vs[1], vs[2], glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f));
+			//}
 		}
 
 		});

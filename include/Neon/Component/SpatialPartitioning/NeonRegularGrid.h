@@ -36,6 +36,9 @@ namespace Neon
 				get<2>(index) != get<2>(other.index);
 		}
 
+		bool selected = false;
+		int tempFlag = 0;
+
 	protected:
 		tuple<size_t, size_t, size_t> index;
 
@@ -84,6 +87,11 @@ namespace Neon
 			auto y = get<1>(index);
 			auto z = get<2>(index);
 
+			return GetCell(x, y, z);
+		}
+
+		inline RegularGridCell<Vertex, Triangle>* GetCell(size_t x, size_t y, size_t z)
+		{
 			if ((0 <= x && x < cellCountX) &&
 				(0 <= y && y < cellCountY) &&
 				(0 <= z && z < cellCountZ))
@@ -114,6 +122,10 @@ namespace Neon
 		vector<vector<glm::vec3>> RegularGrid::ExtractSurface(float isolevel);
 
 		void ForEachCell(function<void(RegularGridCell<Vertex, Triangle>*, size_t, size_t, size_t)> callback);
+
+		void SelectOutsideCells();
+		void InvertSelectedCells();
+		void ShrinkSelectedCells(int iteration);
 
 	private:
 		Mesh* mesh = nullptr;

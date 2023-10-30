@@ -542,7 +542,7 @@ namespace Neon
 
 	vector<vector<glm::vec3>> RegularGrid::ExtractSurface(float isolevel)
 	{
-		Neon::Time("ExtractSurface");
+		auto t = Neon::Time("ExtractSurface");
 
 		auto cellHalfSize = cellSize * 0.5f;
 
@@ -554,7 +554,7 @@ namespace Neon
 			{
 				for (size_t x = 0; x < cellCountX; x++)
 				{
-					auto cell = GetCell(make_tuple(x, y, z));
+					auto cell = GetCell(x, y, z);
 					if (nullptr == cell)
 						continue;
 
@@ -582,7 +582,7 @@ namespace Neon
 							auto pcell = GetCell(GetIndex(gridCell.p[i]));
 							if (nullptr != pcell)
 							{
-								if (0 < pcell->GetTriangles().size())
+								if (pcell->selected)
 								{
 									gridCell.val[i] = -1.0f;
 								}
@@ -625,7 +625,7 @@ namespace Neon
 							auto pcell = GetCell(GetIndex(gridCell.p[i]));
 							if (nullptr != pcell)
 							{
-								if (0 < pcell->GetTriangles().size())
+								if (pcell->selected)
 								{
 									gridCell.val[i] = -1.0f;
 								}
@@ -652,14 +652,163 @@ namespace Neon
 
 	void RegularGrid::ForEachCell(function<void(RegularGridCell<Vertex, Triangle>*, size_t, size_t, size_t)> callback)
 	{
+		auto t = Time("ForEachCell");
+
 		for (size_t z = 0; z < cellCountZ; z++)
 		{
 			for (size_t y = 0; y < cellCountY; y++)
 			{
 				for (size_t x = 0; x < cellCountX; x++)
 				{
-					auto cell = GetCell(make_tuple(x, y, z));
+					auto cell = GetCell(x, y, z);
 					callback(cell, x, y, z);
+				}
+			}
+		}
+	}
+
+	void RegularGrid::SelectOutsideCells()
+	{
+		auto t = Time("SelectOutsideCells()");
+
+		stack<tuple<size_t, size_t, size_t>> toCheck;
+		toCheck.push(make_tuple(0, 0, 0));
+		while (false == toCheck.empty())
+		{
+			auto currentIndex = toCheck.top();
+			toCheck.pop();
+
+			auto cell = GetCell(currentIndex);
+			if (nullptr == cell) continue;
+
+			cell->tempFlag = 1024;
+
+			if (0 < cell->GetTriangles().size())
+				continue;
+
+			if (nullptr != cell)
+			{
+				if(false == cell->selected)
+				{
+					cell->selected = true;
+
+					auto x = get<0>(currentIndex);
+					auto y = get<1>(currentIndex);
+					auto z = get<2>(currentIndex);
+
+					auto mx = x - 1; auto px = x + 1;
+					auto my = y - 1; auto py = y + 1;
+					auto mz = z - 1; auto pz = z + 1;
+
+					Clamp(mx, 0, cellCountX - 1);
+					Clamp(px, 0, cellCountX - 1);
+
+					Clamp(my, 0, cellCountY - 1);
+					Clamp(py, 0, cellCountY - 1);
+
+					Clamp(mz, 0, cellCountZ - 1);
+					Clamp(pz, 0, cellCountZ - 1);
+
+					toCheck.push(make_tuple(mx, y, z));
+					toCheck.push(make_tuple(px, y, z));
+
+					toCheck.push(make_tuple(x, my, z));
+					toCheck.push(make_tuple(x, py, z));
+
+					toCheck.push(make_tuple(x, y, mz));
+					toCheck.push(make_tuple(x, y, pz));
+				}
+			}
+		}
+	}
+
+	void RegularGrid::InvertSelectedCells()
+	{
+		auto t = Time("InvertSelectedCells()");
+
+		for (size_t z = 0; z < cellCountZ; z++)
+		{
+			for (size_t y = 0; y < cellCountY; y++)
+			{
+				for (size_t x = 0; x < cellCountX; x++)
+				{
+					auto cell = GetCell(x, y, z);
+					if (nullptr != cell)
+					{
+						cell->selected = !cell->selected;
+					}
+				}
+			}
+		}
+	}
+
+	void RegularGrid::ShrinkSelectedCells(int iteration)
+	{
+		auto t = Time("ShrinkSelectedCells()");
+
+		for (size_t i = 0; i < iteration; i++)
+		{
+			for (size_t z = 0; z < cellCountZ; z++)
+			{
+				for (size_t y = 0; y < cellCountY; y++)
+				{
+					for (size_t x = 0; x < cellCountX; x++)
+					{
+						auto cell = GetCell(x, y, z);
+						if (nullptr != cell)
+						{
+							auto mx = x - 1; auto px = x + 1;
+							auto my = y - 1; auto py = y + 1;
+							auto mz = z - 1; auto pz = z + 1;
+
+							auto cellMX = GetCell(mx, y, z);
+							auto cellPX = GetCell(px, y, z);
+
+							auto cellMY = GetCell(x, my, z);
+							auto cellPY = GetCell(x, py, z);
+
+							auto cellMZ = GetCell(x, y, mz);
+							auto cellPZ = GetCell(x, y, pz);
+
+							bool allSelected = true;
+							if (nullptr != cellMX) { if (false == cellMX->selected) allSelected = false; }
+							else { allSelected = false; }
+							if (nullptr != cellPX) { if (false == cellPX->selected) allSelected = false; }
+							else { allSelected = false; }
+							if (nullptr != cellMY) { if (false == cellMY->selected) allSelected = false; }
+							else { allSelected = false; }
+							if (nullptr != cellPY) { if (false == cellPY->selected) allSelected = false; }
+							else { allSelected = false; }
+							if (nullptr != cellMZ) { if (false == cellMZ->selected) allSelected = false; }
+							else { allSelected = false; }
+							if (nullptr != cellPZ) { if (false == cellPZ->selected) allSelected = false; }
+							else { allSelected = false; }
+
+							if (false == allSelected)
+							{
+								cell->tempFlag = 128;
+							}
+						}
+					}
+				}
+			}
+
+			for (size_t z = 0; z < cellCountZ; z++)
+			{
+				for (size_t y = 0; y < cellCountY; y++)
+				{
+					for (size_t x = 0; x < cellCountX; x++)
+					{
+						auto cell = GetCell(x, y, z);
+						if (nullptr != cell)
+						{
+							if (cell->tempFlag == 128)
+							{
+								cell->tempFlag = 0;
+								cell->selected = false;
+							}
+						}
+					}
 				}
 			}
 		}
