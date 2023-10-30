@@ -10,6 +10,6 @@ namespace Neon
 		Triangulator();
 		~Triangulator();
 
-		vector<size_t> Triangulate(const vector<glm::vec2>& points);
+		vector<size_t> Triangulate(const vector<vector<glm::vec2>>& pointsList);
 	};
 }

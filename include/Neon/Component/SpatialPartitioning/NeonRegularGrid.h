@@ -126,6 +126,7 @@ namespace Neon
 		void SelectOutsideCells();
 		void InvertSelectedCells();
 		void ShrinkSelectedCells(int iteration);
+		void ExtrudeSelectedCells(const glm::vec3& direction, int iteration);
 
 	private:
 		Mesh* mesh = nullptr;

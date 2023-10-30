@@ -1009,7 +1009,7 @@ namespace Neon
 		}
 	}*/
 
-	void VETM::GenerateBase()
+	glm::vec3 VETM::GenerateBase()
 	{
 		int segments = 20;
 		int iteration = 10;
@@ -1018,11 +1018,11 @@ namespace Neon
 
 		auto foundBorderEdges = GetBorderEdges();
 
-		for (size_t k = 0; k < foundBorderEdges.size(); k++)
+		//for (size_t k = 0; k < foundBorderEdges.size(); k++)
 		{
 			glm::vec3 direction = glm::zero<glm::vec3>();
 
-			vector<Edge*> borderEdges = foundBorderEdges[k];
+			vector<Edge*> borderEdges = foundBorderEdges[0];
 
 			vector<Vertex*> borderVertices;
 
@@ -1110,7 +1110,7 @@ namespace Neon
 
 #pragma region Border Smoothing
 			{
-				Neon::Time("Border Smoothing");
+				auto t = Time("Border Smoothing");
 
 				for (size_t n = 0; n < iteration; n++)
 				{
@@ -1129,7 +1129,7 @@ namespace Neon
 #pragma region Calculate distances
 			vector<float> distances;
 			{
-				Neon::Time("Calculate distances");
+				auto t = Time("Calculate distances");
 
 				for (size_t i = 0; i < borderVertices.size(); i++)
 				{
@@ -1174,7 +1174,7 @@ namespace Neon
 
 #pragma region Create Base Wall
 			{
-				Neon::Time("Create Base Wall");
+				auto t = Time("Create Base Wall");
 
 				for (size_t n = 0; n < segments; n++)
 				{
@@ -1209,7 +1209,7 @@ namespace Neon
 
 #pragma region Border Smoothing
 			{
-				Neon::Time("Border Adjacent Vertices Smoothing");
+				auto t = Time("Border Adjacent Vertices Smoothing");
 
 				for (size_t n = 0; n < iteration; n++)
 				{
@@ -1330,6 +1330,8 @@ namespace Neon
 			}
 #pragma endregion
 			*/
+
+		return direction;
 		}
 	}
 
@@ -1757,7 +1759,7 @@ namespace Neon
 			auto i1 = vertexMapping[t->v1];
 			auto i2 = vertexMapping[t->v2];
 
-			mesh->AddTriangle(i0, i1, i2);
+			mesh->AddTriangle((GLuint)i0, (GLuint)i1, (GLuint)i2);
 		}
 
 		mesh->RecalculateFaceNormal();

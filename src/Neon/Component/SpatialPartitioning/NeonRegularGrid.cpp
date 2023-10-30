@@ -814,6 +814,53 @@ namespace Neon
 		}
 	}
 
+	void RegularGrid::ExtrudeSelectedCells(const glm::vec3& direction, int iteration)
+	{
+		auto t = Time("ExtrudeSelectedCells()");
+
+		for (size_t i = 0; i < iteration; i++)
+		{
+			for (size_t z = 0; z < cellCountZ; z++)
+			{
+				for (size_t y = 0; y < cellCountY; y++)
+				{
+					for (size_t x = 0; x < cellCountX; x++)
+					{
+						auto cell = GetCell(x, y, z);
+						if (cell->selected)
+						{
+							auto offset = direction;
+							offset.x *= cell->GetXLength();
+							offset.y *= cell->GetYLength();
+							offset.z *= cell->GetZLength();
+							auto index = GetIndex(cell->GetCenter() + offset);
+							auto nextCell = GetCell(index);
+							if (nullptr != nextCell)
+							{
+								nextCell->tempFlag = 512;
+							}
+						}
+					}
+				}
+			}
+
+			for (size_t z = 0; z < cellCountZ; z++)
+			{
+				for (size_t y = 0; y < cellCountY; y++)
+				{
+					for (size_t x = 0; x < cellCountX; x++)
+					{
+						auto cell = GetCell(x, y, z);
+						if (512 == cell->tempFlag)
+						{
+							cell->selected = true;
+						}
+					}
+				}
+			}
+		}
+	}
+
 	//void RegularGrid::RemoveTriangle(Triangle* t)
 	//{
 	//	auto& p0 = mesh->GetVertex(t->v0->index);

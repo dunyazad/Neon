@@ -327,58 +327,74 @@ int main()
 				}
 				});
 
+			glm::vec3 direction;
+			vector<Neon::VETM::Triangle*> toDelete;
+			Neon::VETM* vetm = nullptr;
+			vector<vector<Neon::VETM::Edge*>> vetmBorders;
+
 			{
-				auto vetm = scene->CreateComponent<Neon::VETM>("VETM/Mesh", mesh);
+				vetm = scene->CreateComponent<Neon::VETM>("VETM/Mesh", mesh);
 				entity->AddComponent(vetm);
 				vetm->Build();
-	
-				{
-					Neon::Time("GenerateBase");
 
-					vetm->GenerateBase();
+				{
+					auto t = Neon::Time("GenerateBase");
+
+					direction = vetm->GenerateBase();
 
 					//vetm->ApplyToMesh();
 				}
 
 				//mesh->ToSTLFile("C:\\Resources\\3D\\STL\\Result.stl");
 
-				vector<glm::vec3> borderVertices;
 				{
-					auto borderEdges = vetm->GetBorderEdges();
-
-					for (auto& edge : borderEdges[0])
+					vector<vector<glm::vec3>> borderVerticesList;
+					vector<glm::vec3> flatBorderVerticesList;
 					{
-						borderVertices.push_back(edge->v0->p);
+						vetmBorders = vetm->GetBorderEdges();
 
-						//scene->Debug("Border")->AddLine(edge->v0->p, edge->v1->p, glm::red, glm::blue);
-						//scene->Debug("Border Points")->AddPoint(edge->v0->p, glm::green);
-						//scene->Debug("Border Points")->AddPoint(edge->v1->p, glm::green);
+						for (auto& borderEdges : vetmBorders)
+						{
+							vector<glm::vec3> borderVertices;
+
+							for (auto& edge : borderEdges)
+							{
+								borderVertices.push_back(edge->v0->p);
+								flatBorderVerticesList.push_back(edge->v0->p);
+							}
+							borderVerticesList.push_back(borderVertices);
+						}
 					}
-				}
 
-				Neon::Triangulator triangulator;
-				vector<glm::vec2> points;
-				for (auto& v : borderVertices)
-				{
-					points.push_back(glm::vec2(v.x, v.z));
-				}
-				auto result = triangulator.Triangulate(points);
+					Neon::Triangulator triangulator;
+					vector<vector<glm::vec2>> pointsList;
+					for (auto& borderVertices : borderVerticesList)
+					{
+						vector<glm::vec2> points;
+						for (auto& v : borderVertices)
+						{
+							points.push_back(glm::vec2(v.x, v.z));
+						}
+						pointsList.push_back(points);
+					}
+					auto result = triangulator.Triangulate(pointsList);
 
-				for (size_t i = 0; i < result.size() / 3; i++)
-				{
-					auto i0 = result[i * 3 + 0];
-					auto i1 = result[i * 3 + 1];
-					auto i2 = result[i * 3 + 2];
+					for (size_t i = 0; i < result.size() / 3; i++)
+					{
+						auto i0 = result[i * 3 + 0];
+						auto i1 = result[i * 3 + 1];
+						auto i2 = result[i * 3 + 2];
 
-					auto v0 = borderVertices[i0];
-					auto v1 = borderVertices[i1];
-					auto v2 = borderVertices[i2];
+						auto v0 = flatBorderVerticesList[i0];
+						auto v1 = flatBorderVerticesList[i1];
+						auto v2 = flatBorderVerticesList[i2];
 
-					//scene->Debug("triangulated")->AddTriangle(v0, v2, v1);
-					auto nv0 = vetm->AddVertex(v0, glm::zero<glm::vec3>());
-					auto nv1 = vetm->AddVertex(v1, glm::zero<glm::vec3>());
-					auto nv2 = vetm->AddVertex(v2, glm::zero<glm::vec3>());
-					vetm->AddTriangle(nv0, nv2, nv1);
+						//scene->Debug("triangulated")->AddTriangle(v0, v2, v1);
+						auto nv0 = vetm->AddVertex(v0, glm::zero<glm::vec3>());
+						auto nv1 = vetm->AddVertex(v1, glm::zero<glm::vec3>());
+						auto nv2 = vetm->AddVertex(v2, glm::zero<glm::vec3>());
+						toDelete.push_back(vetm->AddTriangle(nv0, nv2, nv1));
+					}
 				}
 
 				vetm->ApplyToMesh();
@@ -404,13 +420,18 @@ int main()
 
 			//return;
 
-			Neon::Time("Regular Grid");
 			auto trimin = Trimin(mesh->GetAABB().GetXLength(), mesh->GetAABB().GetYLength(), mesh->GetAABB().GetZLength());
 			auto cellSize = trimin * 0.01f;
 			auto regularGrid = scene->CreateComponent<Neon::RegularGrid>("RegularGrid/spot", mesh, cellSize);
 			entity->AddComponent(regularGrid);
 
 			regularGrid->Build();
+
+			for (auto& triangle : toDelete)
+			{
+				vetm->RemoveTriangle(triangle);
+			}
+			//vetm->ApplyToMesh();
 
 			//regularGrid->ForEachCell([scene](Neon::RGCell* cell, size_t x, size_t y, size_t z) {
 			//	if (0 < cell->GetTriangles().size())
@@ -439,27 +460,149 @@ int main()
 
 			regularGrid->SelectOutsideCells();
 			regularGrid->InvertSelectedCells();
-			regularGrid->ShrinkSelectedCells(10);
+			regularGrid->ShrinkSelectedCells(5);
+			regularGrid->ExtrudeSelectedCells(direction, 5);
 
-			regularGrid->ForEachCell([scene](Neon::RGCell* cell, size_t x, size_t y, size_t z) {
-				if (cell->selected)
-				{
-					scene->Debug("Outside")->AddBox(cell->GetCenter(), cell->GetXLength(), cell->GetYLength(), cell->GetZLength(), glm::red);
-				}
-				});
-
-			//auto result = regularGrid->ExtractSurface(0.0f);
-			//for (auto& vs : result)
-			//{
-			//	if ((vs[0].y + 0.0001f >= regularGrid->GetMaxPoint().y) ||
-			//		(vs[1].y + 0.0001f >= regularGrid->GetMaxPoint().y) ||
-			//		(vs[2].y + 0.0001f >= regularGrid->GetMaxPoint().y))
+			//regularGrid->ForEachCell([scene](Neon::RGCell* cell, size_t x, size_t y, size_t z) {
+			//	if (cell->selected)
 			//	{
-			//		continue;
+			//		scene->Debug("Outside")->AddBox(cell->GetCenter(), cell->GetXLength(), cell->GetYLength(), cell->GetZLength(), glm::red);
 			//	}
+			//	});
 
-			//	scene->Debug("Result")->AddTriangle(vs[0], vs[1], vs[2], glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f));
-			//}
+			auto innerVETM = scene->CreateComponent<Neon::VETM>("VETM/innerMesh", nullptr);
+			vector<vector<Neon::VETM::Edge*>> innerVETMBorders;
+			{
+				auto result = regularGrid->ExtractSurface(0.0f);
+				for (auto& vs : result)
+				{
+					if ((vs[0].y + 0.0001f >= regularGrid->GetMaxPoint().y) ||
+						(vs[1].y + 0.0001f >= regularGrid->GetMaxPoint().y) ||
+						(vs[2].y + 0.0001f >= regularGrid->GetMaxPoint().y))
+					{
+						continue;
+					}
+
+					//scene->Debug("Result")->AddTriangle(vs[0], vs[1], vs[2], glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f), glm::vec4(0.7f, 0.6f, 0.4f, 1.0f));
+					auto v0 = innerVETM->AddVertex(vs[0], glm::zero<glm::vec3>());
+					auto v1 = innerVETM->AddVertex(vs[1], glm::zero<glm::vec3>());
+					auto v2 = innerVETM->AddVertex(vs[2], glm::zero<glm::vec3>());
+
+					innerVETM->AddTriangle(v0, v2, v1);
+				}
+
+				innerVETMBorders = innerVETM->GetBorderEdges();
+				for (auto& borderEdges : innerVETMBorders)
+				{
+					for (auto& e : borderEdges)
+					{
+						e->v0->tempFlag = 2;
+						e->v1->tempFlag = 2;
+					}
+				}
+
+				{
+					auto t = Neon::Time("Smooting");
+
+					for (size_t i = 0; i < 3; i++)
+					{
+						for (auto& v : innerVETM->GetVertices())
+						{
+							if (2 == v->tempFlag)
+								continue;
+
+							auto avs = innerVETM->GetAdjacentVertices(v);
+
+							glm::vec3 p = glm::zero<glm::vec3>();
+							for (auto& av : avs)
+							{
+								p += av->p;
+							}
+							p /= (float)(avs.size());
+
+							v->p = p;
+						}
+					}
+				}
+
+				for (auto& triangle : innerVETM->GetTriangles())
+				{
+					auto v0 = vetm->AddVertex(triangle->v0->p, glm::zero<glm::vec3>());
+					auto v1 = vetm->AddVertex(triangle->v1->p, glm::zero<glm::vec3>());
+					auto v2 = vetm->AddVertex(triangle->v2->p, glm::zero<glm::vec3>());
+
+					vetm->AddTriangle(v0, v1, v2);
+				}
+			}
+			
+			{
+				vector<vector<glm::vec3>> borderVerticesList;
+				vector<glm::vec3> flatBorderVerticesList;
+
+				for (auto& borderEdges : vetmBorders)
+				{
+					vector<glm::vec3> borderVertices;
+
+					for (auto& edge : borderEdges)
+					{
+						borderVertices.push_back(edge->v0->p);
+						flatBorderVerticesList.push_back(edge->v0->p);
+					}
+					borderVerticesList.push_back(borderVertices);
+				}
+
+				for (auto& borderEdges : innerVETMBorders)
+				{
+					vector<glm::vec3> borderVertices;
+
+					for (auto& edge : borderEdges)
+					{
+						borderVertices.push_back(edge->v0->p);
+						flatBorderVerticesList.push_back(edge->v0->p);
+					}
+					borderVerticesList.push_back(borderVertices);
+				}
+
+				Neon::Triangulator triangulator;
+				vector<vector<glm::vec2>> pointsList;
+				for (auto& borderVertices : borderVerticesList)
+				{
+					vector<glm::vec2> points;
+					for (auto& v : borderVertices)
+					{
+						points.push_back(glm::vec2(v.x, v.z));
+					}
+					pointsList.push_back(points);
+				}
+				auto result = triangulator.Triangulate(pointsList);
+
+				for (size_t i = 0; i < result.size() / 3; i++)
+				{
+					auto i0 = result[i * 3 + 0];
+					auto i1 = result[i * 3 + 1];
+					auto i2 = result[i * 3 + 2];
+
+					auto v0 = flatBorderVerticesList[i0];
+					auto v1 = flatBorderVerticesList[i1];
+					auto v2 = flatBorderVerticesList[i2];
+
+					scene->Debug("triangulated")->AddTriangle(v0, v2, v1);
+					auto nv0 = vetm->AddVertex(v0, glm::zero<glm::vec3>());
+					auto nv1 = vetm->AddVertex(v1, glm::zero<glm::vec3>());
+					auto nv2 = vetm->AddVertex(v2, glm::zero<glm::vec3>());
+					vetm->AddTriangle(nv0, nv2, nv1);
+				}
+
+				vetm->ApplyToMesh();
+			}
+
+			//mesh->ToSTLFile("C:\\Resources\\3D\\STL\\Result.stl");
+
+	/*		auto borders = vetm->GetBorderEdges();
+			for (auto& borderEdges : borders)
+			{
+				cout << "borderEdges.size() : " << borderEdges.size() << endl;
+			}*/
 		}
 
 		});

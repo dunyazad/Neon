@@ -21,6 +21,8 @@ namespace Neon
 			glm::vec3 n = glm::zero<glm::vec3>();
 			set<Edge*> edges;
 			set<Triangle*> triangles;
+
+			int tempFlag = 0;
 		};
 
 		struct Edge
@@ -135,7 +137,7 @@ namespace Neon
 		vector<vector<Edge*>> GetBorderEdges();
 		void FillTrianglesToMakeBorderSmooth(float degreeMax);
 		void ExtrudeBorder(const glm::vec3& direction, int segments);
-		void GenerateBase();
+		glm::vec3 GenerateBase();
 		void GenerateBaseWithHollow();
 		void DeleteSelfintersectingTriangles();
 
