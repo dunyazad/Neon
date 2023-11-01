@@ -276,6 +276,10 @@ int main()
 					glGetFloatv(GL_POINT_SIZE, &currentPointSize);
 					glPointSize(currentPointSize - 1.0f);
 				}
+				else if (GLFW_KEY_S == event.key && GLFW_RELEASE == event.action)
+				{
+					mesh->ToSTLFile("C:\\Users\\USER\\Desktop\\result.stl");
+				}
 				});
 
 			entity->AddMouseButtonEventHandler([entity, scene, mesh](const Neon::MouseButtonEvent& event) {
@@ -504,7 +508,7 @@ int main()
 				{
 					auto t = Neon::Time("Smooting");
 
-					for (size_t i = 0; i < 3; i++)
+					for (size_t i = 0; i < 5; i++)
 					{
 						for (auto& v : innerVETM->GetVertices())
 						{
