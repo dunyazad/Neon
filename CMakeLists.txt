@@ -18,6 +18,13 @@ add_subdirectory("External/glm")
 #add_subdirectory("External/OpenMesh")
 add_subdirectory("External/tinyply")
 
+if(USE_CUDA)
+set(cuda_source_list
+src/Neon/CUDA/HelloCUDA.cu
+)
+set_source_files_properties($<$<BOOL:USE_CUDA>:${cuda_source_list}>> PROPERTIES LANGUAGE "CUDA")
+endif(USE_CUDA)
+
 set(source_list
 src/main.cpp
 
@@ -82,14 +89,9 @@ include/Neon/System/NeonRenderSystem.h
 src/Neon/System/NeonRenderSystem.cpp
 include/Neon/System/NeonSystem.h
 src/Neon/System/NeonSystem.cpp
-)
 
-if(USE_CUDA)
-set(cuda_source_list
-src/Neon/CUDA/HelloCUDA.cu
+$<$<BOOL:USE_CUDA>:${cuda_source_list}>
 )
-set_source_files_properties($<$<BOOL:USE_CUDA>:${cuda_source_list}>> PROPERTIES LANGUAGE "CUDA")
-endif(USE_CUDA)
 
 add_executable(Neon
 External/glad/glad/gl.c
@@ -103,7 +105,6 @@ External/imgui/backends/imgui_impl_opengl3.cpp
 External/imgui/backends/imgui_impl_glfw.cpp
 
 ${source_list}
-$<$<BOOL:USE_CUDA>:${cuda_source_list}>
 )
 
 target_include_directories(Neon PUBLIC 
@@ -117,7 +118,9 @@ target_include_directories(Neon PUBLIC
 "src"
 )
 
+if(USE_CUDA)
 set_target_properties(Neon PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+endif(USE_CUDA)
 
 target_link_libraries(Neon
 glfw
@@ -141,3 +144,6 @@ function(assign_source_group)
 endfunction(assign_source_group)
 
 assign_source_group(${source_list})
+if(USE_CUDA)
+assign_source_group(${cuda_source_list})
+endif(USE_CUDA)
