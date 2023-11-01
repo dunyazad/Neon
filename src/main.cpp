@@ -2,8 +2,14 @@
 
 #include <Neon/Neon.h>
 
+extern void Hello();
+
 int main()
 {
+	Hello();
+
+	return 0;
+
 	Neon::Application app(1280, 1024);
 	Neon::URL::ChangeDirectory("..");
 

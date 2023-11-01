@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 3.1)
 
-project(Neon)
+OPTION (USE_CUDA "use CUDA" ON)
+
+project(Neon LANGUAGES CXX CUDA)
+if(USE_CUDA)
+find_package(CUDAToolkit REQUIRED)
+set(CMAKE_CUDA_STANDARD 17)
+set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+endif(USE_CUDA)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -77,7 +84,13 @@ include/Neon/System/NeonSystem.h
 src/Neon/System/NeonSystem.cpp
 )
 
-#add_library(Neon
+if(USE_CUDA)
+set(cuda_source_list
+src/Neon/CUDA/HelloCUDA.cu
+)
+set_source_files_properties($<$<BOOL:USE_CUDA>:${cuda_source_list}>> PROPERTIES LANGUAGE "CUDA")
+endif(USE_CUDA)
+
 add_executable(Neon
 External/glad/glad/gl.c
 
@@ -89,7 +102,9 @@ External/imgui/imgui_widgets.cpp
 External/imgui/backends/imgui_impl_opengl3.cpp
 External/imgui/backends/imgui_impl_glfw.cpp
 
-${source_list})
+${source_list}
+$<$<BOOL:USE_CUDA>:${cuda_source_list}>
+)
 
 target_include_directories(Neon PUBLIC 
 "External"
@@ -102,11 +117,15 @@ target_include_directories(Neon PUBLIC
 "src"
 )
 
-target_link_libraries(Neon glfw)
+set_target_properties(Neon PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+
+target_link_libraries(Neon
+glfw
+tinyply
+$<$<BOOL:USE_CUDA>:CUDA::cudart>
+)
 #target_link_libraries(Neon $<$<CONFIG:Debug>:OpenMeshCored>)
 #target_link_libraries(Neon $<$<CONFIG:Release>:OpenMeshCore>)
-
-target_link_libraries(Neon tinyply)
 
 function(assign_source_group)
     foreach(_source IN ITEMS ${ARGN})
