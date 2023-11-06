@@ -38,7 +38,7 @@ namespace Neon
 		void SetNormal(size_t index, const glm::vec3& n);
 
 		size_t AddIndex(GLuint index);
-		void GetIndex(size_t bufferIndex, GLuint& index);
+		GLuint GetIndex(size_t bufferIndex);
 
 		tuple<int, int, int> AddTriangle(GLuint i0, GLuint i1, GLuint i2);
 		void GetTriangleVertexIndices(size_t triangleIndex, GLuint& i0, GLuint& i1, GLuint& i2);

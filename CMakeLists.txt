@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.11)
 
 OPTION (USE_CUDA "use CUDA" ON)
 
@@ -7,6 +7,7 @@ if(USE_CUDA)
 find_package(CUDAToolkit REQUIRED)
 set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler /wd4819")
 endif(USE_CUDA)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -21,6 +22,10 @@ add_subdirectory("External/tinyply")
 if(USE_CUDA)
 set(cuda_source_list
 src/Neon/CUDA/HelloCUDA.cu
+
+src/Neon/CUDA/CUDACommon.cuh
+src/Neon/CUDA/CUDACommon.cu
+src/Neon/CUDA/CUDAMesh.cu
 )
 set_source_files_properties($<$<BOOL:USE_CUDA>:${cuda_source_list}>> PROPERTIES LANGUAGE "CUDA")
 endif(USE_CUDA)
@@ -74,6 +79,9 @@ include/Neon/Component/NeonTransform.h
 src/Neon/Component/NeonTransform.cpp
 include/Neon/Component/NeonVETM.h
 src/Neon/Component/NeonVETM.cpp
+
+include/Neon/CUDA/CUDACommon.h
+include/Neon/CUDA/CUDAMesh.h
 
 include/Neon/Component/SpatialPartitioning/NeonBSPTree.hpp
 include/Neon/Component/SpatialPartitioning/NeonRegularGrid.h

@@ -132,10 +132,10 @@ namespace Neon
 		return buffer->AddElement(index);
 	}
 
-	void Mesh::GetIndex(size_t bufferIndex, GLuint& index)
+	GLuint Mesh::GetIndex(size_t bufferIndex)
 	{
 		auto buffer = GetIndexBuffer();
-		index = buffer->GetElement(bufferIndex);
+		return buffer->GetElement(bufferIndex);
 	}
 
 	tuple<int, int, int> Mesh::AddTriangle(GLuint i0, GLuint i1, GLuint i2)
@@ -333,10 +333,9 @@ namespace Neon
 
 			for (int i = 0; i < nof; i++)
 			{
-				GLuint vi0, vi1, vi2;
-				GetIndex(i * 3, vi0);
-				GetIndex(i * 3 + 1, vi1);
-				GetIndex(i * 3 + 2, vi2);
+				auto vi0 = GetIndex(i * 3);
+				auto vi1 = GetIndex(i * 3 + 1);
+				auto vi2 = GetIndex(i * 3 + 2);
 
 				auto v0 = GetVertex(vi0);
 				auto v1 = GetVertex(vi1);
@@ -814,10 +813,9 @@ namespace Neon
 		auto noi = GetIndexBuffer()->Size();
 		for (int i = 0; i < noi / 3; i++)
 		{
-			GLuint i0, i1, i2;
-			GetIndex(i * 3 + 0, i0);
-			GetIndex(i * 3 + 1, i1);
-			GetIndex(i * 3 + 2, i2);
+			auto i0 = GetIndex(i * 3 + 0);
+			auto i1 = GetIndex(i * 3 + 1);
+			auto i2 = GetIndex(i * 3 + 2);
 
 			auto v0 = GetVertex(i0);
 			auto v1 = GetVertex(i1);
