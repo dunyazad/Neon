@@ -57,6 +57,8 @@ namespace Neon
 
 	void EventSystem::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
+		ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
+
 		KeyEvent event{ nullptr, window, key, scancode, action, mods };
 
 		for (auto& instance : instances)
@@ -67,6 +69,8 @@ namespace Neon
 
 	void EventSystem::MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 	{
+		ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
+
 		MouseButtonEvent event{ nullptr, window, button, action, mods };
 
 		for (auto& instance : instances)
@@ -77,6 +81,8 @@ namespace Neon
 
 	void EventSystem::CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
 	{
+		ImGui_ImplGlfw_CursorPosCallback(window, xpos, ypos);
+
 		CursorPosEvent event{ nullptr, window, xpos, ypos };
 
 		for (auto& instance : instances)
@@ -87,6 +93,8 @@ namespace Neon
 
 	void EventSystem::ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 	{
+		ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
+
 		ScrollEvent event{ nullptr, window, xoffset, yoffset };
 
 		for (auto& instance : instances)

@@ -146,6 +146,10 @@ namespace Neon
 			lastTime = now;
 		}
 
+		ImGui_ImplOpenGL3_Shutdown();
+		ImGui_ImplGlfw_Shutdown();
+		ImGui::DestroyContext();
+
 		if (onTerminateFunction != nullptr)
 		{
 			onTerminateFunction();
@@ -155,6 +159,8 @@ namespace Neon
 		{
 			SAFE_DELETE(kvp.second);
 		}
+
+		SAFE_DELETE(window);
 
 		glfwTerminate();
 	}
