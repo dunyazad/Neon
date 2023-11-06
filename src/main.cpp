@@ -113,6 +113,8 @@ int main()
 		}
 #pragma endregion
 
+		scene->Debug("Spheres")->AddSphere(glm::vec3(0.0f, 3.0f, 0.0f), 1, 32, glm::blue);
+
 		});
 
 

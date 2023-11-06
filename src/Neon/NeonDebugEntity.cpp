@@ -102,4 +102,39 @@ namespace Neon
 		AddTriangle(glm::vec3(nx, ny, pz), glm::vec3(nx, py, pz), glm::vec3(nx, py, nz), color, color, color);
 		AddTriangle(glm::vec3(nx, ny, pz), glm::vec3(nx, py, nz), glm::vec3(nx, ny, nz), color, color, color);
 	}
+
+	void DebugEntity::AddSphere(const glm::vec3& center, float radius, int segments, const glm::vec4& color)
+	{
+		int offset = mesh->GetVertexBuffer()->Size();
+
+		for (int i = 0; i <= segments; ++i) {
+			float phi = PI * float(i) / (float)segments;
+			for (int j = 0; j <= segments; ++j) {
+				float theta = PI * 2 * float(j) / (float)segments;
+				float x = sinf(phi) * cosf(theta);
+				float y = cosf(phi);
+				float z = sinf(phi) * sinf(theta);
+
+				auto v = glm::vec3{ x * radius, y * radius,  z * radius };
+				mesh->AddVertex(v + center);
+				mesh->AddColor(color);
+				mesh->AddNormal(normalize(v));
+			}
+		}
+
+		for (int i = 0; i < segments; ++i) {
+			for (int j = 0; j < segments; ++j) {
+				int current = i * (segments + 1) + j;
+				int next = current + segments + 1;
+
+				mesh->AddIndex(offset + current);
+				mesh->AddIndex(offset + current + 1);
+				mesh->AddIndex(offset + next);
+
+				mesh->AddIndex(offset + next);
+				mesh->AddIndex(offset + current + 1);
+				mesh->AddIndex(offset + next + 1);
+			}
+		}
+	}
 }
