@@ -3,6 +3,7 @@
 
 namespace NeonCUDA
 {
+<<<<<<< HEAD
 	// Hypothetical CUDA Mutex type
 	typedef struct {
 		int data;  // Data used for mutex implementation
@@ -28,6 +29,20 @@ namespace NeonCUDA
 		// Implementation of unlocking mechanism
 		// This is a simplified example and may not be suitable for production use
 		atomicExch(&(mutex->data), 0);
+=======
+	__device__ void mutex_lock(unsigned int* mutex) {
+		unsigned int ns = 8;
+		while (atomicCAS(mutex, 0, 1) == 1) {
+			__nanosleep(ns);
+			if (ns < 256) {
+				ns *= 2;
+			}
+		}
+	}
+
+	__device__ void mutex_unlock(unsigned int* mutex) {
+		atomicExch(mutex, 0);
+>>>>>>> 22389a11971a7610621648eb9ec9a0f7f44dfe3e
 	}
 
 	namespace MemoryPool
@@ -35,7 +50,10 @@ namespace NeonCUDA
 		__device__ __managed__ char* allocatedMemory = nullptr;
 		__device__ __managed__ char* currentMemory = nullptr;
 		__device__ __managed__ size_t allocatedSize = 0;
+<<<<<<< HEAD
 		__device__ __managed__ cudaMutex_t* mutex = nullptr;
+=======
+>>>>>>> 22389a11971a7610621648eb9ec9a0f7f44dfe3e
 
 		__host__ bool Initialize(size_t size)
 		{
@@ -45,9 +63,12 @@ namespace NeonCUDA
 			currentMemory = allocatedMemory;
 			allocatedSize = size;
 
+<<<<<<< HEAD
 			result = cudaMalloc((void**)&mutex, sizeof(cudaMutex_t));
 			CUDA_CHECK_ERROR(result);
 
+=======
+>>>>>>> 22389a11971a7610621648eb9ec9a0f7f44dfe3e
 			printf("MemoryPool is successfully initialized.\n");
 
 			return true;
@@ -66,6 +87,7 @@ namespace NeonCUDA
 		template<typename T>
 		__device__ T* New()
 		{
+<<<<<<< HEAD
 			printf("New()\n");
 
 			cudaLockMutex(mutex);
@@ -75,6 +97,10 @@ namespace NeonCUDA
 			auto output = currentMemory;
 			currentMemory += sizeof(T);
 			cudaUnlockMutex(mutex);
+=======
+			auto output = currentMemory;
+			currentMemory += sizeof(T);
+>>>>>>> 22389a11971a7610621648eb9ec9a0f7f44dfe3e
 			return (T*)output;
 		}
 	}
@@ -87,9 +113,12 @@ namespace NeonCUDA
 			printf("[%d] ", threadId);
 
 			auto value = MemoryPool::New<int>();
+<<<<<<< HEAD
 
 			printf("11111111\n");
 
+=======
+>>>>>>> 22389a11971a7610621648eb9ec9a0f7f44dfe3e
 			printf("value = %d\n", (int)value - (int)MemoryPool::allocatedMemory);
 		}
 
@@ -107,7 +136,11 @@ namespace NeonCUDA
 	{
 		MemoryPool::Initialize(102400000);
 
+<<<<<<< HEAD
 		Test<<<1,10>>>();
+=======
+		Test<<<1,1024>>>();
+>>>>>>> 22389a11971a7610621648eb9ec9a0f7f44dfe3e
 
 		CUDA_CHECK_ERROR(cudaGetLastError());
 
