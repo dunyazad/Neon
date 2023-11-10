@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <cstdlib>
 
+#include <cuda_runtime.h>
+
 #include <thrust/copy.h>
 #include <thrust/device_vector.h>
 #include <thrust/generate.h>
@@ -29,6 +31,12 @@
 
 #define DEG2RAD (PI / 180.0f)
 #define RAD2DEG (180.0f / PI)
+
+#define CUDA_CHECK_ERROR(err) \
+if (err != cudaSuccess && err != cudaErrorUnknown) { \
+    fprintf(stderr, "CUDA error: %s at %s:%d\n", cudaGetErrorString(err), __FILE__, __LINE__); \
+    exit(err); \
+}
 
 namespace NeonCUDA {
 	float Trimax(float a, float b, float c);

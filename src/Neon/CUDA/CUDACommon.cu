@@ -9,5 +9,4 @@ namespace NeonCUDA {
 	float Trimin(float a, float b, float c) {
 		return std::min(std::min(a, b), c);
 	}
-
 }

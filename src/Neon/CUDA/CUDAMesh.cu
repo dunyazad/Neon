@@ -97,7 +97,7 @@ namespace NeonCUDA
 	{
 		auto t = Neon::Time("Subdivide()");
 
-		int numTriangles = host_indices.size() / 3;
+		int numTriangles = (int)host_indices.size() / 3;
 
 		// Create arrays for the subdivided mesh data on the GPU
 		thrust::device_vector<glm::vec3> subdividedVertices(device_vertices.size() * 2);
