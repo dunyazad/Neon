@@ -24,7 +24,9 @@
 #include <Neon/Component/NeonVETM.h>
 
 #include <Neon/CUDA/CUDACommon.h>
+#include <Neon/CUDA/CUDAMemoryPool.h>
 #include <Neon/CUDA/CUDAMesh.h>
+#include <Neon/CUDA/CUDAList.h>
 
 #include <Neon/Component/SpatialPartitioning/NeonBSPTree.hpp>
 #include <Neon/Component/SpatialPartitioning/NeonRegularGrid.h>

@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <cstdlib>
 
+#include <cuda_runtime.h>
+
 #include <thrust/copy.h>
 #include <thrust/device_vector.h>
 #include <thrust/generate.h>

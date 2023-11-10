@@ -137,4 +137,9 @@ namespace Neon
 			}
 		}
 	}
+
+	void AddCylinder(const glm::vec3& bottomCenter, float bottomRadius, const glm::vec3& topCenter, float topRadius, int segments, bool cap, const glm::vec4& bottomColor, const glm::vec4& topColor)
+	{
+
+	}
 }

@@ -2,10 +2,20 @@
 
 #include <Neon/Neon.h>
 
-void HelloRegularGrid();
-
 int main()
 {
+	NeonCUDA::MemoryPoolTest();
+
+	return 0;
+
+	//NeonCUDA::MemoryPool memoryPool;
+	//if (false == memoryPool.Initialize(sizeof(int) * 4 * 120000 * 2560))
+	//{
+	//	cout << "memorypool initialization failed." << endl;
+	//}
+
+	
+
 	Neon::Application app(1280, 1024);
 	Neon::URL::ChangeDirectory("..");
 
@@ -113,8 +123,17 @@ int main()
 		}
 #pragma endregion
 
-		scene->Debug("Spheres")->AddSphere(glm::vec3(0.0f, 3.0f, 0.0f), 1, 32, glm::blue);
+		for (size_t y = 0; y < 50; y++)
+		{
+			for (size_t x = 0; x < 50; x++)
+			{
+				auto xv = Neon::RandomReal<float>(0.0f, 100.0f) - 50.0f;
+				auto yv = Neon::RandomReal<float>(0.0f, 100.0f) - 50.0f;
 
+				//scene->Debug("Spheres")->AddSphere({ xv, yv, 0.0f }, 0.125f, 32, glm::white);
+				scene->Debug("Spheres")->AddPoint({ xv, yv, 0.0f }, glm::white);
+			}
+		}
 		});
 
 

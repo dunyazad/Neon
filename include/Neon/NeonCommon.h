@@ -14,6 +14,7 @@
 #include <memory>
 #include <ostream>
 #include <queue>
+#include <random>
 #include <set>
 #include <sstream>
 #include <stack>
@@ -104,6 +105,24 @@ namespace Neon
 
 #define DEG2RAD (PI / 180.0f)
 #define RAD2DEG (180.0f / PI)
+
+	template<typename T>
+	T RandomInt(T from, T to)
+	{
+		std::random_device rd;
+		std::mt19937 generator(rd());
+		std::uniform_int_distribution<T> distribution(from, to);
+		return distribution(generator);
+	}
+
+	template<typename T>
+	T RandomReal(T from, T to, typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr)
+	{
+		std::random_device rd;
+		std::mt19937 generator(rd());
+		std::uniform_real_distribution<T> distribution(from, to);
+		return distribution(generator);
+	}
 
 	struct Ray
 	{

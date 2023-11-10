@@ -31,4 +31,21 @@ namespace Neon
 
 		return mapbox::earcut<size_t>(polygon);
 	}
+
+	DelaunayTriangulator::DelaunayTriangulator()
+	{
+	}
+
+	DelaunayTriangulator::~DelaunayTriangulator()
+	{
+	}
+
+	vector<size_t> DelaunayTriangulator::Triangulate(const vector<glm::vec2>& points)
+	{
+		vector<size_t> result;
+
+
+
+		return result;
+	}
 }
