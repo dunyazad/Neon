@@ -111,59 +111,91 @@ int main()
 		}
 #pragma endregion
 
+		//{
+		//	auto entity = scene->CreateEntity("ply");
+		//	auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh");
+		//	entity->AddComponent(mesh);
+
+		//	mesh->FromPLYFile("C:\\Resources\\3D\\PLY\\first_patch.ply");
+		//	mesh->SetFillMode(Neon::Mesh::FillMode::Point);
+
+		//	auto shader = scene->CreateComponent<Neon::Shader>("Shader/Color", Neon::URL::Resource("/shader/color.vs"), Neon::URL::Resource("/shader/color.fs"));
+		//	entity->AddComponent(shader);
+
+		//	auto nov = mesh->GetVertexBuffer()->Size();
+		//	for (size_t i = 0; i < nov; i++)
+		//	{
+		//		auto v = mesh->GetVertex(i);
+		//		cout << v << endl;
+		//	}
+		//}
+
+
+		vector<glm::vec3> points;
+		vector<glm::ivec4> indices;
+
+		std::string line;
+		std::fstream fs;
+
+		fs.open("C:\\Resources\\3D\\ASCII\\points_optimized.ascii", std::fstream::in);
+		while (std::getline(fs, line))
 		{
-			vector<glm::vec3> points;
-			for (size_t i = 0; i < 1000; i++)
-			{
-				auto x = Neon::RandomReal<float>(-100, 100);
-				auto y = Neon::RandomReal<float>(-100, 100);
-				points.push_back({ x, y, 0.0f });
-			}
+			std::stringstream ss(line);
+			float x, y, z;
+			char comma;
+			ss >> x;
+			ss >> comma;
+			ss >> y;
+			ss >> comma;
+			ss >> z;
 
-			for (auto& p : points)
-			{
-				scene->Debug("points")->AddPoint(p);
-			}
+			points.push_back({ x,y,z });
+		}
+		fs.close();
 
-			vector<glm::vec3> pts(points);
+		fs.open("C:\\Resources\\3D\\ASCII\\indices.ascii", std::fstream::in);
+		while (std::getline(fs, line))
+		{
+			std::stringstream ss(line);
+			long i0, i1, i2, i3;
+			char comma;
+			ss >> i0;
+			ss >> comma;
+			ss >> i1;
+			ss >> comma;
+			ss >> i2;
+			ss >> comma;
+			ss >> i3;
 
-			{ // Get Supra triangle as a initial triangle
-				glm::vec3 sp0, sp1, sp2;
-				NeonCUDA::GetSupraTriangle(points, sp0, sp1, sp2);
+			indices.push_back({ i0, i1, i2, i3 });
+		}
+		fs.close();
 
-				pts.push_back(sp0);
-				pts.push_back(sp1);
-				pts.push_back(sp2);
-			}
+		for (auto& is : indices)
+		{
+			auto v0 = points[is.x];
+			auto v1 = points[is.y];
+			auto v2 = points[is.z];
+			auto v3 = points[is.w];
 
-			auto triangles = NeonCUDA::Triangulate(points);
-			for (auto& t : triangles)
-			{
-				if (t.x >= pts.size() || t.y >= pts.size() || t.z >= pts.size())
-				{
-					continue;
-				}
-
-				auto p0 = pts[t.x];
-				auto p1 = pts[t.y];
-				auto p2 = pts[t.z];
-				scene->Debug("Edges")->AddLine(p0, p1, glm::red, glm::red);
-				scene->Debug("Edges")->AddLine(p1, p2, glm::red, glm::red);
-				scene->Debug("Edges")->AddLine(p2, p0, glm::red, glm::red);
-			}
+			scene->Debug("tetrahedrons")->AddTriangle(v0, v1, v2);
+			/*scene->Debug("tetrahedrons")->AddTriangle(v1, v3, v2);
+			scene->Debug("tetrahedrons")->AddTriangle(v0, v3, v1);
+			scene->Debug("tetrahedrons")->AddTriangle(v0, v2, v3);*/
 		}
 
-		/*{
-			auto entity = scene->CreateEntity("Mesh");
-			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh");
-			entity->AddComponent(mesh);
+		//for (size_t y = 0; y < 50; y++)
+		//{
+		//	for (size_t x = 0; x < 50; x++)
+		//	{
+		//		auto xv = Neon::RandomReal<float>(0.0f, 100.0f) - 50.0f;
+		//		auto yv = Neon::RandomReal<float>(0.0f, 100.0f) - 50.0f;
 
-			mesh->FromPLYFile("C:\\Users\\USER\\Desktop\\2023-11-07-Pre-marginline Detection\\2023-11-07-Pre-marginline Detection-lowerjaw.ply");
-			mesh->RecalculateFaceNormal();
+		//		//scene->Debug("Spheres")->AddSphere({ xv, yv, 0.0f }, 0.125f, 32, glm::white);
+		//		scene->Debug("Spheres")->AddPoint({ xv, yv, 0.0f }, glm::white);
+		//	}
+		//}
 
-			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Color", Neon::URL::Resource("/shader/color.vs"), Neon::URL::Resource("/shader/color.fs"));
-			entity->AddComponent(shader);
-		}*/
 
 
 		});

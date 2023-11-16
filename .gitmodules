@@ -19,3 +19,6 @@
 [submodule "External/earcut.hpp"]
 	path = External/earcut.hpp
 	url = https://github.com/mapbox/earcut.hpp.git
+[submodule "External/gDel3D"]
+	path = External/gDel3D
+	url = https://github.com/ashwin/gDel3D.git

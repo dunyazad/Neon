@@ -769,8 +769,8 @@ namespace Neon
 
 			if (colors && alphas)
 			{
-				float* alphaBuffer = new float[alphas->count];
-				std::memcpy(alphaBuffer, alphas->buffer.get(), alphas->count * sizeof(float));
+				unsigned char* alphaBuffer = new unsigned char[alphas->count];
+				std::memcpy(alphaBuffer, alphas->buffer.get(), alphas->count * sizeof(unsigned char));
 
 				unsigned char* rgbBuffer = new unsigned char[colors->count * 3];
 				std::memcpy(rgbBuffer, colors->buffer.get(), colors->count * 3 * sizeof(unsigned char));
@@ -780,7 +780,7 @@ namespace Neon
 					float r = ((float)rgbBuffer[i * 3 + 0]) / 255.0f;
 					float g = ((float)rgbBuffer[i * 3 + 1]) / 255.0f;
 					float b = ((float)rgbBuffer[i * 3 + 2]) / 255.0f;
-					float a = alphaBuffer[i / 3];
+					float a = ((float)alphaBuffer[i]) / 255.0f;
 					AddColor(glm::vec4(r, g, b, a));
 				}
 
@@ -797,6 +797,13 @@ namespace Neon
 				buffer->Clear();
 				buffer->Resize(size / sizeof(GLuint));
 				std::memcpy(buffer->Data(), faces->buffer.get(), size);
+			}
+			else
+			{
+				for (size_t i = 0; i < vertices->count; i++)
+				{
+					GetIndexBuffer()->AddElement(i-1);
+				}
 			}
 		}
 		catch (const std::exception& e)
