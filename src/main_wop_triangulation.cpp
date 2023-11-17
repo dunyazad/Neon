@@ -4,12 +4,14 @@
 
 Neon::Scene* g_scene = nullptr;
 
-void GetSupraTriangle(const std::vector<glm::vec2>& points, glm::vec2& p0, glm::vec2& p1, glm::vec2& p2)
+void GetSupraTriangle(const std::vector<glm::vec3>& points, glm::vec3& p0, glm::vec3& p1, glm::vec3& p2)
 {
 	float x = 0.0f;
 	float y = 0.0f;
+	float z = 0.0f;
 	float X = 0.0f;
 	float Y = 0.0f;
+	float Z = 0.0f;
 
 	for (auto& p : points)
 	{
@@ -17,26 +19,31 @@ void GetSupraTriangle(const std::vector<glm::vec2>& points, glm::vec2& p0, glm::
 		X = max(X, p.x);
 		y = min(y, p.y);
 		Y = max(Y, p.y);
+		z = min(z, p.z);
+		Z = max(Z, p.z);
 	}
 
 	float cx = (x + X) * 0.5f;
 	float cy = (y + Y) * 0.5f;
+	float cz = (z + Z) * 0.5f;
 
 	float sx = (x - cx) * 3 + x;
 	float sy = (y - cy) * 3 + y;
+	float sz = (z - cz) * 3 + z;
 	float sX = (X - cx) * 3 + X;
 	float sY = (Y - cy) * 3 + Y;
+	float sZ = (Z - cz) * 3 + Z;
 
-	p0 = glm::vec2(sx, sy);
-	p1 = glm::vec2(sX, sy);
-	p2 = glm::vec2(cx, sY);
+	p0 = glm::vec3(sx, sy, 0.0f);
+	p1 = glm::vec3(sX, sy, 0.0f);
+	p2 = glm::vec3(cx, sY, 0.0f);
 }
 
-bool IsPointInTriangle(const glm::vec2& point, const glm::vec2& A, const glm::vec2& B, const glm::vec2& C) {
+bool IsPointInTriangle(const glm::vec3& point, const glm::vec3& A, const glm::vec3& B, const glm::vec3& C) {
 	// Compute barycentric coordinates
-	glm::vec2 v0 = B - A;
-	glm::vec2 v1 = C - A;
-	glm::vec2 v2 = point - A;
+	glm::vec3 v0 = B - A;
+	glm::vec3 v1 = C - A;
+	glm::vec3 v2 = point - A;
 
 	float dot00 = glm::dot(v0, v0);
 	float dot01 = glm::dot(v0, v1);
@@ -53,84 +60,85 @@ bool IsPointInTriangle(const glm::vec2& point, const glm::vec2& A, const glm::ve
 	return (u >= 0) && (v >= 0) && (u + v <= 1);
 }
 
-typedef size_t id_t;
-struct Edge
+bool SplitTriangles(const vector<glm::vec3>& points, vector<glm::ivec4>& triangles)
 {
-	id_t i0;
-	id_t i1;
-};
+	bool newTriangle = false;
 
-struct Triangle
-{
-	bool valid;
-	id_t i0;
-	id_t i1;
-	id_t i2;
-	glm::vec2 circum_center;
-	float circum_radius;
-};
+	vector<glm::ivec4> new_triangles;
 
-bool TriangleHasEdge(Triangle* t, Edge* e)
-{
-	return ((e->i0 == t->i0) || (e->i0 == t->i1) || (e->i0 == t->i2)) &&
-		((e->i1 == t->i0) || (e->i1 == t->i1) || (e->i1 == t->i2));
+	for (size_t i = 0; i < triangles.size(); i++)
+	{
+		auto& t = triangles[i];
+		if (1 == t.x)
+		{
+			auto v0 = points[t.y];
+			auto v1 = points[t.z];
+			auto v2 = points[t.w];
+
+			for (size_t j = 0; j < points.size(); j++)
+			{
+				if (j == t.y || j == t.z || j == t.w)
+					continue;
+
+				if (IsPointInTriangle(points[j], v0, v1, v2))
+				{
+					new_triangles.push_back({ 1, t.y, t.z, j });
+					new_triangles.push_back({ 1, t.z, t.w, j });
+					new_triangles.push_back({ 1, t.w, t.y, j });
+
+					newTriangle = true;
+
+					t.x = 0;
+					break;
+				}
+			}
+		}
+	}
+
+	for (auto& t : new_triangles)
+	{
+		triangles.push_back(t);
+	}
+
+	return newTriangle;
 }
 
-vector<glm::ivec3> Triangulate(const vector<glm::vec3>& pts)
+
+vector<glm::ivec4> Triangulate(const vector<glm::vec3>& points)
 {
-	vector<glm::vec2> points;
+	vector<glm::vec3> pts(points);
+	glm::vec3 sp0, sp1, sp2;
+	GetSupraTriangle(points, sp0, sp1, sp2);
 
-	{ // Copy positions to points and get supra-triangle from pts
-		float x = 0.0f;
-		float y = 0.0f;
-		float X = 0.0f;
-		float Y = 0.0f;
+	pts.push_back(sp0);
+	pts.push_back(sp1);
+	pts.push_back(sp2);
 
-		for (auto& p : pts)
-		{
-			x = min(x, p.x);
-			X = max(X, p.x);
-			y = min(y, p.y);
-			Y = max(Y, p.y);
+	vector<glm::ivec4> triangles;
 
-			points.push_back(glm::vec2(p.x, p.y));
-		}
+	triangles.push_back({ 1, pts.size() - 3, pts.size() - 2, pts.size() - 1 });
 
-		float cx = (x + X) * 0.5f;
-		float cy = (y + Y) * 0.5f;
-
-		float sx = (x - cx) * 3 + x;
-		float sy = (y - cy) * 3 + y;
-		float sX = (X - cx) * 3 + X;
-		float sY = (Y - cy) * 3 + Y;
-
-		points.push_back(glm::vec2(sx, sy));
-		points.push_back(glm::vec2(sX, sy));
-		points.push_back(glm::vec2(cx, sY));
-	}
-
-	// points 2d kdtree 생성
-
-	vector<Triangle> triangles;
-	
-	// Supra-triangle 생성 후 triangles에 추가
-	// triangles에 추가할때는 circumcenter 와 radius 찾기
-
-	
-	triangles.push_back({ true, points.size() - 3, points.size() - 2, points.size() - 1 });
-
-	for (size_t pi = 0; pi < points.size() - 3; pi++)
+	int cnt = 0;
+	while (SplitTriangles(pts, triangles))
 	{
-		for (size_t ti = triangles.size() - 1; ti >= 0; ti--)
-		{
-			auto& t = triangles[ti];
+		if (cnt++ == 20) break;
+		printf("[%d] triangles.size() : %d\n", cnt, triangles.size());
+	}
 
+	for (auto& t : triangles)
+	{
+		if (1 == t.x)
+		{
+			auto v0 = pts[t.y];
+			auto v1 = pts[t.z];
+			auto v2 = pts[t.w];
+			g_scene->Debug("Edges")->AddLine(v0, v1, glm::red, glm::red);
+			g_scene->Debug("Edges")->AddLine(v1, v2, glm::red, glm::red);
+			g_scene->Debug("Edges")->AddLine(v2, v0, glm::red, glm::red);
 		}
 	}
 
-	vector<glm::ivec3> result;
-
-	return result;
+	return triangles;
 }
 
 int main()
@@ -244,53 +252,29 @@ int main()
 #pragma endregion
 
 		{
-			vector<glm::vec2> points;
+			vector<glm::vec3> points;
 			for (size_t i = 0; i < 1000; i++)
 			{
 				auto x = Neon::RandomReal<float>(-100, 100);
 				auto y = Neon::RandomReal<float>(-100, 100);
-				points.push_back({ x, y });
+				points.push_back({ x, y, 0.0f });
 			}
 
 			for (auto& p : points)
 			{
-				scene->Debug("points")->AddPoint({p.x, p.y, 0.0f});
+				scene->Debug("points")->AddPoint(p);
 			}
 
-			//auto triangles = delaunayTriangulation(points);
-
-			//for (auto& t : triangles)
-			//{
-			//	scene->Debug("Edges")->AddLine({ t.p1.x, t.p1.y, 0.0f }, { t.p2.x, t.p2.y, 0.0f }, glm::red, glm::red);
-			//	scene->Debug("Edges")->AddLine({ t.p2.x, t.p2.y, 0.0f }, { t.p3.x, t.p3.y, 0.0f }, glm::red, glm::red);
-			//	scene->Debug("Edges")->AddLine({ t.p3.x, t.p3.y, 0.0f }, { t.p1.x, t.p1.y, 0.0f }, glm::red, glm::red);
-			//}
-		}
-
-		{
-			//vector<glm::vec3> points;
-			//for (size_t i = 0; i < 1000; i++)
-			//{
-			//	auto x = Neon::RandomReal<float>(-100, 100);
-			//	auto y = Neon::RandomReal<float>(-100, 100);
-			//	points.push_back({ x, y, 0.0f });
-			//}
-
-			//for (auto& p : points)
-			//{
-			//	scene->Debug("points")->AddPoint(p);
-			//}
-
-			//auto triangles = Triangulate(points);
-			//for (auto& t : triangles)
-			//{
-			//	//auto p0 = pts[t.x];
-			//	//auto p1 = pts[t.y];
-			//	//auto p2 = pts[t.z];
-			//	//scene->Debug("Edges")->AddLine(p0, p1, glm::red, glm::red);
-			//	//scene->Debug("Edges")->AddLine(p1, p2, glm::red, glm::red);
-			//	//scene->Debug("Edges")->AddLine(p2, p0, glm::red, glm::red);
-			//}
+			auto triangles = Triangulate(points);
+			for (auto& t : triangles)
+			{
+				//auto p0 = pts[t.x];
+				//auto p1 = pts[t.y];
+				//auto p2 = pts[t.z];
+				//scene->Debug("Edges")->AddLine(p0, p1, glm::red, glm::red);
+				//scene->Debug("Edges")->AddLine(p1, p2, glm::red, glm::red);
+				//scene->Debug("Edges")->AddLine(p2, p0, glm::red, glm::red);
+			}
 
 			//vector<glm::vec3> pts(points);
 

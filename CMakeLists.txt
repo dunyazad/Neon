@@ -28,6 +28,7 @@ src/Neon/CUDA/CUDACommon.cu
 src/Neon/CUDA/CUDAMemoryPool.cu
 src/Neon/CUDA/CUDAMesh.cu
 src/Neon/CUDA/CUDAList.cu
+src/Neon/CUDA/CUDATriangulation.cu
 )
 set_source_files_properties($<$<BOOL:USE_CUDA>:${cuda_source_list}>> PROPERTIES LANGUAGE "CUDA")
 endif(USE_CUDA)
@@ -86,6 +87,7 @@ include/Neon/CUDA/CUDACommon.h
 include/Neon/CUDA/CUDAMemoryPool.h
 include/Neon/CUDA/CUDAMesh.h
 include/Neon/CUDA/CUDAList.h
+include/Neon/CUDA/CUDATriangulation.h
 
 include/Neon/Component/SpatialPartitioning/NeonBSPTree.hpp
 include/Neon/Component/SpatialPartitioning/NeonRegularGrid.h
