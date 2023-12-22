@@ -2,6 +2,8 @@
 
 #include <Neon/Neon.h>
 
+#include <Neon/CUDA/CUDATest.h>
+
 int main()
 {
 	Neon::Application app(1280, 1024);
@@ -59,7 +61,8 @@ int main()
 					if (1.0f >= pointSize)
 						pointSize = 1.0f;
 					glPointSize(pointSize);
-				} else if ((GLFW_KEY_KP_MULTIPLY == event.key) && (GLFW_RELEASE == event.action || GLFW_REPEAT == event.action)) {
+				}
+				else if ((GLFW_KEY_KP_MULTIPLY == event.key) && (GLFW_RELEASE == event.action || GLFW_REPEAT == event.action)) {
 					GLfloat lineWidth;
 					glGetFloatv(GL_LINE_WIDTH, &lineWidth);
 					lineWidth += 1.0f;
@@ -143,137 +146,83 @@ int main()
 		}
 #pragma endregion
 
-		//{
-		//	auto entity = scene->CreateEntity("Entity/Target");
-		//	auto mesh = scene->CreateComponent<Neon::Mesh>("target");
-		//	mesh->FromBSON("C:\\Resources\\TestData\\target.bson");
-		//	//mesh->RecalculateFaceNormal();
-		//	entity->AddComponent(mesh);
-
-		//	auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", Neon::URL::Resource("/shader/lighting.vs"), Neon::URL::Resource("/shader/lighting.fs"));
-		//	entity->AddComponent(shader);
-
-		//	entity->AddKeyEventHandler([scene, mesh](const Neon::KeyEvent& event) {
-		//		if (GLFW_KEY_ESCAPE == event.key && GLFW_RELEASE == event.action) {
-		//			mesh->ToggleFillMode();
-		//			cout << "Toggle Fill Mode : " << mesh->GetName() << endl;
-		//		}
-		//		});
-
-		//	entity->AddMouseButtonEventHandler([entity, scene, mesh](const Neon::MouseButtonEvent& event) {
-		//		if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_DOUBLE_ACTION)
-		//		{
-		//			auto camera = scene->GetMainCamera();
-
-		//			auto ray = camera->GetPickingRay(event.xpos, event.ypos);
-
-		//			glm::vec3 intersection;
-		//			size_t faceIndex = 0;
-		//			if (mesh->Pick(ray, intersection, faceIndex))
-		//			{
-		//				camera->centerPosition = intersection;
-		//			}
-		//		}
-		//		else if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_RELEASE)
-		//		{
-		//			auto camera = scene->GetMainCamera();
-
-		//			auto ray = camera->GetPickingRay(event.xpos, event.ypos);
-
-		//			glm::vec3 intersection;
-		//			size_t faceIndex = 0;
-		//			if (mesh->Pick(ray, intersection, faceIndex))
-		//			{
-		//				scene->Debug("Points")->Clear();
-		//				scene->Debug("Points")->AddPoint(intersection, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-
-		//				GLuint i0, i1, i2;
-		//				mesh->GetTriangleVertexIndices(faceIndex, i0, i1, i2);
-
-		//				printf("Face Index : %d, vi0 : %d, vi1 : %d, vi2 : %d\n", faceIndex, i0, i1, i2);
-
-		//				//auto vetm = entity->GetComponent<Neon::VETM>();
-		//				//auto vertex = vetm->GetNearestVertex(intersection);
-
-		//				//scene->Debug("Points")->Clear();
-		//				//scene->Debug("Points")->AddPoint(vertex->p, glm::red);
-		//				//scene->Debug("Points")->AddPoint(intersection, glm::white);
-
-		//				//scene->Debug("Lines")->Clear();
-		//				//cout << "---------------------------------------" << endl;
-		//				//for (auto& e : vertex->edges)
-		//				//{
-		//				//	if (2 > e->triangles.size())
-		//				//	{
-		//				//		scene->Debug("Lines")->AddLine(e->v0->p, e->v1->p, glm::green, glm::green);
-		//				//		cout << e->id << " : " << e->triangles.size() << endl;
-		//				//	}
-		//				//}
-		//			}
-		//		}
-		//		});
-		//}
-
-		//{
-		//	auto mesh = scene->CreateComponent<Neon::Mesh>("target_point");
-		//	mesh->FromBSON("C:\\Resources\\TestData\\target_points.bson");
-		//	scene->Debug("target_point")->AddMesh(mesh);
-
-		//	printf("target_point size : %d\n", mesh->GetVertexBuffer()->Size());
-		//}
-
 		{
-			auto mesh = scene->CreateComponent<Neon::Mesh>("source_point");
-			mesh->FromBSON("C:\\Resources\\TestData\\source_points.bson");
-			scene->Debug("source_point")->AddMesh(mesh);
-	/*		for (size_t i = 0; i < mesh->GetVertexBuffer()->Size(); i++)
+			auto entity = scene->CreateEntity("Entity/spot");
+			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/spot");
+			entity->AddComponent(mesh);
+
+			mesh->FromSTLFile(Neon::URL::Resource("/stl/mesh.stl"));
+			mesh->FillColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+			mesh->RecalculateFaceNormal();
+
+
+			auto noi = mesh->GetIndexBuffer()->Size();
+			for (size_t i = 0; i < noi / 3; i++)
 			{
-				auto& v = mesh->GetVertex(i);
+				auto i0 = mesh->GetIndex(i * 3 + 0);
+				auto i1 = mesh->GetIndex(i * 3 + 1);
+				auto i2 = mesh->GetIndex(i * 3 + 2);
 
-				printf("[%6d] %f, %f, %f\n", i, v.x, v.y, v.z);
+				auto v0 = mesh->GetVertex(i0);
+				auto v1 = mesh->GetVertex(i1);
+				auto v2 = mesh->GetVertex(i2);
 
-				scene->Debug("source_point")->AddPoint(v);
-			}*/
+				scene->Debug("spot")->AddTriangle(v0, v1, v2, glm::blue, glm::blue, glm::blue);
+			}
 
-			printf("source_point size : %d\n", mesh->GetVertexBuffer()->Size());
+			entity->AddMouseButtonEventHandler([entity, scene, mesh](const Neon::MouseButtonEvent& event) {
+				if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_DOUBLE_ACTION)
+				{
+					auto camera = scene->GetMainCamera();
+
+					auto ray = camera->GetPickingRay(event.xpos, event.ypos);
+
+					glm::vec3 intersection;
+					size_t faceIndex = 0;
+					if (mesh->Pick(ray, intersection, faceIndex))
+					{
+						camera->centerPosition = intersection;
+					}
+				}
+				else if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_RELEASE)
+				{
+					auto camera = scene->GetMainCamera();
+
+					auto ray = camera->GetPickingRay(event.xpos, event.ypos);
+
+					glm::vec3 intersection;
+					size_t faceIndex = 0;
+					if (mesh->Pick(ray, intersection, faceIndex))
+					{
+						//debugPoints->Clear();
+
+						//debugPoints->AddPoint(intersection, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+						auto vetm = entity->GetComponent<Neon::VETM>();
+						auto vertex = vetm->GetNearestVertex(intersection);
+
+						scene->Debug("Points")->Clear();
+						scene->Debug("Points")->AddPoint(vertex->p, glm::red);
+						scene->Debug("Points")->AddPoint(intersection, glm::white);
+
+						scene->Debug("Lines")->Clear();
+						cout << "---------------------------------------" << endl;
+						for (auto& e : vertex->edges)
+						{
+							if (2 > e->triangles.size())
+							{
+								scene->Debug("Lines")->AddLine(e->v0->p, e->v1->p, glm::green, glm::green);
+								cout << e->id << " : " << e->triangles.size() << endl;
+							}
+						}
+					}
+				}
+				});
+
+			NeonCUDA::Voxelize(mesh, 0.05f);
 		}
 
-		//{
-		//	auto mesh = scene->CreateComponent<Neon::Mesh>("target");
-		//	mesh->FromBSON("C:\\Resources\\TestData\\target.bson");
-		//	scene->Debug("target")->AddMesh(mesh);
-		//}
-
-		//{
-		//	auto mesh = scene->CreateComponent<Neon::Mesh>("source");
-		//	mesh->FromBSON("C:\\Resources\\TestData\\source.bson");
-		//	scene->Debug("source")->AddMesh(mesh);
-		//}
-
-		//{
-		//	auto mesh = scene->CreateComponent<Neon::Mesh>("link");
-		//	mesh->FromBSON("C:\\Resources\\TestData\\link.bson");
-		//	scene->Debug("link")->AddMesh(mesh);
-
-		//	auto debugMesh = scene->Debug("link")->GetComponent<Neon::Mesh>();
-
-		//	debugMesh->SetDrawingMode(GL_LINES);
-		//	debugMesh->SetFillMode(Neon::Mesh::FillMode::Line);
-		//}
-
-		//{
-		//	auto mesh = scene->CreateComponent<Neon::Mesh>("points");
-		//	mesh->FromBSON("C:\\Resources\\TestData\\points.bson");
-		//	scene->Debug("points")->AddMesh(mesh);
-
-		//	printf("points size : %d\n", mesh->GetVertexBuffer()->Size());
-		//}
-
 		});
-
-
-
-
 
 	app.OnUpdate([&](double now, double timeDelta) {
 		//glPointSize(cosf(now * 0.005f) * 10.0f + 10.0f);
@@ -291,10 +240,6 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		});
-
-
-
-
 
 
 	app.OnTerminate([&]() {

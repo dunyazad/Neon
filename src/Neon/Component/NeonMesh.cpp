@@ -99,6 +99,9 @@ namespace Neon
 	const glm::vec3& Mesh::GetVertex(size_t index)
 	{
 		auto buffer = GetVertexBuffer();
+		if (index >= buffer->Size())
+			return glm::zero<glm::vec3>();
+
 		return buffer->GetElement(index);
 	}
 
@@ -360,6 +363,115 @@ namespace Neon
 			delete[] buffer;
 
 			fclose(fp);
+		}
+	}
+
+	void Mesh::FromBSON(const URL& fileURL, float scaleX, float scaleY, float scaleZ)
+	{
+		ifstream file(fileURL.path.c_str(), ios::binary);
+		if (file.is_open())
+		{
+			file.seekg(0, ios::end);
+			auto fileSize = file.tellg();
+			file.seekg(0, ios::beg);
+
+			vector<uint8_t> fileContents(static_cast<size_t>(fileSize));
+			file.read(reinterpret_cast<char*>(fileContents.data()), fileSize);
+			file.close();
+
+			json json = json::from_bson(fileContents);
+
+			{
+				auto nov = json["number of vertices"].get<size_t>();
+				if (0 < nov)
+				{
+					printf("number of vertices : %d\n", nov);
+
+					auto vs = json["vertices"].get<vector<float>>();
+					for (size_t i = 0; i < nov; i++)
+					{
+						auto x = vs[i * 3 + 0] * scaleX;
+						auto y = vs[i * 3 + 1] * scaleY;
+						auto z = vs[i * 3 + 2] * scaleZ;
+
+						AddVertex({ x, y, z });
+					}
+				}
+			}
+
+			{
+				auto non = json["number of normals"].get<size_t>();
+				if (0 < non)
+				{
+					auto ns = json["normals"].get<vector<float>>();
+					for (size_t i = 0; i < non; i++)
+					{
+						auto x = ns[i * 3 + 0];
+						auto y = ns[i * 3 + 1];
+						auto z = ns[i * 3 + 2];
+
+						AddNormal({ x, y, z });
+					}
+				}
+			}
+
+			{
+				auto noc = json["number of colors"].get<size_t>();
+				if (0 < noc)
+				{
+					auto cs = json["colors"].get<vector<unsigned char>>();
+					for (size_t i = 0; i < noc; i++)
+					{
+						auto r = cs[i * 3 + 0];
+						auto g = cs[i * 3 + 1];
+						auto b = cs[i * 3 + 2];
+
+						AddColor({ r, g, b, 1.0f });
+					}
+				}
+			}
+
+			{
+				auto not = json["number of triangles"].get<size_t>();
+				if (0 < not)
+				{
+					auto is = json["triangles"].get<vector<tuple<unsigned int, unsigned int, unsigned int>>>();
+					for (size_t i = 0; i < not; i++)
+					{
+						AddIndex(get<0>(is[i]));
+						AddIndex(get<1>(is[i]));
+						AddIndex(get<2>(is[i]));
+					}
+				}
+			}
+
+			{
+				auto nol = json["number of lines"].get<size_t>();
+				if (0 < nol)
+				{
+					auto is = json["lines"].get<vector<tuple<unsigned int, unsigned int>>>();
+					for (size_t i = 0; i < nol; i++)
+					{
+						auto& i0 = get<0>(is[i]);
+						auto& i1 = get<1>(is[i]);
+
+						AddIndex(i0);
+						AddIndex(i1);
+
+						printf("i0 : %d, i1 : %d\n", i0, i1);
+					}
+				}
+			}
+
+			//{
+			//	auto nov = json["number of vertices"].get<size_t>();
+			//	AddIndex(nov - 4);
+			//	AddIndex(nov - 3);
+			//	AddIndex(nov - 3);
+			//	AddIndex(nov - 2);
+			//	AddIndex(nov - 2);
+			//	AddIndex(nov - 1);
+			//}
 		}
 	}
 

@@ -22,3 +22,6 @@
 [submodule "External/gDel3D"]
 	path = External/gDel3D
 	url = https://github.com/ashwin/gDel3D.git
+[submodule "External/eigen"]
+	path = External/eigen
+	url = https://gitlab.com/libeigen/eigen.git

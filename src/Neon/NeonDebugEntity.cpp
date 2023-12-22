@@ -25,6 +25,34 @@ namespace Neon
 		mesh->Clear();
 	}
 
+	void DebugEntity::AddMesh(Mesh* mesh)
+	{
+		for (auto& e : mesh->GetVertexBuffer()->GetElements())
+		{
+			this->mesh->AddVertex(e);
+		}
+
+		for (auto& e : mesh->GetNormalBuffer()->GetElements())
+		{
+			this->mesh->AddNormal(e);
+		}
+
+		for (auto& e : mesh->GetColorBuffer()->GetElements())
+		{
+			this->mesh->AddColor(e);
+		}
+
+		for (auto& e : mesh->GetUVBuffer()->GetElements())
+		{
+			this->mesh->AddUV(e);
+		}
+
+		for (auto& e : mesh->GetIndexBuffer()->GetElements())
+		{
+			this->mesh->AddIndex(e);
+		}
+	}
+
 	void DebugEntity::AddPoint(const glm::vec3& v, const glm::vec4& c)
 	{
 		auto index = mesh->AddVertex(v);

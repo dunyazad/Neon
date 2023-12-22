@@ -191,15 +191,15 @@ namespace Neon
 			{
 				if (mesh->GetFillMode() == Mesh::FillMode::Point)
 				{
-					glDrawArrays(mesh->GetDrawingMode(), 0, (GLsizei)mesh->GetVertexBuffer()->Size());
+					glDrawArrays(GL_POINTS, 0, (GLsizei)mesh->GetVertexBuffer()->Size());
 				}
 				else if (mesh->GetFillMode() == Mesh::FillMode::Line)
 				{
-					glDrawArrays(mesh->GetDrawingMode(), 0, (GLsizei)mesh->GetVertexBuffer()->Size() / 2);
+					glDrawArrays(GL_LINES, 0, (GLsizei)mesh->GetVertexBuffer()->Size() / 2);
 				}
 				else if (mesh->GetFillMode() == Mesh::FillMode::Fill)
 				{
-					glDrawArrays(mesh->GetDrawingMode(), 0, (GLsizei)mesh->GetVertexBuffer()->Size() / 3);
+					glDrawArrays(GL_TRIANGLES, 0, (GLsizei)mesh->GetVertexBuffer()->Size() / 3);
 				}
 			}
 

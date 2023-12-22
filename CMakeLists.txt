@@ -18,6 +18,7 @@ add_subdirectory("External/glfw")
 add_subdirectory("External/glm")
 #add_subdirectory("External/OpenMesh")
 add_subdirectory("External/tinyply")
+add_subdirectory("External/eigen")
 
 if(USE_CUDA)
 set(cuda_source_list
@@ -25,16 +26,16 @@ src/Neon/CUDA/HelloCUDA.cu
 
 src/Neon/CUDA/CUDACommon.cuh
 src/Neon/CUDA/CUDACommon.cu
-src/Neon/CUDA/CUDAMemoryPool.cu
-src/Neon/CUDA/CUDAMesh.cu
-src/Neon/CUDA/CUDAList.cu
-src/Neon/CUDA/CUDATriangulation.cu
+
+src/Neon/CUDA/CUDATest.cu
 )
 set_source_files_properties($<$<BOOL:USE_CUDA>:${cuda_source_list}>> PROPERTIES LANGUAGE "CUDA")
 endif(USE_CUDA)
 
 set(source_list
 src/main.cpp
+src/MiniMath.h
+src/MiniMath.cpp
 
 include/Neon/Neon.h
 src/Neon/Neon.cpp
@@ -84,10 +85,8 @@ include/Neon/Component/NeonVETM.h
 src/Neon/Component/NeonVETM.cpp
 
 include/Neon/CUDA/CUDACommon.h
-include/Neon/CUDA/CUDAMemoryPool.h
-include/Neon/CUDA/CUDAMesh.h
-include/Neon/CUDA/CUDAList.h
-include/Neon/CUDA/CUDATriangulation.h
+
+include/Neon/CUDA/CUDATest.h
 
 include/Neon/Component/SpatialPartitioning/NeonBSPTree.hpp
 include/Neon/Component/SpatialPartitioning/NeonRegularGrid.h
@@ -124,6 +123,7 @@ ${source_list}
 target_include_directories(Neon PUBLIC 
 "External"
 "External/earcut.hpp/include"
+"External/eigen"
 "External/glad"
 "External/glm"
 "External/imgui"

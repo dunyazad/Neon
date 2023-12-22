@@ -8,13 +8,16 @@
 #include <vector>
 
 #include <cuda_runtime.h>
+#include <device_launch_parameters.h>
 
+#include <thrust/iterator/constant_iterator.h>
 #include <thrust/copy.h>
 #include <thrust/device_vector.h>
 #include <thrust/generate.h>
 #include <thrust/host_vector.h>
 #include <thrust/sort.h>
 #include <thrust/tuple.h>
+#include <thrust/iterator/zip_iterator.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
