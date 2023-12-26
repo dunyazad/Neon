@@ -6,6 +6,9 @@
 #include <Neon/CUDA/CUDACommon.h>
 //#include <nvtx3/nvToolsExt.h>
 
+
+
+
 namespace NeonCUDA
 {
 	//__device__ float operator - (const float& a, const float& b) {
