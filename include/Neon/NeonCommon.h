@@ -73,6 +73,9 @@ namespace glm
 
 }
 
+#define byte win_byte_override
+#define NOMINMAX
+
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>

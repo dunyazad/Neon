@@ -446,14 +446,14 @@ namespace Neon
 			glm::vec3& i0, glm::vec3& i1)
 		{
 			int coplanar = 0;
-			real source[3], target[3];
+			_real source[3], target[3];
 			if (tri_tri_intersection_test_3d(
-				(real*)(&a0),
-				(real*)(&a1),
-				(real*)(&a2),
-				(real*)(&b0),
-				(real*)(&b1),
-				(real*)(&b2),
+				(_real*)(&a0),
+				(_real*)(&a1),
+				(_real*)(&a2),
+				(_real*)(&b0),
+				(_real*)(&b1),
+				(_real*)(&b2),
 				&coplanar, source, target))
 			{
 				i0.x = source[0];

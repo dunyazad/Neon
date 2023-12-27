@@ -2,6 +2,9 @@
 
 #include <Neon/Neon.h>
 
+#include <Neon/CUDA/CUDATest.h>
+#include "DT/DT.h"
+
 int main()
 {
 	Neon::Application app(1280, 1024);
@@ -86,6 +89,7 @@ int main()
 			entity->AddComponent(camera);
 			camera->distance = 2.0f;
 			camera->centerPosition = glm::vec3(0.0f, 0.0f, 0.0f);
+			camera->zFar = 10000.0f;
 			scene->SetMainCamera(camera);
 
 			auto cameraManipulator = scene->CreateComponent<Neon::CameraManipulator>("CameraManipulator/Main", entity, camera);
@@ -142,6 +146,135 @@ int main()
 			entity->AddComponent(shader);
 		}
 #pragma endregion
+
+		{
+			int numberPoints = 6000;
+			
+			std::default_random_engine eng(std::random_device{}());
+			std::uniform_real_distribution<double> dist_w(0, 1280);
+			std::uniform_real_distribution<double> dist_h(0, 1024);
+
+			std::cout << "Generating " << numberPoints << " random points" << std::endl;
+
+			vector<Eigen::Vector3f> input;
+
+			std::vector<DT::Vector2<double>> points;
+			for (int i = 0; i < numberPoints; ++i) {
+				auto x = dist_w(eng);
+				auto y = dist_h(eng);
+				//printf("%f, %f\n", x, y);
+
+				//scene->Debug("points")->AddPoint(glm::vec3(x, y, 0.0f), glm::green);
+
+				points.push_back(DT::Vector2<double>{x, y});
+
+				input.push_back({ (float)x, (float)y, 0.0f });
+			}
+			
+			//auto result = NeonCUDA::DelaunayTriangulation(input);
+
+			//for (auto& p : result)
+			//{
+			//	scene->Debug("points")->AddPoint({ p.x(), p.y(), p.z() });
+			//}
+
+			//{
+			//	float minX = FLT_MAX, minY = FLT_MAX, minZ = FLT_MAX;
+			//	float maxX = -FLT_MAX, maxY = -FLT_MAX, maxZ = -FLT_MAX;
+
+			//	for (size_t i = 0; i < numberPoints; i++)
+			//	{
+			//		auto& v = input[i];
+
+			//		if (minX > v.x()) minX = v.x();
+			//		if (minY > v.y()) minY = v.y();
+			//		if (minZ > v.z()) minZ = v.z();
+
+			//		if (maxX < v.x()) maxX = v.x();
+			//		if (maxY < v.y()) maxY = v.y();
+			//		if (maxZ < v.z()) maxZ = v.z();
+			//	}
+
+			//	float centerX = (minX + maxX) * 0.5f;
+			//	float centerY = (minY + maxY) * 0.5f;
+			//	float centerZ = (minZ + maxZ) * 0.5f;
+
+			//	input.push_back(Eigen::Vector3f(
+			//		minX + (minX - centerX) * 3,
+			//		minY + (minY - centerY) * 3,
+			//		0.0f));
+
+			//	input.push_back(Eigen::Vector3f(
+			//		centerX,
+			//		maxY + (maxY - centerY) * 3,
+			//		0.0f));
+
+			//	input.push_back(Eigen::Vector3f(
+			//		maxX + (maxX - centerX) * 3,
+			//		minY + (minY - centerY) * 3,
+			//		0.0f));
+			//}
+
+			//{
+			//	for (auto& t : result)
+			//	{
+			//		printf("%d, %d, %d\n", t.x(), t.y(), t.z());
+
+			//		auto ix = t.x();
+			//		auto iy = t.y();
+			//		auto iz = t.z();
+
+			//		if (ix == -1 || iy == -1 || iz == -1)
+			//			continue;
+
+			//		//if (ix == input.size() - 3 || ix == input.size() - 2 || ix == input.size() - 1)
+			//		//	continue;
+			//		//if (iy == input.size() - 3 || iy == input.size() - 2 || iy == input.size() - 1)
+			//		//	continue;
+			//		//if (iz == input.size() - 3 || iz == input.size() - 2 || iz == input.size() - 1)
+			//		//	continue;
+
+			//		auto& v0 = input[ix];
+			//		auto& v2 = input[iy];
+			//		auto& v1 = input[iz];
+
+			//		scene->Debug("Triangles")->AddTriangle(
+			//			{ v0.x(), v0.y(), v0.z() },
+			//			{ v1.x(), v1.y(), v1.z() },
+			//			{ v2.x(), v2.y(), v2.z() });
+			//	}
+			//}
+
+			//return;
+
+			DT::Delaunay<double> triangulation;
+			const auto start = std::chrono::high_resolution_clock::now();
+			const std::vector<DT::Triangle<double>> triangles = triangulation.triangulate(points);
+			const auto end = std::chrono::high_resolution_clock::now();
+			const std::chrono::duration<double> diff = end - start;
+
+			std::cout << triangles.size() << " triangles generated in " << diff.count() << "s\n";
+			const std::vector<DT::Edge<double>> edges = triangulation.getEdges();
+
+			for (auto& e : edges)
+			{
+				auto v0 = glm::vec3(e.v->x, e.v->y, 0.0f);
+				auto v1 = glm::vec3(e.w->x, e.w->y, 0.0f);
+
+				scene->Debug("lines")->AddLine(v0, v1, glm::red, glm::red);
+			}
+
+			triangulation.getTriangles();
+
+			for (auto& t : triangles)
+			{
+				auto v0 = glm::vec3(t.a->x, t.a->y, 100.0f);
+				auto v1 = glm::vec3(t.b->x, t.b->y, 100.0f);
+				auto v2 = glm::vec3(t.c->x, t.c->y, 100.0f);
+
+				scene->Debug("triangles")->AddTriangle(v0, v2, v1, glm::blue, glm::blue, glm::blue);
+			}
+		}
 	});
 
 

@@ -13,7 +13,7 @@
  *  Journal of Graphics Tools, 8(1), 2003
  *
  *  Several geometric predicates are defined.  Their parameters are all
- *  points.  Each point is an array of two or three real precision
+ *  points.  Each point is an array of two or three _real precision
  *  floating point numbers. The geometric predicates implemented in
  *  this file are:
  *
@@ -46,23 +46,23 @@
 
 /* function prototype */
 
-int tri_tri_overlap_test_3d(real p1[3], real q1[3], real r1[3],
-    real p2[3], real q2[3], real r2[3]);
+int tri_tri_overlap_test_3d(_real p1[3], _real q1[3], _real r1[3],
+    _real p2[3], _real q2[3], _real r2[3]);
 
 
-int coplanar_tri_tri3d(real  p1[3], real  q1[3], real  r1[3],
-    real  p2[3], real  q2[3], real  r2[3],
-    real  N1[3], real  N2[3]);
+int coplanar_tri_tri3d(_real  p1[3], _real  q1[3], _real  r1[3],
+    _real  p2[3], _real  q2[3], _real  r2[3],
+    _real  N1[3], _real  N2[3]);
 
 
-int tri_tri_overlap_test_2d(real p1[2], real q1[2], real r1[2],
-    real p2[2], real q2[2], real r2[2]);
+int tri_tri_overlap_test_2d(_real p1[2], _real q1[2], _real r1[2],
+    _real p2[2], _real q2[2], _real r2[2]);
 
 
-int tri_tri_intersection_test_3d(real p1[3], real q1[3], real r1[3],
-    real p2[3], real q2[3], real r2[3],
+int tri_tri_intersection_test_3d(_real p1[3], _real q1[3], _real r1[3],
+    _real p2[3], _real q2[3], _real r2[3],
     int* coplanar,
-    real source[3], real target[3]);
+    _real source[3], _real target[3]);
 
 /* coplanar returns whether the triangles are coplanar
  *  source and target are the endpoints of the segment of
@@ -137,13 +137,13 @@ else return coplanar_tri_tri3d(p1,q1,r1,p2,q2,r2,N1,N2);\
  */
 
 
-int tri_tri_overlap_test_3d(real p1[3], real q1[3], real r1[3],
+int tri_tri_overlap_test_3d(_real p1[3], _real q1[3], _real r1[3],
 
-    real p2[3], real q2[3], real r2[3])
+    _real p2[3], _real q2[3], _real r2[3])
 {
-    real dp1, dq1, dr1, dp2, dq2, dr2;
-    real v1[3], v2[3];
-    real N1[3], N2[3];
+    _real dp1, dq1, dr1, dp2, dq2, dr2;
+    _real v1[3], v2[3];
+    _real N1[3], N2[3];
 
     /* Compute distance signs  of p1, q1 and r1 to the plane of
      triangle(p2,q2,r2) */
@@ -213,14 +213,14 @@ int tri_tri_overlap_test_3d(real p1[3], real q1[3], real r1[3],
 
 
 
-int coplanar_tri_tri3d(real p1[3], real q1[3], real r1[3],
-    real p2[3], real q2[3], real r2[3],
-    real normal_1[3], real normal_2[3]) {
+int coplanar_tri_tri3d(_real p1[3], _real q1[3], _real r1[3],
+    _real p2[3], _real q2[3], _real r2[3],
+    _real normal_1[3], _real normal_2[3]) {
 
-    real P1[2], Q1[2], R1[2];
-    real P2[2], Q2[2], R2[2];
+    _real P1[2], Q1[2], R1[2];
+    _real P2[2], Q2[2], R2[2];
 
-    real n_x, n_y, n_z;
+    _real n_x, n_y, n_z;
 
     n_x = ((normal_1[0] < 0) ? -normal_1[0] : normal_1[0]);
     n_y = ((normal_1[1] < 0) ? -normal_1[1] : normal_1[1]);
@@ -395,16 +395,16 @@ return coplanar_tri_tri3d(p1,q1,r1,p2,q2,r2,N1,N2);\
    source and target are the endpoints of the line segment of intersection
    */
 
-int tri_tri_intersection_test_3d(real p1[3], real q1[3], real r1[3],
-    real p2[3], real q2[3], real r2[3],
+int tri_tri_intersection_test_3d(_real p1[3], _real q1[3], _real r1[3],
+    _real p2[3], _real q2[3], _real r2[3],
     int* coplanar,
-    real source[3], real target[3])
+    _real source[3], _real target[3])
 
 {
-    real dp1, dq1, dr1, dp2, dq2, dr2;
-    real v1[3], v2[3], v[3];
-    real N1[3], N2[3], N[3];
-    real alpha;
+    _real dp1, dq1, dr1, dp2, dq2, dr2;
+    _real v1[3], v2[3], v[3];
+    _real N1[3], N2[3], N[3];
+    _real alpha;
 
     // Compute distance signs  of p1, q1 and r1 
     // to the plane of triangle(p2,q2,r2)
@@ -583,8 +583,8 @@ else return 0; }}
 
 
 
-int ccw_tri_tri_intersection_2d(real p1[2], real q1[2], real r1[2],
-    real p2[2], real q2[2], real r2[2]) {
+int ccw_tri_tri_intersection_2d(_real p1[2], _real q1[2], _real r1[2],
+    _real p2[2], _real q2[2], _real r2[2]) {
     if (ORIENT_2D(p2, q2, p1) >= 0.0) {
         if (ORIENT_2D(q2, r2, p1) >= 0.0) {
             if (ORIENT_2D(r2, p2, p1) >= 0.0) return 1;
@@ -607,8 +607,8 @@ int ccw_tri_tri_intersection_2d(real p1[2], real q1[2], real r1[2],
 };
 
 
-int tri_tri_overlap_test_2d(real p1[2], real q1[2], real r1[2],
-    real p2[2], real q2[2], real r2[2]) {
+int tri_tri_overlap_test_2d(_real p1[2], _real q1[2], _real r1[2],
+    _real p2[2], _real q2[2], _real r2[2]) {
     if (ORIENT_2D(p1, q1, r1) < 0.0)
         if (ORIENT_2D(p2, q2, r2) < 0.0)
             return ccw_tri_tri_intersection_2d(p1, r1, q1, p2, r2, q2);

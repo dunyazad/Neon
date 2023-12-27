@@ -11,8 +11,10 @@
 #include <device_launch_parameters.h>
 
 #include <thrust/iterator/constant_iterator.h>
+#include <thrust/iterator/counting_iterator.h>
 #include <thrust/copy.h>
 #include <thrust/device_vector.h>
+#include <thrust/functional.h>
 #include <thrust/generate.h>
 #include <thrust/host_vector.h>
 #include <thrust/sort.h>
@@ -28,7 +30,9 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/vector_angle.hpp>
 
-#define PI 3.14159265359f
+#undef _HAS_STD_BYTE
+#define _HAS_STD_BYTE 0
+#include <nvtx3/nvToolsExt.h>
 
 #define IntNAN std::numeric_limits<int>::quiet_NaN()
 #define RealNAN std::numeric_limits<float>::quiet_NaN()

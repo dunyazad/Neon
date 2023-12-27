@@ -134,6 +134,7 @@ target_include_directories(Neon PUBLIC
 
 if(USE_CUDA)
 set_target_properties(Neon PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-extended-lambda")
 endif(USE_CUDA)
 
 target_link_libraries(Neon
