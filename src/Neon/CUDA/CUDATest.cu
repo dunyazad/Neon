@@ -69,7 +69,7 @@ namespace NeonCUDA
 	}
 
 	__device__
-	bool Triangle::aabbContains(VertexIndex v)
+		bool Triangle::aabbContains(VertexIndex v)
 	{
 		auto x0 = points[v0].x();
 		auto y0 = points[v0].y();
@@ -173,13 +173,13 @@ namespace NeonCUDA
 		//printf("trianglesSize : %d\n", trianglesSize);
 	}
 
-	thrust::host_vector<Eigen::Vector3i> DelaunayTriangulation(vector<Eigen::Vector3f>& inputPoints)
+	thrust::host_vector<Eigen::Vector3i> DelaunayTriangulation_BowyerWatson(vector<Eigen::Vector3f>& inputPoints)
 	{
 		thrust::device_vector<Eigen::Vector3f> device_points(inputPoints.size() + 3);
 		thrust::copy(inputPoints.begin(), inputPoints.end(), device_points.begin());
-		
+
 		vector<Eigen::Vector3i> result;
-		
+
 		thrust::device_vector<Triangle> triangles((inputPoints.size() + 2) * 3);
 		thrust::device_vector<int> trianglesSize(1);
 
@@ -197,12 +197,133 @@ namespace NeonCUDA
 		nvtxRangePushA("@Aaron/DT");
 		nvtxRangePushA("@Aaron/DT/GetSuperTriangle");
 
-		GetSuperTriangleWrapper<<<1, 1>>>(
+		GetSuperTriangleWrapper << <1, 1 >> > (
 			thrust::raw_pointer_cast(device_points.data()), device_points.size(),
 			thrust::raw_pointer_cast(triangles.data()), thrust::raw_pointer_cast(trianglesSize.data()));
 		nvtxRangePop();
 
 		nvtxRangePushA("@Aaron/DT/Main");
+		/*
+		thrust::for_each(
+			thrust::make_counting_iterator<size_t>(0),
+			thrust::make_counting_iterator<size_t>(1),
+			[_points, _pointsSize, _edges, _edgesSizes, _triangles, _trianglesSize] __device__(size_t not_using) {
+			for (size_t index = 0; index < _pointsSize; index++)
+			{
+				for (size_t i = 0; i < _trianglesSize[0]; i++)
+				{
+					_triangles[i].points = _points;
+
+					if (_triangles[i].aabbContains(index))
+					{
+						if (_triangles[i].circumCircleContains(index))
+						{
+							_triangles[i].isBad = true;
+							(_edges[index * 100 + _edgesSizes[index]]).isBad = false;
+							(_edges[index * 100 + _edgesSizes[index]]).points = _points;
+							(_edges[index * 100 + _edgesSizes[index]]).v0 = _triangles[i].v0;
+							(_edges[index * 100 + _edgesSizes[index]]).v1 = _triangles[i].v1;
+							_edgesSizes[index]++;
+
+							(_edges[index * 100 + _edgesSizes[index]]).isBad = false;
+							(_edges[index * 100 + _edgesSizes[index]]).points = _points;
+							(_edges[index * 100 + _edgesSizes[index]]).v0 = _triangles[i].v1;
+							(_edges[index * 100 + _edgesSizes[index]]).v1 = _triangles[i].v2;
+							_edgesSizes[index]++;
+
+							(_edges[index * 100 + _edgesSizes[index]]).isBad = false;
+							(_edges[index * 100 + _edgesSizes[index]]).points = _points;
+							(_edges[index * 100 + _edgesSizes[index]]).v0 = _triangles[i].v2;
+							(_edges[index * 100 + _edgesSizes[index]]).v1 = _triangles[i].v0;
+							_edgesSizes[index]++;
+						}
+					}
+				}
+
+				size_t squeezedTriangleIndex = 0;
+				for (size_t i = 0; i < _trianglesSize[0]; i++)
+				{
+					auto& t = _triangles[i];
+					if (t.isBad == false)
+					{
+						_triangles[squeezedTriangleIndex].isBad = t.isBad;
+						_triangles[squeezedTriangleIndex].points = t.points;
+						_triangles[squeezedTriangleIndex].v0 = t.v0;
+						_triangles[squeezedTriangleIndex].v1 = t.v1;
+						_triangles[squeezedTriangleIndex].v2 = t.v2;
+						squeezedTriangleIndex++;
+					}
+					else
+					{
+						t.isBad = true;
+						t.points = nullptr;
+						t.v0 = -1;
+						t.v1 = -1;
+						t.v2 = -1;
+					}
+				}
+				_trianglesSize[0] = squeezedTriangleIndex;
+
+				for (size_t i = 0; i < _edgesSizes[index]; i++)
+				{
+					for (size_t j = i + 1; j < _edgesSizes[index]; j++)
+					{
+						if (almost_equal(_edges[index * 100 + i], _edges[index * 100 + j]))
+						{
+							_edges[index * 100 + i].isBad = true;
+							_edges[index * 100 + j].isBad = true;
+						}
+					}
+				}
+
+				size_t squeezedEdgeIndex = 0;
+				for (size_t i = 0; i < _edgesSizes[index]; i++)
+				{
+					auto& edge = _edges[index * 100 + i];
+					if (edge.isBad == false)
+					{
+						_edges[index * 100 + squeezedEdgeIndex].isBad = edge.isBad;
+						_edges[index * 100 + squeezedEdgeIndex].points = edge.points;
+						_edges[index * 100 + squeezedEdgeIndex].v0 = edge.v0;
+						_edges[index * 100 + squeezedEdgeIndex].v1 = edge.v1;
+						squeezedEdgeIndex++;
+					}
+					else
+					{
+						edge.isBad = true;
+						edge.points = nullptr;
+						edge.v0 = -1;
+						edge.v1 = -1;
+					}
+				}
+				_edgesSizes[index] = squeezedEdgeIndex;
+
+				for (size_t i = 0; i < _edgesSizes[index]; i++)
+				{
+					auto& edge = _edges[index * 100 + i];
+
+					_triangles[_trianglesSize[0]].isBad = false;
+					_triangles[_trianglesSize[0]].points = _points;
+					_triangles[_trianglesSize[0]].v0 = edge.v0;
+					_triangles[_trianglesSize[0]].v1 = edge.v1;
+					_triangles[_trianglesSize[0]].v2 = index;
+					_trianglesSize[0]++;
+				}
+
+				for (size_t i = 0; i < _edgesSizes[index]; i++)
+				{
+					auto& edge = _edges[index * 100 + i];
+					edge.isBad = true;
+					edge.points = nullptr;
+					edge.v0 = -1;
+					edge.v1 = -1;
+				}
+				_edgesSizes[index] = 0;
+			}
+		});
+		*/
+
+		nvtxRangePushA("@Aaron/DT/Check Triangles");
 		thrust::for_each(
 			thrust::make_counting_iterator<size_t>(0),
 			thrust::make_counting_iterator<size_t>(1),
@@ -321,7 +442,7 @@ namespace NeonCUDA
 			}
 		});
 		nvtxRangePop();
-
+		
 		thrust::host_vector<Triangle> temp_triangles(triangles.begin(), triangles.end());
 		for (auto& t : temp_triangles)
 		{
@@ -418,6 +539,55 @@ namespace NeonCUDA
 
 		nvtxRangePop();
 
+		return result;
+	}
+
+	thrust::host_vector<Eigen::Vector3i> DelaunayTriangulation_DivideAndConquer(vector<Eigen::Vector3f>& inputPoints)
+	{
+		vector<Eigen::Vector3i> result;
+		return result;
+	}
+
+	thrust::host_vector<Eigen::Vector3i> DelaunayTriangulation_Custom(vector<Eigen::Vector3f>& inputPoints)
+	{
+		thrust::device_vector<Eigen::Vector3f> device_points(inputPoints.size() + 3);
+		thrust::copy(inputPoints.begin(), inputPoints.end(), device_points.begin());
+
+		vector<Eigen::Vector3i> result;
+
+		thrust::device_vector<Triangle> triangles((inputPoints.size() + 2) * 3);
+		thrust::device_vector<int> trianglesSize(1);
+
+		auto _points = thrust::raw_pointer_cast(device_points.data());
+		auto _pointsSize = inputPoints.size();
+		auto _triangles = thrust::raw_pointer_cast(triangles.data());
+		auto _trianglesSize = thrust::raw_pointer_cast(trianglesSize.data());
+
+		thrust::device_vector<Edge> edges(inputPoints.size() * 100);
+		thrust::device_vector<int> edgesSizes(inputPoints.size(), 0);
+
+		auto _edges = thrust::raw_pointer_cast(edges.data());
+		auto _edgesSizes = thrust::raw_pointer_cast(edgesSizes.data());
+
+		nvtxRangePushA("@Aaron/DT");
+		
+		nvtxRangePushA("@Aaron/DT/GetSuperTriangle");
+		GetSuperTriangleWrapper <<<1, 1 >>> (
+			thrust::raw_pointer_cast(device_points.data()), device_points.size(),
+			thrust::raw_pointer_cast(triangles.data()), thrust::raw_pointer_cast(trianglesSize.data()));
+		nvtxRangePop();
+
+		thrust::host_vector<Triangle> temp_triangles(triangles.begin(), triangles.end());
+		for (auto& t : temp_triangles)
+		{
+			result.push_back(Eigen::Vector3i(t.v0, t.v1, t.v2));
+		}
+
+		nvtxRangePushA("@Aaron/DT/Get Triangles Size");
+		thrust::host_vector<int> host_trianglesSize(trianglesSize.begin(), trianglesSize.end());
+		nvtxRangePop();
+
+		nvtxRangePop();
 		return result;
 	}
 }

@@ -146,135 +146,223 @@ int main()
 			entity->AddComponent(shader);
 		}
 #pragma endregion
-
+		
 		{
-			int numberPoints = 6000;
-			
-			std::default_random_engine eng(std::random_device{}());
-			std::uniform_real_distribution<double> dist_w(0, 1280);
-			std::uniform_real_distribution<double> dist_h(0, 1024);
-
-			std::cout << "Generating " << numberPoints << " random points" << std::endl;
-
-			vector<Eigen::Vector3f> input;
-
-			std::vector<DT::Vector2<double>> points;
-			for (int i = 0; i < numberPoints; ++i) {
-				auto x = dist_w(eng);
-				auto y = dist_h(eng);
-				//printf("%f, %f\n", x, y);
-
-				//scene->Debug("points")->AddPoint(glm::vec3(x, y, 0.0f), glm::green);
-
-				points.push_back(DT::Vector2<double>{x, y});
-
-				input.push_back({ (float)x, (float)y, 0.0f });
-			}
-			
-			//auto result = NeonCUDA::DelaunayTriangulation(input);
-
-			//for (auto& p : result)
-			//{
-			//	scene->Debug("points")->AddPoint({ p.x(), p.y(), p.z() });
-			//}
-
-			//{
-			//	float minX = FLT_MAX, minY = FLT_MAX, minZ = FLT_MAX;
-			//	float maxX = -FLT_MAX, maxY = -FLT_MAX, maxZ = -FLT_MAX;
-
-			//	for (size_t i = 0; i < numberPoints; i++)
-			//	{
-			//		auto& v = input[i];
-
-			//		if (minX > v.x()) minX = v.x();
-			//		if (minY > v.y()) minY = v.y();
-			//		if (minZ > v.z()) minZ = v.z();
-
-			//		if (maxX < v.x()) maxX = v.x();
-			//		if (maxY < v.y()) maxY = v.y();
-			//		if (maxZ < v.z()) maxZ = v.z();
-			//	}
-
-			//	float centerX = (minX + maxX) * 0.5f;
-			//	float centerY = (minY + maxY) * 0.5f;
-			//	float centerZ = (minZ + maxZ) * 0.5f;
-
-			//	input.push_back(Eigen::Vector3f(
-			//		minX + (minX - centerX) * 3,
-			//		minY + (minY - centerY) * 3,
-			//		0.0f));
-
-			//	input.push_back(Eigen::Vector3f(
-			//		centerX,
-			//		maxY + (maxY - centerY) * 3,
-			//		0.0f));
-
-			//	input.push_back(Eigen::Vector3f(
-			//		maxX + (maxX - centerX) * 3,
-			//		minY + (minY - centerY) * 3,
-			//		0.0f));
-			//}
-
-			//{
-			//	for (auto& t : result)
-			//	{
-			//		printf("%d, %d, %d\n", t.x(), t.y(), t.z());
-
-			//		auto ix = t.x();
-			//		auto iy = t.y();
-			//		auto iz = t.z();
-
-			//		if (ix == -1 || iy == -1 || iz == -1)
-			//			continue;
-
-			//		//if (ix == input.size() - 3 || ix == input.size() - 2 || ix == input.size() - 1)
-			//		//	continue;
-			//		//if (iy == input.size() - 3 || iy == input.size() - 2 || iy == input.size() - 1)
-			//		//	continue;
-			//		//if (iz == input.size() - 3 || iz == input.size() - 2 || iz == input.size() - 1)
-			//		//	continue;
-
-			//		auto& v0 = input[ix];
-			//		auto& v2 = input[iy];
-			//		auto& v1 = input[iz];
-
-			//		scene->Debug("Triangles")->AddTriangle(
-			//			{ v0.x(), v0.y(), v0.z() },
-			//			{ v1.x(), v1.y(), v1.z() },
-			//			{ v2.x(), v2.y(), v2.z() });
-			//	}
-			//}
-
-			//return;
-
-			DT::Delaunay<double> triangulation;
-			const auto start = std::chrono::high_resolution_clock::now();
-			const std::vector<DT::Triangle<double>> triangles = triangulation.triangulate(points);
-			const auto end = std::chrono::high_resolution_clock::now();
-			const std::chrono::duration<double> diff = end - start;
-
-			std::cout << triangles.size() << " triangles generated in " << diff.count() << "s\n";
-			const std::vector<DT::Edge<double>> edges = triangulation.getEdges();
-
-			for (auto& e : edges)
+			ifstream file("C:\\Resources\\Results\\Triangulated.bson", ios::binary);
+			if (file.is_open())
 			{
-				auto v0 = glm::vec3(e.v->x, e.v->y, 0.0f);
-				auto v1 = glm::vec3(e.w->x, e.w->y, 0.0f);
+				file.seekg(0, ios::end);
+				auto fileSize = file.tellg();
+				file.seekg(0, ios::beg);
 
-				scene->Debug("lines")->AddLine(v0, v1, glm::red, glm::red);
-			}
+				vector<uint8_t> fileContents(static_cast<size_t>(fileSize));
+				file.read(reinterpret_cast<char*>(fileContents.data()), fileSize);
+				file.close();
 
-			triangulation.getTriangles();
+				json json = json::from_bson(fileContents);
 
-			for (auto& t : triangles)
-			{
-				auto v0 = glm::vec3(t.a->x, t.a->y, 100.0f);
-				auto v1 = glm::vec3(t.b->x, t.b->y, 100.0f);
-				auto v2 = glm::vec3(t.c->x, t.c->y, 100.0f);
+				vector<glm::vec3> vertices;
+				vector<glm::vec3> normals;
+				vector<glm::vec4> colors;
+				vector<GLuint> indices;
 
-				scene->Debug("triangles")->AddTriangle(v0, v2, v1, glm::blue, glm::blue, glm::blue);
+
+				auto nov = json["number of vertices"].get<size_t>();
+				if (0 < nov)
+				{
+					auto vs = json["vertices"].get<vector<float>>();
+					for (size_t i = 0; i < nov; i++)
+					{
+						auto x = vs[i * 3 + 0];
+						auto y = vs[i * 3 + 1];
+						auto z = vs[i * 3 + 2];
+
+						vertices.push_back({ x, y, z });
+					}
+				}
+
+				auto non = json["number of normals"].get<size_t>();
+				if (0 < non)
+				{
+					auto ns = json["normals"].get<vector<float>>();;
+					for (size_t i = 0; i < non; i++)
+					{
+						auto x = ns[i * 3 + 0];
+						auto y = ns[i * 3 + 1];
+						auto z = ns[i * 3 + 2];
+
+						normals.push_back({ x, y, z });
+					}
+				}
+
+				auto noc = json["number of colors"].get<size_t>();
+				if (0 < noc)
+				{
+					auto cs = json["colors"].get<vector<float>>();;
+					for (size_t i = 0; i < noc; i++)
+					{
+						auto r = cs[i * 3 + 0];
+						auto g = cs[i * 3 + 1];
+						auto b = cs[i * 3 + 2];
+
+						colors.push_back({ r, g, b, 1.0f });
+					}
+				}
+
+				auto not = json["number of triangles"].get<size_t>();
+				if (0 < not)
+				{
+					auto ts = json["triangles"].get<vector<tuple<unsigned int, unsigned int, unsigned int>>>();
+					for (size_t i = 0; i < not; i++)
+					{
+						indices.push_back(get<0>(ts[i]));
+						indices.push_back(get<1>(ts[i]));
+						indices.push_back(get<2>(ts[i]));
+					}
+
+					for (size_t i = 0; i < not / 3; i++)
+					{
+						auto i0 = indices[i * 3 + 0];
+						auto i1 = indices[i * 3 + 1];
+						auto i2 = indices[i * 3 + 2];
+
+						auto v0 = vertices[i0];
+						auto v1 = vertices[i1];
+						auto v2 = vertices[i2];
+
+						auto c0 = colors[i0];
+						auto c1 = colors[i1];
+						auto c2 = colors[i2];
+
+						scene->Debug("mesh")->AddTriangle(v0, v1, v2, c0, c1, c2);
+					}
+				}
 			}
 		}
+
+	//	{
+	//		int numberPoints = 60;
+	//		
+	//		std::default_random_engine eng(std::random_device{}());
+	//		std::uniform_real_distribution<double> dist_w(0, 1280);
+	//		std::uniform_real_distribution<double> dist_h(0, 1024);
+
+	//		std::cout << "Generating " << numberPoints << " random points" << std::endl;
+
+	//		vector<Eigen::Vector3f> input;
+
+	//		std::vector<DT::Vector2<double>> points;
+	//		for (int i = 0; i < numberPoints; ++i) {
+	//			auto x = dist_w(eng);
+	//			auto y = dist_h(eng);
+	//			//printf("%f, %f\n", x, y);
+
+	//			scene->Debug("points")->AddPoint(glm::vec3(x, y, 0.0f), glm::green);
+
+	//			points.push_back(DT::Vector2<double>{x, y});
+
+	//			input.push_back({ (float)x, (float)y, 0.0f });
+	//		}
+	//		
+	//		auto result = NeonCUDA::DelaunayTriangulation_Custom(input);
+
+	//		{
+	//			float minX = FLT_MAX, minY = FLT_MAX, minZ = FLT_MAX;
+	//			float maxX = -FLT_MAX, maxY = -FLT_MAX, maxZ = -FLT_MAX;
+
+	//			for (size_t i = 0; i < numberPoints; i++)
+	//			{
+	//				auto& v = input[i];
+
+	//				if (minX > v.x()) minX = v.x();
+	//				if (minY > v.y()) minY = v.y();
+	//				if (minZ > v.z()) minZ = v.z();
+
+	//				if (maxX < v.x()) maxX = v.x();
+	//				if (maxY < v.y()) maxY = v.y();
+	//				if (maxZ < v.z()) maxZ = v.z();
+	//			}
+
+	//			float centerX = (minX + maxX) * 0.5f;
+	//			float centerY = (minY + maxY) * 0.5f;
+	//			float centerZ = (minZ + maxZ) * 0.5f;
+
+	//			input.push_back(Eigen::Vector3f(
+	//				minX + (minX - centerX) * 3,
+	//				minY + (minY - centerY) * 3,
+	//				0.0f));
+
+	//			input.push_back(Eigen::Vector3f(
+	//				centerX,
+	//				maxY + (maxY - centerY) * 3,
+	//				0.0f));
+
+	//			input.push_back(Eigen::Vector3f(
+	//				maxX + (maxX - centerX) * 3,
+	//				minY + (minY - centerY) * 3,
+	//				0.0f));
+	//		}
+
+	//		{
+	//			for (auto& t : result)
+	//			{
+	//				printf("%d, %d, %d\n", t.x(), t.y(), t.z());
+
+	//				auto ix = t.x();
+	//				auto iy = t.y();
+	//				auto iz = t.z();
+
+	//				if (ix == -1 || iy == -1 || iz == -1)
+	//					continue;
+
+	///*				if (ix >= input.size() - 3)
+	//					continue;
+	//				if (iy >= input.size() - 3)
+	//					continue;
+	//				if (iz >= input.size() - 3)
+	//					continue;*/
+
+	//				auto& v0 = input[ix];
+	//				auto& v2 = input[iy];
+	//				auto& v1 = input[iz];
+
+	//				scene->Debug("Triangles")->AddTriangle(
+	//					{ v0.x(), v0.y(), v0.z() },
+	//					{ v1.x(), v1.y(), v1.z() },
+	//					{ v2.x(), v2.y(), v2.z() });
+	//			}
+	//		}
+
+	//		return;
+
+	//		DT::Delaunay<double> triangulation;
+	//		const auto start = std::chrono::high_resolution_clock::now();
+	//		const std::vector<DT::Triangle<double>> triangles = triangulation.triangulate(points);
+	//		const auto end = std::chrono::high_resolution_clock::now();
+	//		const std::chrono::duration<double> diff = end - start;
+
+	//		std::cout << triangles.size() << " triangles generated in " << diff.count() << "s\n";
+	//		const std::vector<DT::Edge<double>> edges = triangulation.getEdges();
+
+	//		for (auto& e : edges)
+	//		{
+	//			auto v0 = glm::vec3(e.v->x, e.v->y, 0.0f);
+	//			auto v1 = glm::vec3(e.w->x, e.w->y, 0.0f);
+
+	//			scene->Debug("lines")->AddLine(v0, v1, glm::red, glm::red);
+	//		}
+
+	//		triangulation.getTriangles();
+
+	//		for (auto& t : triangles)
+	//		{
+	//			auto v0 = glm::vec3(t.a->x, t.a->y, 10.0f);
+	//			auto v1 = glm::vec3(t.b->x, t.b->y, 10.0f);
+	//			auto v2 = glm::vec3(t.c->x, t.c->y, 10.0f);
+
+	//			scene->Debug("triangles")->AddTriangle(v0, v2, v1, glm::blue, glm::blue, glm::blue);
+	//		}
+	//	}
 	});
 
 
