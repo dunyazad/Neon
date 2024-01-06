@@ -379,15 +379,15 @@ namespace Neon
 		return true;
 	}
 
-	//ostream& operator<<(ostream& os, AABB const& aabb)
-	//{
-	//	return os << "min : " << aabb.xyz << endl
-	//		<< "max : " << aabb.XYZ << endl
-	//		<< "center : " << aabb.GetCenter() << endl
-	//		<< "x length : " << aabb.GetXLength() << endl
-	//		<< "y length : " << aabb.GetYLength() << endl
-	//		<< "z length : " << aabb.GetZLength() << endl;
-	//}
+	ostream& operator<<(ostream& os, const AABB& aabb)
+	{
+		return os << "min : " << aabb.xyz.x << ", " << aabb.xyz.y << ", " << aabb.xyz.z << endl
+			<< "max : " << aabb.XYZ.x << ", " << aabb.XYZ.y << ", " << aabb.XYZ.z << endl
+			<< "center : " << aabb.center.x << ", " << aabb.center.y << ", " << aabb.center.z << endl
+			<< "x length : " << aabb.GetXLength() << endl
+			<< "y length : " << aabb.GetYLength() << endl
+			<< "z length : " << aabb.GetZLength() << endl;
+	}
 
 	namespace Intersection
 	{

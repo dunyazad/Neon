@@ -197,7 +197,7 @@ namespace Neon
 		for (size_t i = 0; i < nov; i++)
 		{
 			auto v = mesh->GetVertex(i);
-			vertexMapping[i] = AddVertex(v, { 0.0f, 0.0f, 0.0f });
+			vertexMapping[(GLuint)i] = AddVertex(v, { 0.0f, 0.0f, 0.0f });
 		}
 
 		auto noi = mesh->GetIndexBuffer()->Size() / 3;

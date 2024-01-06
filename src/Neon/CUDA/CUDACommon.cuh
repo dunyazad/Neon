@@ -20,6 +20,7 @@
 #include <glm/gtc/matrix_access.hpp>
 #include <glm/gtx/intersect.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtx/norm.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/vector_angle.hpp>
 

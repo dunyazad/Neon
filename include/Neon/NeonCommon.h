@@ -231,7 +231,7 @@ namespace Neon
 		bool IntersectsTriangle(const glm::vec3& tp0, const glm::vec3& tp1, const glm::vec3& tp2);
 	};
 
-	//ostream& operator<<(ostream& os, AABB const& aabb);
+	ostream& operator<<(ostream& os, const AABB& aabb);
 
 	namespace Intersection
 	{

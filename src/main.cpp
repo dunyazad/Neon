@@ -3,6 +3,7 @@
 #include <Neon/Neon.h>
 
 #include <Neon/CUDA/CUDATest.h>
+#include <Neon/CUDA/CUDATSDF.h>
 #include "DT/DT.h"
 
 int main()
@@ -23,7 +24,7 @@ int main()
 		//glEnable(GL_CULL_FACE);
 		//glCullFace(GL_BACK);
 		//glFrontFace(GL_CCW);
-
+		
 		glPointSize(10.0f);
 
 		auto scene = app.CreateScene("Scene/Main");
@@ -62,7 +63,8 @@ int main()
 					if (1.0f >= pointSize)
 						pointSize = 1.0f;
 					glPointSize(pointSize);
-				} else if ((GLFW_KEY_KP_MULTIPLY == event.key) && (GLFW_RELEASE == event.action || GLFW_REPEAT == event.action)) {
+				}
+				else if ((GLFW_KEY_KP_MULTIPLY == event.key) && (GLFW_RELEASE == event.action || GLFW_REPEAT == event.action)) {
 					GLfloat lineWidth;
 					glGetFloatv(GL_LINE_WIDTH, &lineWidth);
 					lineWidth += 1.0f;
@@ -146,224 +148,197 @@ int main()
 			entity->AddComponent(shader);
 		}
 #pragma endregion
-		
+
 		{
-			ifstream file("C:\\Resources\\Results\\Triangulated.bson", ios::binary);
-			if (file.is_open())
+			auto entity = scene->CreateEntity("Entity/RegularGrid");
+
+			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/PLY Input");
+			entity->AddComponent(mesh);
+			mesh->FromPLYFile("C:\\saveData\\0000_target.ply");
+
+			auto& minPoint = mesh->GetAABB().GetMinPoint();
+			auto& maxPoint = mesh->GetAABB().GetMaxPoint();
+
+			float xoffset = (maxPoint.x - minPoint.x) * 0.5f;
+			float yoffset = (maxPoint.y - minPoint.y) * 0.5f;
+			float zoffset = (maxPoint.z - minPoint.z) * 0.5f;
+
+			int xcount = 4;
+			int ycount = 4;
+			int zcount = 4;
+
+			float voxelSize = 0.05f;
+		
+			NeonCUDA::TSDF** tsdfs = new NeonCUDA::TSDF*[xcount * ycount * zcount];
+			for (size_t z = 0; z < zcount; z++)
 			{
-				file.seekg(0, ios::end);
-				auto fileSize = file.tellg();
-				file.seekg(0, ios::beg);
-
-				vector<uint8_t> fileContents(static_cast<size_t>(fileSize));
-				file.read(reinterpret_cast<char*>(fileContents.data()), fileSize);
-				file.close();
-
-				json json = json::from_bson(fileContents);
-
-				vector<glm::vec3> vertices;
-				vector<glm::vec3> normals;
-				vector<glm::vec4> colors;
-				vector<GLuint> indices;
-
-
-				auto nov = json["number of vertices"].get<size_t>();
-				if (0 < nov)
+				for (size_t y = 0; y < ycount; y++)
 				{
-					auto vs = json["vertices"].get<vector<float>>();
-					for (size_t i = 0; i < nov; i++)
+					for (size_t x = 0; x < xcount; x++)
 					{
-						auto x = vs[i * 3 + 0];
-						auto y = vs[i * 3 + 1];
-						auto z = vs[i * 3 + 2];
-
-						vertices.push_back({ x, y, z });
-					}
-				}
-
-				auto non = json["number of normals"].get<size_t>();
-				if (0 < non)
-				{
-					auto ns = json["normals"].get<vector<float>>();;
-					for (size_t i = 0; i < non; i++)
-					{
-						auto x = ns[i * 3 + 0];
-						auto y = ns[i * 3 + 1];
-						auto z = ns[i * 3 + 2];
-
-						normals.push_back({ x, y, z });
-					}
-				}
-
-				auto noc = json["number of colors"].get<size_t>();
-				if (0 < noc)
-				{
-					auto cs = json["colors"].get<vector<float>>();;
-					for (size_t i = 0; i < noc; i++)
-					{
-						auto r = cs[i * 3 + 0];
-						auto g = cs[i * 3 + 1];
-						auto b = cs[i * 3 + 2];
-
-						colors.push_back({ r, g, b, 1.0f });
-					}
-				}
-
-				auto not = json["number of triangles"].get<size_t>();
-				if (0 < not)
-				{
-					auto ts = json["triangles"].get<vector<tuple<unsigned int, unsigned int, unsigned int>>>();
-					for (size_t i = 0; i < not; i++)
-					{
-						indices.push_back(get<0>(ts[i]));
-						indices.push_back(get<1>(ts[i]));
-						indices.push_back(get<2>(ts[i]));
-					}
-
-					for (size_t i = 0; i < not / 3; i++)
-					{
-						auto i0 = indices[i * 3 + 0];
-						auto i1 = indices[i * 3 + 1];
-						auto i2 = indices[i * 3 + 2];
-
-						auto v0 = vertices[i0];
-						auto v1 = vertices[i1];
-						auto v2 = vertices[i2];
-
-						auto c0 = colors[i0];
-						auto c1 = colors[i1];
-						auto c2 = colors[i2];
-
-						scene->Debug("mesh")->AddTriangle(v0, v1, v2, c0, c1, c2);
+						tsdfs[z * ycount * xcount + y * xcount + x] = new NeonCUDA::TSDF(
+							voxelSize,
+							make_float3(minPoint.x + x * xoffset, minPoint.y + y * yoffset, minPoint.z + z * zoffset),
+							make_float3(minPoint.x + (x + 1) * xoffset, minPoint.y + (y + 1) * yoffset, minPoint.z + (z + 1) * zoffset));
 					}
 				}
 			}
+
+			nvtxRangePushA("@Aaron/UpdateValues - Total");
+			for (size_t z = 0; z < zcount; z++)
+			{
+				for (size_t y = 0; y < ycount; y++)
+				{
+					for (size_t x = 0; x < xcount; x++)
+					{
+						tsdfs[z * ycount * xcount + y * xcount + x]->UpdateValues();
+					}
+				}
+			}
+			nvtxRangePop();
+
+			for (size_t z = 0; z < zcount; z++)
+			{
+				for (size_t y = 0; y < ycount; y++)
+				{
+					for (size_t x = 0; x < xcount; x++)
+					{
+						tsdfs[z * ycount * xcount + y * xcount + x]->Test(scene);
+					}
+				}
+			}
+
+			//NeonCUDA::TSDF tsdf(
+			//	0.05f,
+			//	make_float3(minPoint.x, minPoint.y, minPoint.z),
+			//	make_float3(maxPoint.x, maxPoint.y, maxPoint.z));
+
+			////tsdf.Apply(mesh);
+
+			//tsdf.UpdateValues();
+
+			//tsdf.Test(scene);
+
+			//auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", Neon::URL::Resource("/shader/lighting.vs"), Neon::URL::Resource("/shader/lighting.fs"));
+			//entity->AddComponent(shader);
+
+			//auto grid = scene->CreateComponent<Neon::RegularGrid>("Volume", mesh, 0.5f);
+			//grid->Build();
+
+			//for (size_t z = 0; z < grid->GetCellCountZ(); z++)
+			//{
+			//	for (size_t y = 0; y < grid->GetCellCountY(); y++)
+			//	{
+			//		for (size_t x = 0; x < grid->GetCellCountX(); x++)
+			//		{
+			//			auto cell = grid->GetCell(make_tuple(x, y, z));
+			//			if (cell->GetTriangles().size() > 0)
+			//			{
+			//				printf("[%d, %d, %d] Triangle Exists\n", x, y, z);
+			//			}
+			//		}
+			//	}
+			//}
+
+			//auto triangleLists = grid->ExtractSurface(0.0f);
+
+			//cout << mesh->GetAABB() << endl;
+
+#pragma region Temp
+			//auto not = mesh->GetIndexBuffer()->Size() / 3;
+			//
+			//			float gridInterval = 0.5f;
+			//
+			//			auto xLength = mesh->GetAABB().GetXLength();
+			//			auto yLength = mesh->GetAABB().GetYLength();
+			//			auto zLength = mesh->GetAABB().GetZLength();
+			//
+			//			auto xCount = (int)ceilf(xLength / gridInterval) + 1;
+			//			auto yCount = (int)ceilf(yLength / gridInterval) + 1;
+			//			auto zCount = (int)ceilf(zLength / gridInterval) + 1;
+			//
+			//			float* grid = new float[xCount * yCount * zCount];
+			//			memset(grid, 0, sizeof(float) * xCount * yCount * zCount);
+			//
+			//			float nx = -((float)xCount * gridInterval) * 0.5f;
+			//			float px = ((float)xCount * gridInterval) * 0.5f;
+			//			float ny = -((float)yCount * gridInterval) * 0.5f;
+			//			float py = ((float)yCount * gridInterval) * 0.5f;
+			//			float nz = -((float)zCount * gridInterval) * 0.5f;
+			//			float pz = ((float)zCount * gridInterval) * 0.5f;
+			//			float cx = (px + nx) * 0.5f;
+			//			float cy = (py + ny) * 0.5f;
+			//			float cz = (pz + nz) * 0.5f;
+			//
+			//			Neon::AABB aabb;
+			//			aabb.Expand(glm::vec3(nx, ny, nz) + mesh->GetAABB().GetCenter());
+			//			aabb.Expand(glm::vec3(px, py, pz) + mesh->GetAABB().GetCenter());
+			//
+			//#pragma omp parallel for
+			//			for (int z = 0; z < zCount; z++)
+			//			{
+			//#pragma omp parallel for
+			//				for (int y = 0; y < yCount; y++)
+			//				{
+			//#pragma omp parallel for
+			//					for (int x = 0; x < xCount; x++)
+			//					{
+			//						float minDistance = FLT_MAX;
+			//
+			//#pragma omp parallel for
+			//						for (int i = 0; i < not; i++)
+			//						{
+			//							auto i0 = mesh->GetIndex(i * 3 + 0);
+			//							auto i1 = mesh->GetIndex(i * 3 + 1);
+			//							auto i2 = mesh->GetIndex(i * 3 + 2);
+			//
+			//							auto& v0 = mesh->GetVertex(i0);
+			//							auto& v1 = mesh->GetVertex(i1);
+			//							auto& v2 = mesh->GetVertex(i2);
+			//
+			//							auto point = glm::vec3(nx, ny, nz) + mesh->GetAABB().GetCenter() + glm::vec3(x * gridInterval, y * gridInterval, z * gridInterval);
+			//							auto normal = glm::normalize(glm::cross(v1 - v0, v2 - v0));
+			//							auto vectorToVertex = point - v0;
+			//
+			//							float distance = glm::dot(normal, vectorToVertex) / glm::length(normal);
+			//
+			//							if (minDistance > distance)
+			//							{
+			//								minDistance = distance;
+			//							}
+			//						}
+			//
+			//						//if (fabsf(minDistance) < 2.0f)
+			//						{
+			//							grid[z * yCount * xCount + y * xCount + x] = minDistance;
+			//
+			//							//printf("%d %d %d %f\n", x, y, z, minDistance);
+			//						}
+			//					}
+			//				}
+			//			}
+			//
+			//			for (int z = 0; z < zCount; z++)
+			//			{
+			//				for (int y = 0; y < yCount; y++)
+			//				{
+			//					for (int x = 0; x < xCount; x++)
+			//					{
+			//						auto value = grid[z * yCount * xCount + y * xCount + x];
+			//
+			//						if (value != 0)
+			//						{
+			//							printf("%d %d %d %f\n", x, y, z, value);
+			//						}
+			//					}
+			//				}
+			//			}  
+#pragma endregion
+
+
+			scene->Debug("Mesh")->AddMesh(mesh);
 		}
-
-	//	{
-	//		int numberPoints = 60;
-	//		
-	//		std::default_random_engine eng(std::random_device{}());
-	//		std::uniform_real_distribution<double> dist_w(0, 1280);
-	//		std::uniform_real_distribution<double> dist_h(0, 1024);
-
-	//		std::cout << "Generating " << numberPoints << " random points" << std::endl;
-
-	//		vector<Eigen::Vector3f> input;
-
-	//		std::vector<DT::Vector2<double>> points;
-	//		for (int i = 0; i < numberPoints; ++i) {
-	//			auto x = dist_w(eng);
-	//			auto y = dist_h(eng);
-	//			//printf("%f, %f\n", x, y);
-
-	//			scene->Debug("points")->AddPoint(glm::vec3(x, y, 0.0f), glm::green);
-
-	//			points.push_back(DT::Vector2<double>{x, y});
-
-	//			input.push_back({ (float)x, (float)y, 0.0f });
-	//		}
-	//		
-	//		auto result = NeonCUDA::DelaunayTriangulation_Custom(input);
-
-	//		{
-	//			float minX = FLT_MAX, minY = FLT_MAX, minZ = FLT_MAX;
-	//			float maxX = -FLT_MAX, maxY = -FLT_MAX, maxZ = -FLT_MAX;
-
-	//			for (size_t i = 0; i < numberPoints; i++)
-	//			{
-	//				auto& v = input[i];
-
-	//				if (minX > v.x()) minX = v.x();
-	//				if (minY > v.y()) minY = v.y();
-	//				if (minZ > v.z()) minZ = v.z();
-
-	//				if (maxX < v.x()) maxX = v.x();
-	//				if (maxY < v.y()) maxY = v.y();
-	//				if (maxZ < v.z()) maxZ = v.z();
-	//			}
-
-	//			float centerX = (minX + maxX) * 0.5f;
-	//			float centerY = (minY + maxY) * 0.5f;
-	//			float centerZ = (minZ + maxZ) * 0.5f;
-
-	//			input.push_back(Eigen::Vector3f(
-	//				minX + (minX - centerX) * 3,
-	//				minY + (minY - centerY) * 3,
-	//				0.0f));
-
-	//			input.push_back(Eigen::Vector3f(
-	//				centerX,
-	//				maxY + (maxY - centerY) * 3,
-	//				0.0f));
-
-	//			input.push_back(Eigen::Vector3f(
-	//				maxX + (maxX - centerX) * 3,
-	//				minY + (minY - centerY) * 3,
-	//				0.0f));
-	//		}
-
-	//		{
-	//			for (auto& t : result)
-	//			{
-	//				printf("%d, %d, %d\n", t.x(), t.y(), t.z());
-
-	//				auto ix = t.x();
-	//				auto iy = t.y();
-	//				auto iz = t.z();
-
-	//				if (ix == -1 || iy == -1 || iz == -1)
-	//					continue;
-
-	///*				if (ix >= input.size() - 3)
-	//					continue;
-	//				if (iy >= input.size() - 3)
-	//					continue;
-	//				if (iz >= input.size() - 3)
-	//					continue;*/
-
-	//				auto& v0 = input[ix];
-	//				auto& v2 = input[iy];
-	//				auto& v1 = input[iz];
-
-	//				scene->Debug("Triangles")->AddTriangle(
-	//					{ v0.x(), v0.y(), v0.z() },
-	//					{ v1.x(), v1.y(), v1.z() },
-	//					{ v2.x(), v2.y(), v2.z() });
-	//			}
-	//		}
-
-	//		return;
-
-	//		DT::Delaunay<double> triangulation;
-	//		const auto start = std::chrono::high_resolution_clock::now();
-	//		const std::vector<DT::Triangle<double>> triangles = triangulation.triangulate(points);
-	//		const auto end = std::chrono::high_resolution_clock::now();
-	//		const std::chrono::duration<double> diff = end - start;
-
-	//		std::cout << triangles.size() << " triangles generated in " << diff.count() << "s\n";
-	//		const std::vector<DT::Edge<double>> edges = triangulation.getEdges();
-
-	//		for (auto& e : edges)
-	//		{
-	//			auto v0 = glm::vec3(e.v->x, e.v->y, 0.0f);
-	//			auto v1 = glm::vec3(e.w->x, e.w->y, 0.0f);
-
-	//			scene->Debug("lines")->AddLine(v0, v1, glm::red, glm::red);
-	//		}
-
-	//		triangulation.getTriangles();
-
-	//		for (auto& t : triangles)
-	//		{
-	//			auto v0 = glm::vec3(t.a->x, t.a->y, 10.0f);
-	//			auto v1 = glm::vec3(t.b->x, t.b->y, 10.0f);
-	//			auto v2 = glm::vec3(t.c->x, t.c->y, 10.0f);
-
-	//			scene->Debug("triangles")->AddTriangle(v0, v2, v1, glm::blue, glm::blue, glm::blue);
-	//		}
-	//	}
-	});
+		});
 
 
 

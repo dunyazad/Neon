@@ -61,6 +61,7 @@ namespace Neon
 		};
 
 	public:
+		RegularGrid(const string& name, float cellSize);
 		RegularGrid(const string& name, Mesh* mesh, float cellSize);
 		~RegularGrid();
 

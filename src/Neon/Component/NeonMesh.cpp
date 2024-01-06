@@ -385,7 +385,7 @@ namespace Neon
 				auto nov = json["number of vertices"].get<size_t>();
 				if (0 < nov)
 				{
-					printf("number of vertices : %d\n", nov);
+					printf("number of vertices : %lld\n", nov);
 
 					auto vs = json["vertices"].get<vector<float>>();
 					for (size_t i = 0; i < nov; i++)
@@ -868,6 +868,11 @@ namespace Neon
 				buffer->Clear();
 				buffer->Resize(size / sizeof(float3));
 				std::memcpy(buffer->Data(), vertices->buffer.get(), size);
+
+				for (auto& v : buffer->GetElements())
+				{
+					aabb.Expand(v);
+				}
 			}
 
 			if (normals)
@@ -901,6 +906,23 @@ namespace Neon
 				delete[] alphaBuffer;
 				delete[] rgbBuffer;
 			}
+			else if (colors)
+			{
+				unsigned char* rgbBuffer = new unsigned char[colors->count * 3];
+				std::memcpy(rgbBuffer, colors->buffer.get(), colors->count * 3 * sizeof(unsigned char));
+
+				for (size_t i = 0; i < colors->count; i++)
+				{
+					float r = ((float)rgbBuffer[i * 3 + 0]) / 255.0f;
+					float g = ((float)rgbBuffer[i * 3 + 1]) / 255.0f;
+					float b = ((float)rgbBuffer[i * 3 + 2]) / 255.0f;
+					float a = 1.0f;
+					AddColor(glm::vec4(r, g, b, a));
+				}
+
+				auto buffer = GetColorBuffer();
+				delete[] rgbBuffer;
+			}
 
 			if (faces)
 			{
@@ -914,7 +936,7 @@ namespace Neon
 			{
 				for (size_t i = 0; i < vertices->count; i++)
 				{
-					GetIndexBuffer()->AddElement(i-1);
+					GetIndexBuffer()->AddElement((GLuint)i - 1);
 				}
 			}
 		}
@@ -1002,7 +1024,7 @@ namespace Neon
 		}
 	}
 
-	void Mesh::ForEachTriangle(function<void(size_t, GLuint, GLuint, GLuint, glm::vec3, glm::vec3, glm::vec3)> callback)
+	void Mesh::ForEachTriangle(function<void(size_t, GLuint, GLuint, GLuint, glm::vec3&, glm::vec3&, glm::vec3&)> callback)
 	{
 		auto ib = GetIndexBuffer();
 		auto noi = ib->Size();

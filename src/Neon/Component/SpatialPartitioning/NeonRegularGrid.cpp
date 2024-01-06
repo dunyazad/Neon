@@ -414,6 +414,11 @@ namespace Neon
 		return(p);
 	}
 
+	RegularGrid::RegularGrid(const string& name, float cellSize)
+		: ComponentBase(name), mesh(nullptr), cellSize(cellSize), cellHalfSize(cellSize * 0.5f)
+	{
+	}
+
 	RegularGrid::RegularGrid(const string& name, Mesh* mesh, float cellSize)
 		: ComponentBase(name), mesh(mesh), cellSize(cellSize), cellHalfSize(cellSize * 0.5f)
 	{
@@ -448,6 +453,9 @@ namespace Neon
 
 	void RegularGrid::Build()
 	{
+		if (nullptr == mesh)
+			return;
+
 		auto meshAABB = mesh->GetAABB();
 		cellCountX = (size_t)ceilf(meshAABB.GetXLength() / cellSize) + 1;
 		cellCountY = (size_t)ceilf(meshAABB.GetYLength() / cellSize) + 1;

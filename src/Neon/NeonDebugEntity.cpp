@@ -133,7 +133,7 @@ namespace Neon
 
 	void DebugEntity::AddSphere(const glm::vec3& center, float radius, int segments, const glm::vec4& color)
 	{
-		int offset = mesh->GetVertexBuffer()->Size();
+		auto offset = mesh->GetVertexBuffer()->Size();
 
 		for (int i = 0; i <= segments; ++i) {
 			float phi = PI * float(i) / (float)segments;
@@ -155,13 +155,13 @@ namespace Neon
 				int current = i * (segments + 1) + j;
 				int next = current + segments + 1;
 
-				mesh->AddIndex(offset + current);
-				mesh->AddIndex(offset + current + 1);
-				mesh->AddIndex(offset + next);
+				mesh->AddIndex((GLuint)offset + current);
+				mesh->AddIndex((GLuint)offset + current + 1);
+				mesh->AddIndex((GLuint)offset + next);
 
-				mesh->AddIndex(offset + next);
-				mesh->AddIndex(offset + current + 1);
-				mesh->AddIndex(offset + next + 1);
+				mesh->AddIndex((GLuint)offset + next);
+				mesh->AddIndex((GLuint)offset + current + 1);
+				mesh->AddIndex((GLuint)offset + next + 1);
 			}
 		}
 	}

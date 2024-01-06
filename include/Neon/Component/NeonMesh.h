@@ -76,7 +76,7 @@ namespace Neon
 
 		inline const AABB& GetAABB() const { return aabb; }
 
-		void ForEachTriangle(function<void(size_t, GLuint, GLuint, GLuint, glm::vec3, glm::vec3, glm::vec3)> callback);
+		void ForEachTriangle(function<void(size_t, GLuint, GLuint, GLuint, glm::vec3&, glm::vec3&, glm::vec3&)> callback);
 
 	private:
 		bool visible = true;

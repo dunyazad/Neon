@@ -83,6 +83,19 @@ namespace Neon
 			return elements;
 		}
 
+		vector<T>& GetElements()
+		{
+			return elements;
+		}
+
+		template<typename U>
+		vector<U> Cast()
+		{
+			vector<U> result(this->Size());
+			memcpy(&result[0], &this->elements[0], this->Size() * sizeof(T));
+			return result;
+		}
+
 		bool SetElement(size_t index, const T& element)
 		{
 			if (index >= elements.size())
@@ -162,6 +175,8 @@ namespace Neon
 				dirty = false;
 			}
 		}
+
+		inline void SetDirty() { dirty = true; }
 
 	private:
 		bool dirty = true;
