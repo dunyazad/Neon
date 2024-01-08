@@ -10,6 +10,18 @@ namespace Neon
 
 namespace NeonCUDA
 {
+	namespace MarchingCubes
+	{
+		typedef struct {
+			float3 p[8];
+			float val[8];
+		} GRIDCELL;
+
+		typedef struct {
+			float3 p[3];
+		} TRIANGLE;
+	}
+
 	void Test();
 
 	class TSDF
@@ -22,7 +34,10 @@ namespace NeonCUDA
 
 		void UpdateValues();
 
-		void Test(Neon::Scene* scene);
+		void BuildGridCells(float isoValue);
+
+		void TestValues(Neon::Scene* scene);
+		void TestTriangles(Neon::Scene* scene);
 
 	protected:
 		float voxelSize;
@@ -36,5 +51,7 @@ namespace NeonCUDA
 
 		thrust::device_vector<float> values;
 		thrust::device_vector<float3> positions;
+		thrust::device_vector<MarchingCubes::GRIDCELL> gridcells;
+		thrust::device_vector<MarchingCubes::TRIANGLE> triangles;
 	};
 }

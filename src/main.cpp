@@ -155,6 +155,8 @@ int main()
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/PLY Input");
 			entity->AddComponent(mesh);
 			mesh->FromPLYFile("C:\\saveData\\0000_target.ply");
+			
+			scene->Debug("Mesh")->AddMesh(mesh);
 
 			auto& minPoint = mesh->GetAABB().GetMinPoint();
 			auto& maxPoint = mesh->GetAABB().GetMaxPoint();
@@ -163,9 +165,9 @@ int main()
 			float yoffset = (maxPoint.y - minPoint.y) * 0.5f;
 			float zoffset = (maxPoint.z - minPoint.z) * 0.5f;
 
-			int xcount = 4;
-			int ycount = 4;
-			int zcount = 4;
+			int xcount = 2;
+			int ycount = 2;
+			int zcount = 2;
 
 			float voxelSize = 0.05f;
 		
@@ -184,159 +186,53 @@ int main()
 				}
 			}
 
-			nvtxRangePushA("@Aaron/UpdateValues - Total");
+			cudaDeviceSynchronize();
+
+			nvtxRangePushA("@Aaron/Total");
+
+			for (size_t i = 0; i < 1; i++)
+			{
+				nvtxRangePushA("@Aaron/UpdateValues - Total");
+				for (size_t z = 0; z < zcount; z++)
+				{
+					for (size_t y = 0; y < ycount; y++)
+					{
+						for (size_t x = 0; x < xcount; x++)
+						{
+							tsdfs[z * ycount * xcount + y * xcount + x]->UpdateValues();
+						}
+					}
+				}
+				nvtxRangePop();
+
+				nvtxRangePushA("@Aaron/BuildGridCells - Total");
+				for (size_t z = 0; z < zcount; z++)
+				{
+					for (size_t y = 0; y < ycount; y++)
+					{
+						for (size_t x = 0; x < xcount; x++)
+						{
+							tsdfs[z * ycount * xcount + y * xcount + x]->BuildGridCells(2.5f);
+						}
+					}
+				}
+				nvtxRangePop();
+			}
+
+			nvtxRangePushA("@Aaron/TestTriangles - Total");
 			for (size_t z = 0; z < zcount; z++)
 			{
 				for (size_t y = 0; y < ycount; y++)
 				{
 					for (size_t x = 0; x < xcount; x++)
 					{
-						tsdfs[z * ycount * xcount + y * xcount + x]->UpdateValues();
+						tsdfs[z * ycount * xcount + y * xcount + x]->TestTriangles(scene);
 					}
 				}
 			}
 			nvtxRangePop();
 
-			for (size_t z = 0; z < zcount; z++)
-			{
-				for (size_t y = 0; y < ycount; y++)
-				{
-					for (size_t x = 0; x < xcount; x++)
-					{
-						tsdfs[z * ycount * xcount + y * xcount + x]->Test(scene);
-					}
-				}
-			}
-
-			//NeonCUDA::TSDF tsdf(
-			//	0.05f,
-			//	make_float3(minPoint.x, minPoint.y, minPoint.z),
-			//	make_float3(maxPoint.x, maxPoint.y, maxPoint.z));
-
-			////tsdf.Apply(mesh);
-
-			//tsdf.UpdateValues();
-
-			//tsdf.Test(scene);
-
-			//auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", Neon::URL::Resource("/shader/lighting.vs"), Neon::URL::Resource("/shader/lighting.fs"));
-			//entity->AddComponent(shader);
-
-			//auto grid = scene->CreateComponent<Neon::RegularGrid>("Volume", mesh, 0.5f);
-			//grid->Build();
-
-			//for (size_t z = 0; z < grid->GetCellCountZ(); z++)
-			//{
-			//	for (size_t y = 0; y < grid->GetCellCountY(); y++)
-			//	{
-			//		for (size_t x = 0; x < grid->GetCellCountX(); x++)
-			//		{
-			//			auto cell = grid->GetCell(make_tuple(x, y, z));
-			//			if (cell->GetTriangles().size() > 0)
-			//			{
-			//				printf("[%d, %d, %d] Triangle Exists\n", x, y, z);
-			//			}
-			//		}
-			//	}
-			//}
-
-			//auto triangleLists = grid->ExtractSurface(0.0f);
-
-			//cout << mesh->GetAABB() << endl;
-
-#pragma region Temp
-			//auto not = mesh->GetIndexBuffer()->Size() / 3;
-			//
-			//			float gridInterval = 0.5f;
-			//
-			//			auto xLength = mesh->GetAABB().GetXLength();
-			//			auto yLength = mesh->GetAABB().GetYLength();
-			//			auto zLength = mesh->GetAABB().GetZLength();
-			//
-			//			auto xCount = (int)ceilf(xLength / gridInterval) + 1;
-			//			auto yCount = (int)ceilf(yLength / gridInterval) + 1;
-			//			auto zCount = (int)ceilf(zLength / gridInterval) + 1;
-			//
-			//			float* grid = new float[xCount * yCount * zCount];
-			//			memset(grid, 0, sizeof(float) * xCount * yCount * zCount);
-			//
-			//			float nx = -((float)xCount * gridInterval) * 0.5f;
-			//			float px = ((float)xCount * gridInterval) * 0.5f;
-			//			float ny = -((float)yCount * gridInterval) * 0.5f;
-			//			float py = ((float)yCount * gridInterval) * 0.5f;
-			//			float nz = -((float)zCount * gridInterval) * 0.5f;
-			//			float pz = ((float)zCount * gridInterval) * 0.5f;
-			//			float cx = (px + nx) * 0.5f;
-			//			float cy = (py + ny) * 0.5f;
-			//			float cz = (pz + nz) * 0.5f;
-			//
-			//			Neon::AABB aabb;
-			//			aabb.Expand(glm::vec3(nx, ny, nz) + mesh->GetAABB().GetCenter());
-			//			aabb.Expand(glm::vec3(px, py, pz) + mesh->GetAABB().GetCenter());
-			//
-			//#pragma omp parallel for
-			//			for (int z = 0; z < zCount; z++)
-			//			{
-			//#pragma omp parallel for
-			//				for (int y = 0; y < yCount; y++)
-			//				{
-			//#pragma omp parallel for
-			//					for (int x = 0; x < xCount; x++)
-			//					{
-			//						float minDistance = FLT_MAX;
-			//
-			//#pragma omp parallel for
-			//						for (int i = 0; i < not; i++)
-			//						{
-			//							auto i0 = mesh->GetIndex(i * 3 + 0);
-			//							auto i1 = mesh->GetIndex(i * 3 + 1);
-			//							auto i2 = mesh->GetIndex(i * 3 + 2);
-			//
-			//							auto& v0 = mesh->GetVertex(i0);
-			//							auto& v1 = mesh->GetVertex(i1);
-			//							auto& v2 = mesh->GetVertex(i2);
-			//
-			//							auto point = glm::vec3(nx, ny, nz) + mesh->GetAABB().GetCenter() + glm::vec3(x * gridInterval, y * gridInterval, z * gridInterval);
-			//							auto normal = glm::normalize(glm::cross(v1 - v0, v2 - v0));
-			//							auto vectorToVertex = point - v0;
-			//
-			//							float distance = glm::dot(normal, vectorToVertex) / glm::length(normal);
-			//
-			//							if (minDistance > distance)
-			//							{
-			//								minDistance = distance;
-			//							}
-			//						}
-			//
-			//						//if (fabsf(minDistance) < 2.0f)
-			//						{
-			//							grid[z * yCount * xCount + y * xCount + x] = minDistance;
-			//
-			//							//printf("%d %d %d %f\n", x, y, z, minDistance);
-			//						}
-			//					}
-			//				}
-			//			}
-			//
-			//			for (int z = 0; z < zCount; z++)
-			//			{
-			//				for (int y = 0; y < yCount; y++)
-			//				{
-			//					for (int x = 0; x < xCount; x++)
-			//					{
-			//						auto value = grid[z * yCount * xCount + y * xCount + x];
-			//
-			//						if (value != 0)
-			//						{
-			//							printf("%d %d %d %f\n", x, y, z, value);
-			//						}
-			//					}
-			//				}
-			//			}  
-#pragma endregion
-
-
-			scene->Debug("Mesh")->AddMesh(mesh);
+			nvtxRangePop();
 		}
 		});
 
