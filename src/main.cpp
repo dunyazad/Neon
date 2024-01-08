@@ -24,7 +24,7 @@ int main()
 		//glEnable(GL_CULL_FACE);
 		//glCullFace(GL_BACK);
 		//glFrontFace(GL_CCW);
-		
+
 		glPointSize(10.0f);
 
 		auto scene = app.CreateScene("Scene/Main");
@@ -155,7 +155,7 @@ int main()
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/PLY Input");
 			entity->AddComponent(mesh);
 			mesh->FromPLYFile("C:\\saveData\\0000_target.ply");
-			
+
 			scene->Debug("Mesh")->AddMesh(mesh);
 
 			auto& minPoint = mesh->GetAABB().GetMinPoint();
@@ -170,8 +170,9 @@ int main()
 			int zcount = 2;
 
 			float voxelSize = 0.05f;
-		
-			NeonCUDA::TSDF** tsdfs = new NeonCUDA::TSDF*[xcount * ycount * zcount];
+			float isoValue = 2.5f;
+
+			NeonCUDA::TSDF** tsdfs = new NeonCUDA::TSDF * [xcount * ycount * zcount];
 			for (size_t z = 0; z < zcount; z++)
 			{
 				for (size_t y = 0; y < ycount; y++)
@@ -187,6 +188,8 @@ int main()
 			}
 
 			cudaDeviceSynchronize();
+
+			//cout << "isovalue : " << isoValue << endl;
 
 			nvtxRangePushA("@Aaron/Total");
 
@@ -212,7 +215,7 @@ int main()
 					{
 						for (size_t x = 0; x < xcount; x++)
 						{
-							tsdfs[z * ycount * xcount + y * xcount + x]->BuildGridCells(2.5f);
+							tsdfs[z * ycount * xcount + y * xcount + x]->BuildGridCells(isoValue);
 						}
 					}
 				}
@@ -220,6 +223,7 @@ int main()
 			}
 
 			nvtxRangePushA("@Aaron/TestTriangles - Total");
+
 			for (size_t z = 0; z < zcount; z++)
 			{
 				for (size_t y = 0; y < ycount; y++)

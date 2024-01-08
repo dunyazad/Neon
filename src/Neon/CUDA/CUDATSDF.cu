@@ -500,7 +500,7 @@ namespace NeonCUDA
 				minPoint.y + y * voxelSize + 0.5f * voxelSize,
 				minPoint.z + z * voxelSize + 0.5f * voxelSize);
 
-			//float dist = distance(position, center);
+			float dist = distance(position, center);
 
 			////if (2.5 < dist && dist < 3.0)
 			////if (dist > 3.0)
@@ -513,9 +513,9 @@ namespace NeonCUDA
 			//	values[index] = FLT_MAX;
 			//}
 
-			//values[index] = dist;
+			values[index] = dist;
 
-			values[index] = position.z - 2.0f;
+			//values[index] = position.z;
 		}
 	};
 
@@ -909,8 +909,6 @@ namespace NeonCUDA
 	void TSDF::TestTriangles(Neon::Scene* scene)
 	{
 		thrust::host_vector<MarchingCubes::TRIANGLE> host_triangles(triangles.begin(), triangles.end());
-
-		scene->Debug("triangles")->Clear();
 
 		for (auto& t : host_triangles)
 		{
