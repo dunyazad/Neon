@@ -427,55 +427,55 @@ namespace NeonCUDA
 		}
 	};
 
-	struct ApplyFunctor
-	{
-		float* values;
-		float3* positions;
-		int countX;
-		int countY;
-		int countZ;
-		float3 minPoint;
-		float voxelSize;
+	//struct ApplyFunctor
+	//{
+	//	float* values;
+	//	float3* positions;
+	//	int countX;
+	//	int countY;
+	//	int countZ;
+	//	float3 minPoint;
+	//	float voxelSize;
 
-		float3* vertices;
-		size_t verticesSize;
-		GLuint* indices;
-		size_t indicesSize;
-		float4* colors;
-		size_t colorsSize;
+	//	float3* vertices;
+	//	size_t verticesSize;
+	//	GLuint* indices;
+	//	size_t indicesSize;
+	//	float4* colors;
+	//	size_t colorsSize;
 
-		__device__
-			float operator()(const float3& position)//size_t index)
-		{
-			float dist = distance(position, make_float3(0.0f, 0.0f, 10.0f));
+	//	__device__
+	//		float operator()(const float3& position)//size_t index)
+	//	{
+	//		float dist = distance(position, make_float3(0.0f, 0.0f, 10.0f));
 
-			//printf("distance : %f\n", distance);
+	//		//printf("distance : %f\n", distance);
 
-			return dist;
-		}
-	};
+	//		return dist;
+	//	}
+	//};
 
-	struct UpdateFunctor
-	{
-		float3 center;
+	//struct UpdateFunctor
+	//{
+	//	float3 center;
 
-		__device__
-			float operator()(const float3& position)//size_t index)
-		{
-			float dist = distance(position, center);
+	//	__device__
+	//		float operator()(const float3& position)//size_t index)
+	//	{
+	//		float dist = distance(position, center);
 
-			//printf("distance : %f\n", distance);
+	//		//printf("distance : %f\n", distance);
 
-			if (2.5 < dist && dist < 3.0)
-			{
-				return dist;
-			}
-			else
-			{
-				return FLT_MAX;
-			}
-		}
-	};
+	//		if (2.0 < dist && dist < 3.0)
+	//		{
+	//			return dist;
+	//		}
+	//		else
+	//		{
+	//			return FLT_MAX;
+	//		}
+	//	}
+	//};
 
 	struct UpdateVoxelsFunctor
 	{
@@ -502,15 +502,15 @@ namespace NeonCUDA
 
 			float dist = distance(position, center);
 
-			////if (2.5 < dist && dist < 3.0)
-			////if (dist > 3.0)
-			//if (2.5 < dist)
+			//if (2.0 < dist)
+			//////if (dist > 3.0)
+			////if (2.5 < dist)
 			//{
-			//	values[index] = dist;
+			//	values[index] = 1.0f;
 			//}
 			//else
 			//{
-			//	values[index] = FLT_MAX;
+			//	values[index] = 0;
 			//}
 
 			values[index] = dist;
@@ -713,90 +713,90 @@ namespace NeonCUDA
 			centerPoint.z + voxelSize * (voxelCountZ / 2));
 
 #pragma region Fill default values
-		//{
-		//	nvtxRangePushA("@Arron/TSDF Fill");
+		{
+			nvtxRangePushA("@Arron/TSDF Fill");
 
-		//	FillFunctor fillFunctor;
-		//	fillFunctor.values = thrust::raw_pointer_cast(values.data());
-		//	fillFunctor.positions = thrust::raw_pointer_cast(positions.data());
-		//	fillFunctor.countX = voxelCountX;
-		//	fillFunctor.countY = voxelCountY;
-		//	fillFunctor.countZ = voxelCountZ;
-		//	fillFunctor.minPoint = this->minPoint;
-		//	fillFunctor.voxelSize = voxelSize;
+			FillFunctor fillFunctor;
+			fillFunctor.values = thrust::raw_pointer_cast(values.data());
+			fillFunctor.positions = thrust::raw_pointer_cast(positions.data());
+			fillFunctor.countX = voxelCountX;
+			fillFunctor.countY = voxelCountY;
+			fillFunctor.countZ = voxelCountZ;
+			fillFunctor.minPoint = this->minPoint;
+			fillFunctor.voxelSize = voxelSize;
 
-		//	thrust::for_each(thrust::make_counting_iterator<size_t>(0),
-		//		thrust::make_counting_iterator<size_t>(values.size()), fillFunctor);
+			thrust::for_each(thrust::make_counting_iterator<size_t>(0),
+				thrust::make_counting_iterator<size_t>(values.size()), fillFunctor);
 
-		//	nvtxRangePop();
-		//}
+			nvtxRangePop();
+		}
 #pragma endregion
 
 		printf("%d x %d x %d voxels\n", voxelCountX, voxelCountY, voxelCountZ);
 	}
 
-	void TSDF::Apply(Neon::Mesh* mesh)
-	{
-		auto casted_vertices = mesh->GetVertexBuffer()->Cast<float3>();
-		thrust::device_vector<float3> vertices(
-			casted_vertices.begin(),
-			casted_vertices.end());
+	//void TSDF::Apply(Neon::Mesh* mesh)
+	//{
+	//	auto casted_vertices = mesh->GetVertexBuffer()->Cast<float3>();
+	//	thrust::device_vector<float3> vertices(
+	//		casted_vertices.begin(),
+	//		casted_vertices.end());
 
-		thrust::device_vector<GLuint> indices(
-			mesh->GetIndexBuffer()->GetElements().begin(),
-			mesh->GetIndexBuffer()->GetElements().end());
+	//	thrust::device_vector<GLuint> indices(
+	//		mesh->GetIndexBuffer()->GetElements().begin(),
+	//		mesh->GetIndexBuffer()->GetElements().end());
 
-		//thrust::device_vector<float4> colors(
-		//	mesh->GetColorBuffer()->GetElements().begin(),
-		//	mesh->GetColorBuffer()->GetElements().end());
+	//	//thrust::device_vector<float4> colors(
+	//	//	mesh->GetColorBuffer()->GetElements().begin(),
+	//	//	mesh->GetColorBuffer()->GetElements().end());
 
-		auto _values = thrust::raw_pointer_cast(values.data());
-		auto _positions = thrust::raw_pointer_cast(positions.data());
-		auto _vertices = thrust::raw_pointer_cast(vertices.data());
-		auto _indices = thrust::raw_pointer_cast(indices.data());
-		//auto _colors = thrust::raw_pointer_cast(colors.data());
+	//	auto _values = thrust::raw_pointer_cast(values.data());
+	//	auto _positions = thrust::raw_pointer_cast(positions.data());
+	//	auto _vertices = thrust::raw_pointer_cast(vertices.data());
+	//	auto _indices = thrust::raw_pointer_cast(indices.data());
+	//	//auto _colors = thrust::raw_pointer_cast(colors.data());
 
-		auto verticesSize = vertices.size();
-		auto indicesSize = indices.size();
-		//auto colorsSize = colors.size();
+	//	auto verticesSize = vertices.size();
+	//	auto indicesSize = indices.size();
+	//	//auto colorsSize = colors.size();
 
-		auto _voxelSize = voxelSize;
-		auto _voxelCountX = voxelCountX;
-		auto _voxelCountY = voxelCountY;
-		auto _voxelCountZ = voxelCountZ;
+	//	auto _voxelSize = voxelSize;
+	//	auto _voxelCountX = voxelCountX;
+	//	auto _voxelCountY = voxelCountY;
+	//	auto _voxelCountZ = voxelCountZ;
 
-		auto voxelCount = voxelCountX * voxelCountY * voxelCountZ;
+	//	auto voxelCount = voxelCountX * voxelCountY * voxelCountZ;
 
-		auto _minPoint = minPoint;
+	//	auto _minPoint = minPoint;
 
-		nvtxRangePushA("@Arron/Apply");
+	//	nvtxRangePushA("@Arron/Apply");
 
-		ApplyFunctor applyFunctor;
-		applyFunctor.values = _values;
-		applyFunctor.positions = _positions;
-		applyFunctor.countX = voxelCountX;
-		applyFunctor.countY = voxelCountY;
-		applyFunctor.countZ = voxelCountZ;
-		applyFunctor.minPoint = this->minPoint;
-		applyFunctor.voxelSize = voxelSize;
-		applyFunctor.vertices = _vertices;
-		applyFunctor.verticesSize = verticesSize;
-		applyFunctor.indices = _indices;
-		applyFunctor.indicesSize = indicesSize;
-		//applyFunctor.colors = _colors;
-		//applyFunctor.colorsSize = colorsSize;
+	//	ApplyFunctor applyFunctor;
+	//	applyFunctor.values = _values;
+	//	applyFunctor.positions = _positions;
+	//	applyFunctor.countX = voxelCountX;
+	//	applyFunctor.countY = voxelCountY;
+	//	applyFunctor.countZ = voxelCountZ;
+	//	applyFunctor.minPoint = this->minPoint;
+	//	applyFunctor.voxelSize = voxelSize;
+	//	applyFunctor.vertices = _vertices;
+	//	applyFunctor.verticesSize = verticesSize;
+	//	applyFunctor.indices = _indices;
+	//	applyFunctor.indicesSize = indicesSize;
+	//	//applyFunctor.colors = _colors;
+	//	//applyFunctor.colorsSize = colorsSize;
 
-		//thrust::for_each(thrust::make_counting_iterator<size_t>(0),
-		//	thrust::make_counting_iterator<size_t>(values.size()), applyFunctor);
+	//	//thrust::for_each(thrust::make_counting_iterator<size_t>(0),
+	//	//	thrust::make_counting_iterator<size_t>(values.size()), applyFunctor);
 
-		thrust::transform(
-			positions.begin(),
-			positions.end(),
-			values.begin(),
-			applyFunctor);
+	//	thrust::transform(
+	//		positions.begin(),
+	//		positions.end(),
+	//		values.begin(),
+	//		applyFunctor);
 
-		nvtxRangePop();
-	}
+	//	nvtxRangePop();
+	//}
 
 	void TSDF::UpdateValues()
 	{

@@ -149,14 +149,69 @@ int main()
 		}
 #pragma endregion
 
+#pragma region Model Local Axes
+		{
+			auto entity = scene->CreateEntity("Entity/Local Axes");
+			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Local Axes");
+			entity->AddComponent(mesh);
+
+			mesh->SetDrawingMode(GL_LINES);
+			mesh->AddVertex(glm::vec3(0.0f, 0.0f, 0.0f));
+			mesh->AddVertex(glm::vec3(10.0f, 0.0f, 0.0f));
+			mesh->AddVertex(glm::vec3(0.0f, 0.0f, 0.0f));
+			mesh->AddVertex(glm::vec3(0.0f, 10.0f, 0.0f));
+			mesh->AddVertex(glm::vec3(0.0f, 0.0f, 0.0f));
+			mesh->AddVertex(glm::vec3(0.0f, 0.0f, 10.0f));
+
+			mesh->AddColor(glm::vec4(0.0f, 1.0f, 1.0f, 1.0f));
+			mesh->AddColor(glm::vec4(0.0f, 1.0f, 1.0f, 1.0f));
+			mesh->AddColor(glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
+			mesh->AddColor(glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
+			mesh->AddColor(glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
+			mesh->AddColor(glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
+
+			mesh->AddIndex(0);
+			mesh->AddIndex(1);
+			mesh->AddIndex(2);
+			mesh->AddIndex(3);
+			mesh->AddIndex(4);
+			mesh->AddIndex(5);
+
+			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Color", Neon::URL::Resource("/shader/color.vs"), Neon::URL::Resource("/shader/color.fs"));
+			entity->AddComponent(shader);
+
+			glm::mat4 transformMatrix(
+				9.999999E-01, -3.041836E-04, 5.392341E-05, 0.000000E+00,
+				3.043024E-04, 9.999977E-01, -2.120121E-03, 0.000000E+00,
+				-5.327794E-05, 2.120084E-03, 9.999976E-01, 0.000000E+00,
+				9.976241E-02, 1.964474E-01, -4.013956E-01, 1.000000E+00);
+
+			auto transform = scene->CreateComponent<Neon::Transform>("Trnasform/Local Axes");
+			entity->AddComponent(transform);
+			transform->SetLocalTransform(transformMatrix);
+		}
+#pragma endregion
+
 		{
 			auto entity = scene->CreateEntity("Entity/RegularGrid");
-
+			entity->AddKeyEventHandler([scene, entity](const Neon::KeyEvent& event) {
+				if (GLFW_KEY_ESCAPE == event.key && GLFW_RELEASE == event.action) {
+					auto mesh = entity->GetComponent<Neon::Mesh>(0);
+						if (nullptr != mesh)
+						{
+							mesh->ToggleFillMode();
+								cout << "Toggle Fill Mode : " << mesh->GetName() << endl;
+						}
+				}
+			});
+		
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/PLY Input");
 			entity->AddComponent(mesh);
 			//mesh->FromPLYFile("C:\\saveData\\0000_target.ply");
 			mesh->FromPLYFile("C:\\Resources\\MC_TESTDATA\\0000_1st_TargetPC.ply");
-			//scene->Debug("Mesh")->AddMesh(mesh);
+
+			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", Neon::URL::Resource("/shader/lighting.vs"), Neon::URL::Resource("/shader/lighting.fs"));
+			entity->AddComponent(shader);
 
 			glm::mat4 transformMatrix(
 				9.999999E-01, -3.041836E-04, 5.392341E-05, 0.000000E+00,
@@ -164,7 +219,48 @@ int main()
 				-5.327794E-05, 2.120084E-03, 9.999976E-01, 0.000000E+00,
 				9.976241E-02, 1.964474E-01, - 4.013956E-01, 1.000000E+00);
 
+			for (size_t y = 0; y < 480 - 3; y+=3)
+			{
+				for (size_t x = 0; x < 256 - 2; x+=2)
+				{
+					auto i0 = 256 * y + x;
+					auto i1 = 256 * y + x + 2;
+					auto i2 = 256 * (y + 3) + x;
+					auto i3 = 256 * (y + 3) + x + 2;
+
+					mesh->AddIndex(i0);
+					mesh->AddIndex(i1);
+					mesh->AddIndex(i2);
+
+					mesh->AddIndex(i2);
+					mesh->AddIndex(i1);
+					mesh->AddIndex(i3);
+
+					//auto& v0 = mesh->GetVertex(i0);
+					//auto& v1 = mesh->GetVertex(i1);
+					//auto& v2 = mesh->GetVertex(i2);
+					//auto& v3 = mesh->GetVertex(i3);
+
+					//if ((FLT_VALID(v0.x) && FLT_VALID(v0.y) && FLT_VALID(v0.z)) &&
+					//	(FLT_VALID(v1.x) && FLT_VALID(v1.y) && FLT_VALID(v1.z)) &&
+					//	(FLT_VALID(v2.x) && FLT_VALID(v2.y) && FLT_VALID(v2.z)))
+					//{
+					//	scene->Debug("Triangles")->AddTriangle(v0, v2, v1);
+					//}
+
+					//if ((FLT_VALID(v2.x) && FLT_VALID(v2.y) && FLT_VALID(v2.z)) &&
+					//	(FLT_VALID(v1.x) && FLT_VALID(v1.y) && FLT_VALID(v1.z)) &&
+					//	(FLT_VALID(v3.x) && FLT_VALID(v3.y) && FLT_VALID(v3.z)))
+					//{
+					//	scene->Debug("Triangles")->AddTriangle(v2, v3, v1);
+					//}
+				}
+			}
+
+			scene->Debug("Mesh")->AddMesh(mesh);
+
 			mesh->Bake(transformMatrix);
+			mesh->FillColor(glm::green);
 
 			auto& minPoint = mesh->GetAABB().GetMinPoint();
 			auto& maxPoint = mesh->GetAABB().GetMaxPoint();
@@ -194,6 +290,19 @@ int main()
 					}
 				}
 			}
+
+			auto theO = glm::vec3(transformMatrix * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+			mesh->GetAABB().Clear();
+			for (auto& v : mesh->GetVertexBuffer()->GetElements())
+			{
+				v.z = theO.z;
+
+				mesh->GetAABB().Expand(v);
+			}
+			mesh->GetVertexBuffer()->SetDirty();
+
+			scene->Debug("AABB")->AddAABB(mesh->GetAABB());
+
 
 			cudaDeviceSynchronize();
 

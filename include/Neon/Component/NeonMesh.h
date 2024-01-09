@@ -74,6 +74,7 @@ namespace Neon
 		inline void SetFillMode(FillMode mode) { fillMode = mode; }
 		inline void ToggleFillMode() { int f = fillMode; f++; fillMode = (Mesh::FillMode)(f % ((int)Mesh::FillMode::None + 1)); }
 
+		inline AABB& GetAABB() { return aabb; }
 		inline const AABB& GetAABB() const { return aabb; }
 
 		void ForEachTriangle(function<void(size_t, GLuint, GLuint, GLuint, glm::vec3&, glm::vec3&, glm::vec3&)> callback);

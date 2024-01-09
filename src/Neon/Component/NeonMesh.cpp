@@ -1057,6 +1057,10 @@ namespace Neon
 
 					aabb.Expand(v);
 				}
+				//else
+				//{
+				//	v = glm::zero<glm::vec3>();
+				//}
 			}
 			vertexBuffer->SetDirty();
 		}

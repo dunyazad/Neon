@@ -30,7 +30,7 @@ namespace NeonCUDA
 		TSDF();
 		TSDF(float voxelSize, const float3& minPoint, const float3& maxPoint);
 
-		void Apply(Neon::Mesh* mesh);
+		//void Apply(Neon::Mesh* mesh);
 
 		void UpdateValues();
 

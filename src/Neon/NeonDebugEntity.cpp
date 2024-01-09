@@ -51,6 +51,9 @@ namespace Neon
 		{
 			this->mesh->AddIndex(e);
 		}
+
+		this->mesh->SetFillMode(mesh->GetFillMode());
+		this->mesh->SetDrawingMode(mesh->GetDrawingMode());
 	}
 
 	void DebugEntity::AddPoint(const glm::vec3& v, const glm::vec4& c)
