@@ -131,6 +131,39 @@ namespace Neon
 		AddTriangle(glm::vec3(nx, ny, pz), glm::vec3(nx, py, nz), glm::vec3(nx, ny, nz), color, color, color);
 	}
 
+	void DebugEntity::AddAABB(const AABB& aabb, const glm::vec4& color)
+	{
+		float halfX = aabb.GetXLength() * 0.5f;
+		float halfY = aabb.GetYLength() * 0.5f;
+		float halfZ = aabb.GetZLength() * 0.5f;
+
+		float nx = aabb.GetCenter().x - halfX;
+		float ny = aabb.GetCenter().y - halfY;
+		float nz = aabb.GetCenter().z - halfZ;
+
+		float px = aabb.GetCenter().x + halfX;
+		float py = aabb.GetCenter().y + halfY;
+		float pz = aabb.GetCenter().z + halfZ;
+
+		AddTriangle(glm::vec3(nx, ny, nz), glm::vec3(nx, py, nz), glm::vec3(px, py, nz), color, color, color);
+		AddTriangle(glm::vec3(nx, ny, nz), glm::vec3(px, py, nz), glm::vec3(px, ny, nz), color, color, color);
+
+		AddTriangle(glm::vec3(nx, ny, pz), glm::vec3(px, ny, pz), glm::vec3(px, py, pz), color, color, color);
+		AddTriangle(glm::vec3(nx, ny, pz), glm::vec3(px, py, pz), glm::vec3(nx, py, pz), color, color, color);
+
+		AddTriangle(glm::vec3(nx, py, pz), glm::vec3(px, py, pz), glm::vec3(px, py, nz), color, color, color);
+		AddTriangle(glm::vec3(nx, py, pz), glm::vec3(px, py, nz), glm::vec3(nx, py, nz), color, color, color);
+
+		AddTriangle(glm::vec3(nx, ny, pz), glm::vec3(px, ny, nz), glm::vec3(px, ny, pz), color, color, color);
+		AddTriangle(glm::vec3(nx, ny, pz), glm::vec3(nx, ny, nz), glm::vec3(px, ny, nz), color, color, color);
+
+		AddTriangle(glm::vec3(px, ny, pz), glm::vec3(px, ny, nz), glm::vec3(px, py, nz), color, color, color);
+		AddTriangle(glm::vec3(px, ny, pz), glm::vec3(px, py, nz), glm::vec3(px, py, pz), color, color, color);
+
+		AddTriangle(glm::vec3(nx, ny, pz), glm::vec3(nx, py, pz), glm::vec3(nx, py, nz), color, color, color);
+		AddTriangle(glm::vec3(nx, ny, pz), glm::vec3(nx, py, nz), glm::vec3(nx, ny, nz), color, color, color);
+	}
+
 	void DebugEntity::AddSphere(const glm::vec3& center, float radius, int segments, const glm::vec4& color)
 	{
 		auto offset = mesh->GetVertexBuffer()->Size();

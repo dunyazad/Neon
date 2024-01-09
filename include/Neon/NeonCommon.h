@@ -27,6 +27,8 @@ using namespace std;
 
 #include <Neon/TriangleTriangleOverlap.h>
 
+#define FLT_VALID(x) (x < 3.402823466e+37F)
+
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -157,6 +159,20 @@ namespace Neon
 
 		void update();
 
+		inline void Clear()
+		{
+			xyz = { FLT_MAX,  FLT_MAX,  FLT_MAX };
+			xyZ = { FLT_MAX,  FLT_MAX, -FLT_MAX };
+			xYz = { FLT_MAX, -FLT_MAX,  FLT_MAX };
+			xYZ = { FLT_MAX, -FLT_MAX, -FLT_MAX };
+			Xyz = { -FLT_MAX,  FLT_MAX,  FLT_MAX };
+			XyZ = { -FLT_MAX,  FLT_MAX, -FLT_MAX };
+			XYz = { -FLT_MAX, -FLT_MAX,  FLT_MAX };
+			XYZ = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
+			center = { 0.0,  0.0,  0.0 };
+			extents = { 0.0,  0.0,  0.0 };
+		}
+
 		inline const glm::vec3& GetMinPoint() const { return xyz; }
 		inline const glm::vec3& GetMaxPoint() const { return XYZ; }
 		inline const glm::vec3& GetCenter() const { return center; }
@@ -165,26 +181,26 @@ namespace Neon
 
 		inline void Expand(float x, float y, float z)
 		{
-			if (x < xyz.x) { xyz.x = x; }
-			if (y < xyz.y) { xyz.y = y; }
-			if (z < xyz.z) { xyz.z = z; }
+			if (FLT_VALID(x) && x < xyz.x) { xyz.x = x; }
+			if (FLT_VALID(y) && y < xyz.y) { xyz.y = y; }
+			if (FLT_VALID(x) && z < xyz.z) { xyz.z = z; }
 
-			if (x > XYZ.x) { XYZ.x = x; }
-			if (y > XYZ.y) { XYZ.y = y; }
-			if (z > XYZ.z) { XYZ.z = z; }
+			if (FLT_VALID(x) && x > XYZ.x) { XYZ.x = x; }
+			if (FLT_VALID(y) && y > XYZ.y) { XYZ.y = y; }
+			if (FLT_VALID(x) && z > XYZ.z) { XYZ.z = z; }
 
 			update();
 		}
 
 		inline void Expand(const glm::vec3& p)
 		{
-			if (p.x < xyz.x) { xyz.x = p.x; }
-			if (p.y < xyz.y) { xyz.y = p.y; }
-			if (p.z < xyz.z) { xyz.z = p.z; }
+			if (FLT_VALID(p.x) && p.x < xyz.x) { xyz.x = p.x; }
+			if (FLT_VALID(p.y) && p.y < xyz.y) { xyz.y = p.y; }
+			if (FLT_VALID(p.x) && p.z < xyz.z) { xyz.z = p.z; }
 
-			if (p.x > XYZ.x) { XYZ.x = p.x; }
-			if (p.y > XYZ.y) { XYZ.y = p.y; }
-			if (p.z > XYZ.z) { XYZ.z = p.z; }
+			if (FLT_VALID(p.x) && p.x > XYZ.x) { XYZ.x = p.x; }
+			if (FLT_VALID(p.y) && p.y > XYZ.y) { XYZ.y = p.y; }
+			if (FLT_VALID(p.x) && p.z > XYZ.z) { XYZ.z = p.z; }
 
 			update();
 		}

@@ -78,6 +78,8 @@ namespace Neon
 
 		void ForEachTriangle(function<void(size_t, GLuint, GLuint, GLuint, glm::vec3&, glm::vec3&, glm::vec3&)> callback);
 
+		void Bake(const glm::mat4& transformMatrix);
+
 	private:
 		bool visible = true;
 		AABB aabb;

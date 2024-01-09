@@ -154,9 +154,17 @@ int main()
 
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/PLY Input");
 			entity->AddComponent(mesh);
-			mesh->FromPLYFile("C:\\saveData\\0000_target.ply");
+			//mesh->FromPLYFile("C:\\saveData\\0000_target.ply");
+			mesh->FromPLYFile("C:\\Resources\\MC_TESTDATA\\0000_1st_TargetPC.ply");
+			//scene->Debug("Mesh")->AddMesh(mesh);
 
-			scene->Debug("Mesh")->AddMesh(mesh);
+			glm::mat4 transformMatrix(
+				9.999999E-01, -3.041836E-04, 5.392341E-05, 0.000000E+00,
+				3.043024E-04, 9.999977E-01, -2.120121E-03, 0.000000E+00,
+				-5.327794E-05, 2.120084E-03, 9.999976E-01, 0.000000E+00,
+				9.976241E-02, 1.964474E-01, - 4.013956E-01, 1.000000E+00);
+
+			mesh->Bake(transformMatrix);
 
 			auto& minPoint = mesh->GetAABB().GetMinPoint();
 			auto& maxPoint = mesh->GetAABB().GetMaxPoint();
@@ -188,8 +196,6 @@ int main()
 			}
 
 			cudaDeviceSynchronize();
-
-			//cout << "isovalue : " << isoValue << endl;
 
 			nvtxRangePushA("@Aaron/Total");
 

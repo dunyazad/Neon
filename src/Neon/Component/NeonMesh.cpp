@@ -1041,4 +1041,37 @@ namespace Neon
 			callback(i, i0, i1, i2, v0, v1, v2);
 		}
 	}
+
+	void Mesh::Bake(const glm::mat4& transformMatrix)
+	{
+		aabb.Clear();
+
+		auto vertexBuffer = GetVertexBuffer();
+		if (nullptr != vertexBuffer)
+		{
+			for (auto& v : vertexBuffer->GetElements())
+			{
+				if (FLT_VALID(v.x) && FLT_VALID(v.y) && FLT_VALID(v.z))
+				{
+					v = glm::vec3(transformMatrix * glm::vec4(v.x, v.y, v.z, 1.0f));
+
+					aabb.Expand(v);
+				}
+			}
+			vertexBuffer->SetDirty();
+		}
+
+		auto normalBuffer = GetNormalBuffer();
+		if (nullptr != normalBuffer)
+		{
+			for (auto& n : normalBuffer->GetElements())
+			{
+				if (FLT_VALID(n.x) && FLT_VALID(n.y) && FLT_VALID(n.z))
+				{
+					n = glm::vec3(transformMatrix * glm::vec4(n.x, n.y, n.z, 1.0f));
+				}
+			}
+			normalBuffer->SetDirty();
+		}
+	}
 }
