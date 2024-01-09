@@ -30,6 +30,12 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/vector_angle.hpp>
 
+#include <Eigen/Core>
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
+#include <Eigen/LU>
+#include <vector>
+
 #undef _HAS_STD_BYTE
 #define _HAS_STD_BYTE 0
 #include <nvtx3/nvToolsExt.h>

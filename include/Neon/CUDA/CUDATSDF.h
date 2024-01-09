@@ -13,12 +13,12 @@ namespace NeonCUDA
 	namespace MarchingCubes
 	{
 		typedef struct {
-			float3 p[8];
+			Eigen::Vector3f p[8];
 			float val[8];
 		} GRIDCELL;
 
 		typedef struct {
-			float3 p[3];
+			Eigen::Vector3f p[3];
 		} TRIANGLE;
 	}
 
@@ -28,9 +28,12 @@ namespace NeonCUDA
 	{
 	public:
 		TSDF();
-		TSDF(float voxelSize, const float3& minPoint, const float3& maxPoint);
+		TSDF(float voxelSize, const Eigen::Vector3f& minPoint, const Eigen::Vector3f& maxPoint);
 
 		//void Apply(Neon::Mesh* mesh);
+
+		void IntegrateWrap(const std::vector<glm::vec3>& vertices, const Eigen::Matrix4f& transform, const Eigen::Vector3f& vmin, const Eigen::Vector3f& vmax, int rows, int columns);
+		void Integrate(const thrust::device_vector<Eigen::Vector3f>& vertices, const Eigen::Matrix4f& transform, const Eigen::Vector3f& vmin, const Eigen::Vector3f& vmax, int rows, int columns);
 
 		void UpdateValues();
 
@@ -41,16 +44,16 @@ namespace NeonCUDA
 
 	protected:
 		float voxelSize;
-		float3 minPoint;
-		float3 maxPoint;
-		float3 centerPoint;
+		Eigen::Vector3f minPoint;
+		Eigen::Vector3f maxPoint;
+		Eigen::Vector3f centerPoint;
 
 		size_t voxelCountX;
 		size_t voxelCountY;
 		size_t voxelCountZ;
 
 		thrust::device_vector<float> values;
-		thrust::device_vector<float3> positions;
+		thrust::device_vector<Eigen::Vector3f> positions;
 		thrust::device_vector<MarchingCubes::GRIDCELL> gridcells;
 		thrust::device_vector<MarchingCubes::TRIANGLE> triangles;
 	};
