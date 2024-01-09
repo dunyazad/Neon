@@ -28,6 +28,8 @@ int main()
 		glPointSize(10.0f);
 
 		auto scene = app.CreateScene("Scene/Main");
+
+#pragma region Toggler
 		{
 			auto toggler = scene->CreateEntity("Scene/Toggler");
 			toggler->AddKeyEventHandler([scene](const Neon::KeyEvent& event) {
@@ -47,6 +49,9 @@ int main()
 				}
 				});
 		}
+#pragma endregion
+
+#pragma region Scene Event Handler
 		{
 			auto sceneEventHandler = scene->CreateEntity("Scene/EventHandler");
 			sceneEventHandler->AddKeyEventHandler([scene](const Neon::KeyEvent& event) {
@@ -80,6 +85,7 @@ int main()
 				}
 				});
 		}
+#pragma endregion
 
 #pragma region Camera
 		{
@@ -192,19 +198,202 @@ int main()
 		}
 #pragma endregion
 
+		vector<glm::mat4> transforms;
+		thrust::device_vector<glm::mat4> device_transforms;
+		
+		vector<Neon::Mesh*> meshes;
+
+		Neon::AABB meshesAABB;
+
+#pragma region Preparing Datas
 		{
-			auto entity = scene->CreateEntity("Entity/RegularGrid");
+#pragma region Transform Info File
+			thrust::host_vector<glm::mat4> host_transforms;
+		
+			auto tfile = ifstream();
+			tfile.open("C:\\Resources\\MC_TESTDATA\\transform.txt", ios::in);
+			std::string line;
+			while (std::getline(tfile, line)) {
+				//std::cout << "Read line: " << line << std::endl;
+				stringstream ss(line);
+				
+				string word;
+				ss >> word;
+				glm::mat4 m;
+				for (size_t r = 0; r < 4; r++)
+				{
+					for (size_t c = 0; c < 4; c++)
+					{
+						ss >> m[c][r];
+					}
+				}
+
+				host_transforms.push_back(m);
+				transforms.push_back(m);
+			}
+
+			device_transforms = thrust::device_vector<glm::mat4>(host_transforms.begin(), host_transforms.end());
+#pragma endregion
+		}
+		{
+			//for (size_t i = 0; i < transforms.size(); i++)
+			for (size_t i = 1; i < 2; i++)
+			{
+				char buffer[128];
+				memset(buffer, 0, 128);
+
+				sprintf_s(buffer, "C:\\Resources\\MC_TESTDATA\\%00004d_source.ply", i);
+
+				auto mesh = scene->CreateComponent<Neon::Mesh>(buffer);
+
+				mesh->FromPLYFile(buffer);
+
+				for (size_t y = 0; y < 480 - 3; y += 3)
+				{
+					for (size_t x = 0; x < 256 - 2; x += 2)
+					{
+						auto i0 = 256 * y + x;
+						auto i1 = 256 * y + x + 2;
+						auto i2 = 256 * (y + 3) + x;
+						auto i3 = 256 * (y + 3) + x + 2;
+
+						mesh->AddIndex(i0);
+						mesh->AddIndex(i1);
+						mesh->AddIndex(i2);
+
+						mesh->AddIndex(i2);
+						mesh->AddIndex(i1);
+						mesh->AddIndex(i3);
+
+						//auto& v0 = mesh->GetVertex(i0);
+						//auto& v1 = mesh->GetVertex(i1);
+						//auto& v2 = mesh->GetVertex(i2);
+						//auto& v3 = mesh->GetVertex(i3);
+
+						//if ((FLT_VALID(v0.x) && FLT_VALID(v0.y) && FLT_VALID(v0.z)) &&
+						//	(FLT_VALID(v1.x) && FLT_VALID(v1.y) && FLT_VALID(v1.z)) &&
+						//	(FLT_VALID(v2.x) && FLT_VALID(v2.y) && FLT_VALID(v2.z)))
+						//{
+						//	scene->Debug("Triangles")->AddTriangle(v0, v2, v1);
+						//}
+
+						//if ((FLT_VALID(v2.x) && FLT_VALID(v2.y) && FLT_VALID(v2.z)) &&
+						//	(FLT_VALID(v1.x) && FLT_VALID(v1.y) && FLT_VALID(v1.z)) &&
+						//	(FLT_VALID(v3.x) && FLT_VALID(v3.y) && FLT_VALID(v3.z)))
+						//{
+						//	scene->Debug("Triangles")->AddTriangle(v2, v3, v1);
+						//}
+					}
+				}
+				meshes.push_back(mesh);
+
+				auto vmin = glm::vec3(transforms[i] * glm::vec4(mesh->GetAABB().GetMinPoint(), 1.0f));
+				auto vmax = glm::vec3(transforms[i] * glm::vec4(mesh->GetAABB().GetMaxPoint(), 1.0f));
+				meshesAABB.Expand(vmin);
+				meshesAABB.Expand(vmax);
+
+				//mesh->Bake(transforms[i]);
+
+				//scene->Debug(buffer)->AddMesh(mesh);
+			}
+
+			auto& minPoint = meshesAABB.GetMinPoint();
+			auto& maxPoint = meshesAABB.GetMaxPoint();
+
+			float xoffset = (maxPoint.x - minPoint.x) * 0.5f;
+			float yoffset = (maxPoint.y - minPoint.y) * 0.5f;
+			float zoffset = (maxPoint.z - minPoint.z) * 0.5f;
+
+			int xcount = 2;
+			int ycount = 2;
+			int zcount = 2;
+
+			float voxelSize = 0.05f;
+			float isoValue = 2.5f;
+
+			NeonCUDA::TSDF** tsdfs = new NeonCUDA::TSDF * [xcount * ycount * zcount];
+			for (size_t z = 0; z < zcount; z++)
+			{
+				for (size_t y = 0; y < ycount; y++)
+				{
+					for (size_t x = 0; x < xcount; x++)
+					{
+						tsdfs[z * ycount * xcount + y * xcount + x] = new NeonCUDA::TSDF(
+							voxelSize,
+							make_float3(minPoint.x + x * xoffset, minPoint.y + y * yoffset, minPoint.z + z * zoffset),
+							make_float3(minPoint.x + (x + 1) * xoffset, minPoint.y + (y + 1) * yoffset, minPoint.z + (z + 1) * zoffset));
+					}
+				}
+			}
+
+			cudaDeviceSynchronize();
+
+			nvtxRangePushA("@Aaron/Total");
+
+			for (size_t i = 0; i < 1; i++)
+			{
+				nvtxRangePushA("@Aaron/UpdateValues - Total");
+				for (size_t z = 0; z < zcount; z++)
+				{
+					for (size_t y = 0; y < ycount; y++)
+					{
+						for (size_t x = 0; x < xcount; x++)
+						{
+							tsdfs[z * ycount * xcount + y * xcount + x]->UpdateValues();
+						}
+					}
+				}
+				nvtxRangePop();
+
+				nvtxRangePushA("@Aaron/BuildGridCells - Total");
+				for (size_t z = 0; z < zcount; z++)
+				{
+					for (size_t y = 0; y < ycount; y++)
+					{
+						for (size_t x = 0; x < xcount; x++)
+						{
+							tsdfs[z * ycount * xcount + y * xcount + x]->BuildGridCells(isoValue);
+						}
+					}
+				}
+				nvtxRangePop();
+			}
+
+			nvtxRangePushA("@Aaron/TestTriangles - Total");
+
+			for (size_t z = 0; z < zcount; z++)
+			{
+				for (size_t y = 0; y < ycount; y++)
+				{
+					for (size_t x = 0; x < xcount; x++)
+					{
+						tsdfs[z * ycount * xcount + y * xcount + x]->TestTriangles(scene);
+					}
+				}
+			}
+			nvtxRangePop();
+
+			nvtxRangePop();
+		}
+#pragma endregion
+
+		return;
+
+		{
+			auto entity = scene->CreateEntity("Entity/TSDF");
+#pragma region Entity Toggler
 			entity->AddKeyEventHandler([scene, entity](const Neon::KeyEvent& event) {
 				if (GLFW_KEY_ESCAPE == event.key && GLFW_RELEASE == event.action) {
 					auto mesh = entity->GetComponent<Neon::Mesh>(0);
-						if (nullptr != mesh)
-						{
-							mesh->ToggleFillMode();
-								cout << "Toggle Fill Mode : " << mesh->GetName() << endl;
-						}
+					if (nullptr != mesh)
+					{
+						mesh->ToggleFillMode();
+						cout << "Toggle Fill Mode : " << mesh->GetName() << endl;
+					}
 				}
-			});
-		
+				});
+#pragma endregion
+
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/PLY Input");
 			entity->AddComponent(mesh);
 			//mesh->FromPLYFile("C:\\saveData\\0000_target.ply");
@@ -373,9 +562,6 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		});
-
-
-
 
 
 

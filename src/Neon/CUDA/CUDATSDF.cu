@@ -798,6 +798,15 @@ namespace NeonCUDA
 	//	nvtxRangePop();
 	//}
 
+	void TSDF::Integrate(
+		const thrust::device_vector<glm::vec3>& vertices,
+		const glm::mat4& transform,
+		const glm::vec3& vmin, const glm::vec3& vmax,
+		int rows, int columns)
+	{
+
+	}
+
 	void TSDF::UpdateValues()
 	{
 		//nvtxRangePushA("@Arron/UpdateValues");
