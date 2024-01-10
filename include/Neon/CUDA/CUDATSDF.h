@@ -28,12 +28,12 @@ namespace NeonCUDA
 	{
 	public:
 		TSDF();
-		TSDF(float voxelSize, const Eigen::Vector3f& minPoint, const Eigen::Vector3f& maxPoint);
+		TSDF(float voxelSize, const Eigen::Vector3f& inputMinPoint, const Eigen::Vector3f& inputMaxPoint);
 
 		//void Apply(Neon::Mesh* mesh);
 
-		void IntegrateWrap(const std::vector<glm::vec3>& vertices, const Eigen::Matrix4f& transform, const Eigen::Vector3f& vmin, const Eigen::Vector3f& vmax, int rows, int columns);
-		void Integrate(const thrust::device_vector<Eigen::Vector3f>& vertices, const Eigen::Matrix4f& transform, const Eigen::Vector3f& vmin, const Eigen::Vector3f& vmax, int rows, int columns);
+		void IntegrateWrap(const std::vector<glm::vec3>& vertices, const Eigen::Matrix4f& transform, float width, float height, int columns, int rows);
+		void Integrate(const thrust::device_vector<Eigen::Vector3f>& vertices, const Eigen::Matrix4f& transform, float width, float height, int columns, int rows);
 
 		void UpdateValues();
 
@@ -42,7 +42,9 @@ namespace NeonCUDA
 		void TestValues(Neon::Scene* scene);
 		void TestTriangles(Neon::Scene* scene);
 
-	protected:
+		void ShowInversedVoxels(Neon::Scene* scene, const Eigen::Matrix4f& transform, Neon::Mesh* mesh);
+		void ShowInversedVoxelsSingle(Neon::Scene* scene, const Eigen::Matrix4f& transform, Neon::Mesh* mesh, int singleIndex);
+
 		float voxelSize;
 		Eigen::Vector3f minPoint;
 		Eigen::Vector3f maxPoint;
@@ -56,5 +58,7 @@ namespace NeonCUDA
 		thrust::device_vector<Eigen::Vector3f> positions;
 		thrust::device_vector<MarchingCubes::GRIDCELL> gridcells;
 		thrust::device_vector<MarchingCubes::TRIANGLE> triangles;
+
+	protected:
 	};
 }

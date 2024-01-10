@@ -6,6 +6,8 @@
 #include <Neon/CUDA/CUDATSDF.h>
 #include "DT/DT.h"
 
+int gindex = 0;
+
 int main()
 {
 	Neon::Application app(1280, 1024);
@@ -155,59 +157,11 @@ int main()
 		}
 #pragma endregion
 
-#pragma region Model Local Axes
-		{
-			auto entity = scene->CreateEntity("Entity/Local Axes");
-			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Local Axes");
-			entity->AddComponent(mesh);
-
-			mesh->SetDrawingMode(GL_LINES);
-			mesh->AddVertex(glm::vec3(0.0f, 0.0f, 0.0f));
-			mesh->AddVertex(glm::vec3(10.0f, 0.0f, 0.0f));
-			mesh->AddVertex(glm::vec3(0.0f, 0.0f, 0.0f));
-			mesh->AddVertex(glm::vec3(0.0f, 10.0f, 0.0f));
-			mesh->AddVertex(glm::vec3(0.0f, 0.0f, 0.0f));
-			mesh->AddVertex(glm::vec3(0.0f, 0.0f, 10.0f));
-
-			mesh->AddColor(glm::vec4(0.0f, 1.0f, 1.0f, 1.0f));
-			mesh->AddColor(glm::vec4(0.0f, 1.0f, 1.0f, 1.0f));
-			mesh->AddColor(glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
-			mesh->AddColor(glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
-			mesh->AddColor(glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
-			mesh->AddColor(glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
-
-			mesh->AddIndex(0);
-			mesh->AddIndex(1);
-			mesh->AddIndex(2);
-			mesh->AddIndex(3);
-			mesh->AddIndex(4);
-			mesh->AddIndex(5);
-
-			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Color", Neon::URL::Resource("/shader/color.vs"), Neon::URL::Resource("/shader/color.fs"));
-			entity->AddComponent(shader);
-
-			Eigen::Matrix4f transformMatrix;
-			transformMatrix <<
-				9.999999E-01f, -3.041836E-04f, 5.392341E-05f, 0.000000E+00f,
-				3.043024E-04f, 9.999977E-01f, -2.120121E-03f, 0.000000E+00f,
-				-5.327794E-05f, 2.120084E-03f, 9.999976E-01f, 0.000000E+00f,
-				9.976241E-02f, 1.964474E-01f, -4.013956E-01f, 1.000000E+00f;
-
-			auto transform = scene->CreateComponent<Neon::Transform>("Trnasform/Local Axes");
-			entity->AddComponent(transform);
-			transform->SetLocalTransform({
-				9.999999E-01f, -3.041836E-04f, 5.392341E-05f, 0.000000E+00f,
-				3.043024E-04f, 9.999977E-01f, -2.120121E-03f, 0.000000E+00f,
-				-5.327794E-05f, 2.120084E-03f, 9.999976E-01f, 0.000000E+00f,
-				9.976241E-02f, 1.964474E-01f, -4.013956E-01f, 1.000000E+00f });
-		}
-#pragma endregion
-
 		vector<Eigen::Matrix4f> transforms;
-		
 		vector<Neon::Mesh*> meshes;
-
 		Neon::AABB meshesAABB;
+
+		int currentModelIndex = 0;
 
 #pragma region Preparing Datas
 		{
@@ -237,6 +191,45 @@ int main()
 			}
 #pragma endregion
 		}
+
+#pragma region Model Local Axes
+		{
+			auto entity = scene->CreateEntity("Entity/Local Axes");
+			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Local Axes");
+			entity->AddComponent(mesh);
+
+			mesh->SetDrawingMode(GL_LINES);
+			mesh->AddVertex(glm::vec3(0.0f, 0.0f, 0.0f));
+			mesh->AddVertex(glm::vec3(10.0f, 0.0f, 0.0f));
+			mesh->AddVertex(glm::vec3(0.0f, 0.0f, 0.0f));
+			mesh->AddVertex(glm::vec3(0.0f, 10.0f, 0.0f));
+			mesh->AddVertex(glm::vec3(0.0f, 0.0f, 0.0f));
+			mesh->AddVertex(glm::vec3(0.0f, 0.0f, 10.0f));
+
+			mesh->AddColor(glm::vec4(1.0f, 0.5f, 0.5f, 1.0f));
+			mesh->AddColor(glm::vec4(1.0f, 0.5f, 0.5f, 1.0f));
+			mesh->AddColor(glm::vec4(0.5f, 1.0f, 0.5f, 1.0f));
+			mesh->AddColor(glm::vec4(0.5f, 1.0f, 0.5f, 1.0f));
+			mesh->AddColor(glm::vec4(0.5f, 0.5f, 1.0f, 1.0f));
+			mesh->AddColor(glm::vec4(0.5f, 0.5f, 1.0f, 1.0f));
+
+			mesh->AddIndex(0);
+			mesh->AddIndex(1);
+			mesh->AddIndex(2);
+			mesh->AddIndex(3);
+			mesh->AddIndex(4);
+			mesh->AddIndex(5);
+
+			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Color", Neon::URL::Resource("/shader/color.vs"), Neon::URL::Resource("/shader/color.fs"));
+			entity->AddComponent(shader);
+
+			Eigen::Matrix4f transformMatrix = transforms[currentModelIndex];
+			auto transform = scene->CreateComponent<Neon::Transform>("Trnasform/Local Axes");
+			entity->AddComponent(transform);
+			transform->SetLocalTransform(glm::make_mat4(transformMatrix.data()));
+		}
+#pragma endregion
+
 		{
 			//for (size_t i = 0; i < transforms.size(); i++)
 			for (size_t i = 1; i < 2; i++)
@@ -289,9 +282,21 @@ int main()
 				}
 				meshes.push_back(mesh);
 
+				//for (size_t y = 0; y < 480; y++)
+				//{
+				//	for (size_t x = 0; x < 256; x++)
+				//	{
+				//		auto& v = mesh->GetVertexBuffer()->GetElement(y * 256 + x);
+				//		if (FLT_VALID(v.x) && FLT_VALID(v.y) && FLT_VALID(v.z))
+				//		{
+				//			printf("V [%d, %d] %f, %f, %f\n", x, y, v.x, v.y, v.z);
+				//		}
+				//	}
+				//}
+
 				//mesh->Bake(transforms[i]);
 
-				//scene->Debug(buffer)->AddMesh(mesh);
+				scene->Debug(buffer)->AddMesh(mesh);
 			}
 
 			for (size_t i = 0; i < meshes.size(); i++)
@@ -310,16 +315,18 @@ int main()
 			auto& minPoint = meshesAABB.GetMinPoint();
 			auto& maxPoint = meshesAABB.GetMaxPoint();
 
-			float xoffset = (maxPoint.x - minPoint.x) * 0.5f;
-			float yoffset = (maxPoint.y - minPoint.y) * 0.5f;
-			float zoffset = (maxPoint.z - minPoint.z) * 0.5f;
+			//scene->Debug("AABB")->AddAABB(meshesAABB);
 
 			int xcount = 2;
 			int ycount = 2;
 			int zcount = 2;
 
-			float voxelSize = 0.05f;
-			float isoValue = 2.5f;
+			float xoffset = meshesAABB.GetXLength() / (float)xcount;
+			float yoffset = meshesAABB.GetYLength() / (float)ycount;
+			float zoffset = meshesAABB.GetZLength() / (float)zcount;
+
+			float voxelSize = 0.5f;
+			float isoValue = 0.0f;
 
 			NeonCUDA::TSDF** tsdfs = new NeonCUDA::TSDF * [xcount * ycount * zcount];
 			for (size_t z = 0; z < zcount; z++)
@@ -336,15 +343,84 @@ int main()
 				}
 			}
 
+			//// Debug
+			//{
+			//	//auto center = (tsdfs[2]->maxPoint + tsdfs[2]->minPoint) * 0.5f;
+
+			//	auto center = Eigen::Vector3f(5, 5, 5);
+
+			//	scene->Debug("Debug")->AddBox({center.x(), center.y(), center.z()}, 0.1f, 0.1f, 0.1f);
+
+			//	auto tm = transforms[currentModelIndex].inverse();
+			//	auto tc = tm * Eigen::Vector4f(center.x(), center.y(), center.z(), 1.0f);
+
+			//	scene->Debug("TC")->AddBox({ tc.x(), tc.y(), tc.z() }, 0.1f, 0.1f, 0.1f, glm::green);
+
+			//}
+
+			//auto& inputPositions = meshes[0]->GetVertexBuffer()->GetElements();
+			//{
+			//	auto entity = scene->CreateEntity("Temp111");
+			//	entity->AddKeyEventHandler(
+			//		[scene, entity, inputPositions](const Neon::KeyEvent& event) {
+			//			if (GLFW_KEY_ENTER == event.key && (GLFW_RELEASE == event.action || GLFW_REPEAT == event.action)) {
+			//				auto v = inputPositions[gindex++];
+			//				while (FLT_VALID(v.x) == false || FLT_VALID(v.y) == false || FLT_VALID(v.z) == false)
+			//				{
+			//					v = inputPositions[gindex++];
+			//				}
+			//				scene->Debug("input")->AddPoint(v, glm::red);
+			//				printf("%f, %f, %f\n", v.x, v.y, v.z);
+			//			}
+			//		});
+			//}
+
+			//return;
+
+			//for (size_t z = 0; z < zcount; z++)
+			//{
+			//	for (size_t y = 0; y < ycount; y++)
+			//	{
+			//		for (size_t x = 0; x < xcount; x++)
+			//		{
+			//			tsdfs[z * ycount * xcount + y * xcount + x]->ShowInversedVoxels(scene, transforms[0], meshes[0]);
+			//		}
+			//	}
+			//}
+
+			{
+				auto entity = scene->CreateEntity("Temp111");
+				entity->AddKeyEventHandler(
+					[scene, entity, tsdfs, transforms, meshes](const Neon::KeyEvent& event) {
+						if (GLFW_KEY_ENTER == event.key && (GLFW_RELEASE == event.action || GLFW_REPEAT == event.action)) {
+							tsdfs[0]->ShowInversedVoxelsSingle(scene, transforms[0], meshes[0], gindex);
+							gindex++;
+						}
+					});
+			}
+
+			return;
+
 			for (size_t i = 0; i < meshes.size(); i++)
 			{
 				auto& mesh = meshes[i];
 
-				auto vmin3 = Eigen::Vector3f(mesh->GetAABB().GetMinPoint().x, mesh->GetAABB().GetMinPoint().y, mesh->GetAABB().GetMinPoint().z);
-				auto vmax3 = Eigen::Vector3f(mesh->GetAABB().GetMaxPoint().x, mesh->GetAABB().GetMaxPoint().y, mesh->GetAABB().GetMaxPoint().z);
+				//auto vmin3 = Eigen::Vector3f(mesh->GetAABB().GetMinPoint().x, mesh->GetAABB().GetMinPoint().y, mesh->GetAABB().GetMinPoint().z);
+				//auto vmax3 = Eigen::Vector3f(mesh->GetAABB().GetMaxPoint().x, mesh->GetAABB().GetMaxPoint().y, mesh->GetAABB().GetMaxPoint().z);
 
-				Eigen::Vector4f vmin4 = transforms[i] * Eigen::Vector4f(vmin3.x(), vmin3.y(), vmin3.z(), 1.0f);
-				Eigen::Vector4f vmax4 = transforms[i] * Eigen::Vector4f(vmax3.x(), vmax3.y(), vmax3.z(), 1.0f);
+				//Eigen::Vector4f vmin4 = transforms[i] * Eigen::Vector4f(vmin3.x(), vmin3.y(), vmin3.z(), 1.0f);
+				//Eigen::Vector4f vmax4 = transforms[i] * Eigen::Vector4f(vmax3.x(), vmax3.y(), vmax3.z(), 1.0f);
+
+				//Neon::AABB aabb;
+				//aabb.Expand({ vmin4.x(), vmin4.y(), vmin4.z() });
+				//aabb.Expand({ vmax4.x(), vmax4.y(), vmax4.z() });
+
+				auto vmin = Eigen::Vector3f(mesh->GetAABB().GetMinPoint().x, mesh->GetAABB().GetMinPoint().y, mesh->GetAABB().GetMinPoint().z);
+				auto vmax = Eigen::Vector3f(mesh->GetAABB().GetMaxPoint().x, mesh->GetAABB().GetMaxPoint().y, mesh->GetAABB().GetMaxPoint().z);
+
+				Neon::AABB aabb;
+				aabb.Expand({ vmin.x(), vmin.y(), vmin.z() });
+				aabb.Expand({ vmax.x(), vmax.y(), vmax.z() });
 
 				nvtxRangePushA("@Aaron/Integrate - Total");
 				for (size_t z = 0; z < zcount; z++)
@@ -356,24 +432,25 @@ int main()
 							tsdfs[z * ycount * xcount + y * xcount + x]->IntegrateWrap(
 								mesh->GetVertexBuffer()->GetElements(),
 								transforms[i],
-								vmin4.head<3>(), vmax4.head<3>(), 256, 480);
+								aabb.GetXLength(), aabb.GetYLength(),
+								256, 480);
 						}
 					}
 				}
 				nvtxRangePop();
 
-				nvtxRangePushA("@Aaron/UpdateValues");
-				for (size_t z = 0; z < zcount; z++)
-				{
-					for (size_t y = 0; y < ycount; y++)
-					{
-						for (size_t x = 0; x < xcount; x++)
-						{
-							tsdfs[z * ycount * xcount + y * xcount + x]->UpdateValues();
-						}
-					}
-				}
-				nvtxRangePop();
+				//nvtxRangePushA("@Aaron/UpdateValues");
+				//for (size_t z = 0; z < zcount; z++)
+				//{
+				//	for (size_t y = 0; y < ycount; y++)
+				//	{
+				//		for (size_t x = 0; x < xcount; x++)
+				//		{
+				//			tsdfs[z * ycount * xcount + y * xcount + x]->UpdateValues();
+				//		}
+				//	}
+				//}
+				//nvtxRangePop();
 
 				nvtxRangePushA("@Aaron/BuildGridCells");
 				for (size_t z = 0; z < zcount; z++)
@@ -541,12 +618,12 @@ int main()
 			float yoffset = (maxPoint.y - minPoint.y) * 0.5f;
 			float zoffset = (maxPoint.z - minPoint.z) * 0.5f;
 
-			int xcount = 2;
-			int ycount = 2;
-			int zcount = 2;
+			int xcount = 3;
+			int ycount = 3;
+			int zcount = 3;
 
 			float voxelSize = 0.05f;
-			float isoValue = 2.5f;
+			float isoValue = 0.0f;
 
 			NeonCUDA::TSDF** tsdfs = new NeonCUDA::TSDF * [xcount * ycount * zcount];
 			for (size_t z = 0; z < zcount; z++)

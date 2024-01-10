@@ -401,7 +401,9 @@ namespace NeonCUDA
 		int countX;
 		int countY;
 		int countZ;
-		Eigen::Vector3f minPoint;
+		float minX;
+		float minY;
+		float minZ;
 		float voxelSize;
 
 		__device__
@@ -412,9 +414,9 @@ namespace NeonCUDA
 			auto x = (index % (countX * countY)) % countX;
 
 			Eigen::Vector3f position(
-				minPoint.x() + x * voxelSize + 0.5f * voxelSize,
-				minPoint.y() + y * voxelSize + 0.5f * voxelSize,
-				minPoint.z() + z * voxelSize + 0.5f * voxelSize);
+				minX + x * voxelSize + 0.5f * voxelSize,
+				minY + y * voxelSize + 0.5f * voxelSize,
+				minZ + z * voxelSize + 0.5f * voxelSize);
 
 			values[index] = -FLT_MAX;
 			positions[index] = position;
@@ -429,7 +431,9 @@ namespace NeonCUDA
 		int countX;
 		int countY;
 		int countZ;
-		Eigen::Vector3f minPoint;
+		float minX;
+		float minY;
+		float minZ;
 		float voxelSize;
 
 		__device__
@@ -440,9 +444,9 @@ namespace NeonCUDA
 			auto x = (index % (countX * countY)) % countX;
 
 			Eigen::Vector3f position(
-				minPoint.x() + x * voxelSize + 0.5f * voxelSize,
-				minPoint.y() + y * voxelSize + 0.5f * voxelSize,
-				minPoint.z() + z * voxelSize + 0.5f * voxelSize);
+				minX + x * voxelSize + 0.5f * voxelSize,
+				minY + y * voxelSize + 0.5f * voxelSize,
+				minZ + z * voxelSize + 0.5f * voxelSize);
 
 			float dist = __fsqrt_rn((position - center).squaredNorm());
 
@@ -473,7 +477,9 @@ namespace NeonCUDA
 		int countX;
 		int countY;
 		int countZ;
-		Eigen::Vector3f minPoint;
+		float minX;
+		float minY;
+		float minZ;
 		float voxelSize;
 		float isoValue;
 
@@ -485,43 +491,43 @@ namespace NeonCUDA
 			auto x = (index % (countX * countY)) % countX;
 
 			Eigen::Vector3f position(
-				minPoint.x() + x * voxelSize + 0.5f * voxelSize,
-				minPoint.y() + y * voxelSize + 0.5f * voxelSize,
-				minPoint.z() + z * voxelSize + 0.5f * voxelSize);
+				minX + x * voxelSize + 0.5f * voxelSize,
+				minY + y * voxelSize + 0.5f * voxelSize,
+				minZ + z * voxelSize + 0.5f * voxelSize);
 
 			MarchingCubes::GRIDCELL gridcell;
 			gridcell.p[0] = Eigen::Vector3f(
-				minPoint.x() + x * voxelSize + 0.5f * voxelSize,
-				minPoint.y() + y * voxelSize + 0.5f * voxelSize,
-				minPoint.z() + z * voxelSize + 0.5f * voxelSize);
+				minX + x * voxelSize + 0.5f * voxelSize,
+				minY + y * voxelSize + 0.5f * voxelSize,
+				minZ + z * voxelSize + 0.5f * voxelSize);
 			gridcell.p[1] = Eigen::Vector3f(
-				minPoint.x() + (x + 1) * voxelSize + 0.5f * voxelSize,
-				minPoint.y() + y * voxelSize + 0.5f * voxelSize,
-				minPoint.z() + z * voxelSize + 0.5f * voxelSize);
+				minX + (x + 1) * voxelSize + 0.5f * voxelSize,
+				minY + y * voxelSize + 0.5f * voxelSize,
+				minZ + z * voxelSize + 0.5f * voxelSize);
 			gridcell.p[2] = Eigen::Vector3f(
-				minPoint.x() + (x + 1) * voxelSize + 0.5f * voxelSize,
-				minPoint.y() + y * voxelSize + 0.5f * voxelSize,
-				minPoint.z() + (z + 1) * voxelSize + 0.5f * voxelSize);
+				minX + (x + 1) * voxelSize + 0.5f * voxelSize,
+				minY + y * voxelSize + 0.5f * voxelSize,
+				minZ + (z + 1) * voxelSize + 0.5f * voxelSize);
 			gridcell.p[3] = Eigen::Vector3f(
-				minPoint.x() + x * voxelSize + 0.5f * voxelSize,
-				minPoint.y() + y * voxelSize + 0.5f * voxelSize,
-				minPoint.z() + (z + 1) * voxelSize + 0.5f * voxelSize);
+				minX + x * voxelSize + 0.5f * voxelSize,
+				minY + y * voxelSize + 0.5f * voxelSize,
+				minZ + (z + 1) * voxelSize + 0.5f * voxelSize);
 			gridcell.p[4] = Eigen::Vector3f(
-				minPoint.x() + x * voxelSize + 0.5f * voxelSize,
-				minPoint.y() + (y + 1) * voxelSize + 0.5f * voxelSize,
-				minPoint.z() + z * voxelSize + 0.5f * voxelSize);
+				minX + x * voxelSize + 0.5f * voxelSize,
+				minY + (y + 1) * voxelSize + 0.5f * voxelSize,
+				minZ + z * voxelSize + 0.5f * voxelSize);
 			gridcell.p[5] = Eigen::Vector3f(
-				minPoint.x() + (x + 1) * voxelSize + 0.5f * voxelSize,
-				minPoint.y() + (y + 1) * voxelSize + 0.5f * voxelSize,
-				minPoint.z() + z * voxelSize + 0.5f * voxelSize);
+				minX + (x + 1) * voxelSize + 0.5f * voxelSize,
+				minY + (y + 1) * voxelSize + 0.5f * voxelSize,
+				minZ + z * voxelSize + 0.5f * voxelSize);
 			gridcell.p[6] = Eigen::Vector3f(
-				minPoint.x() + (x + 1) * voxelSize + 0.5f * voxelSize,
-				minPoint.y() + (y + 1) * voxelSize + 0.5f * voxelSize,
-				minPoint.z() + (z + 1) * voxelSize + 0.5f * voxelSize);
+				minX + (x + 1) * voxelSize + 0.5f * voxelSize,
+				minY + (y + 1) * voxelSize + 0.5f * voxelSize,
+				minZ + (z + 1) * voxelSize + 0.5f * voxelSize);
 			gridcell.p[7] = Eigen::Vector3f(
-				minPoint.x() + x * voxelSize + 0.5f * voxelSize,
-				minPoint.y() + (y + 1) * voxelSize + 0.5f * voxelSize,
-				minPoint.z() + (z + 1) * voxelSize + 0.5f * voxelSize);
+				minX + x * voxelSize + 0.5f * voxelSize,
+				minY + (y + 1) * voxelSize + 0.5f * voxelSize,
+				minZ + (z + 1) * voxelSize + 0.5f * voxelSize);
 
 			gridcell.val[0] = values[z * countX * countY + y * countX + x];
 			gridcell.val[1] = values[z * countX * countY + y * countX + (x + 1)];
@@ -623,25 +629,110 @@ namespace NeonCUDA
 
 	struct IntegrateFunctor
 	{
+		Eigen::Vector3f center;
 		float* values;
 		Eigen::Vector3f* positions;
 		int countX;
 		int countY;
 		int countZ;
-		Eigen::Vector3f minPoint;
+		float minX;
+		float minY;
+		float minZ;
 		float voxelSize;
+
+		const Eigen::Vector3f* inputPositions;
+		Eigen::Matrix4f transform;
+		Eigen::Matrix4f inverseTransform;
+		float width;
+		float height;
+		int rows;
+		int columns;
+		float xUnit;
+		float yUnit;
 
 		__device__
 			void operator()(size_t index)
 		{
+			//if (index == 0)
+			//{
+			//	for (size_t y = 0; y < 480 - 3; y += 3)
+			//	{
+			//		for (size_t x = 0; x < 256 - 2; x += 2)
+			//		{
+			//			auto& v = inputPositions[y * 256 + x];
+			//			if (FLT_VALID(v.x()) && FLT_VALID(v.y()) && FLT_VALID(v.z()))
+			//			{
+			//				printf("input : %f, %f, %f\n", v.x(), v.y(), v.z());
+			//			}
+			//		}
+			//	}
+			//}
+			//else
+			//	return;
+
+			if (index == 0)
+			{
+				printf("min : %f, %f, %f\n", minX, minY, minZ);
+				printf("xUnit : %f, yUnit : %f\n", xUnit, yUnit);
+				printf("center: %f, %f, %f\n", center.x(), center.y(), center.z());
+			}
+
 			auto z = index / (countX * countY);
 			auto y = (index % (countX * countY)) / countX;
 			auto x = (index % (countX * countY)) % countX;
 
 			Eigen::Vector3f position(
-				minPoint.x() + x * voxelSize + 0.5f * voxelSize,
-				minPoint.y() + y * voxelSize + 0.5f * voxelSize,
-				minPoint.z() + z * voxelSize + 0.5f * voxelSize);
+				minX + x * voxelSize + 0.5f * voxelSize,
+				minY + y * voxelSize + 0.5f * voxelSize,
+				minZ + z * voxelSize + 0.5f * voxelSize);
+
+			//if ((position - center).norm() < 1.0f)
+			//{
+			//	values[index] = (position - center).norm() - 1.0f;
+			//}
+			//else
+			//{
+			//	values[index] = FLT_MAX;
+			//}
+
+			//if (x % 2 == 0 || y % 2 == 0 || z % 2 == 0)
+			//	values[index] = -1.0f;
+			//else
+			//	values[index] = 1.0f;
+			//return;
+
+			//Eigen::Vector4f ip = (inverseTransform * Eigen::Vector4f(position.x(), position.y(), position.z(), 1.0f));
+			Eigen::Vector3f ip = position;
+
+			float xPosition = ip.x() + width * 0.5f;
+			float yPosition = ip.y() + height * 0.5f;
+			float distance = ip.z();
+
+			if ((0 < xPosition && xPosition < width) &&
+				(0 < yPosition && yPosition < height))
+			{
+				int xIndex = ((int)(xPosition / xUnit) / 2) * 2;
+				int yIndex = ((int)(yPosition / yUnit) / 3) * 3;
+
+				auto inputPosition = inputPositions[yIndex * columns + xIndex];
+
+				if (FLT_VALID(inputPosition.x()) && FLT_VALID(inputPosition.y()) && FLT_VALID(inputPosition.z()))
+				{
+					//printf("[%d, %d] inputPosition : %f, %f, %f\n", xIndex, yIndex, inputPosition.x(), inputPosition.y(), inputPosition.z());
+					values[index] = distance - inputPosition.z();
+
+					//printf("%f\n", (inputPosition - Eigen::Vector3f(ip.x(), ip.y(), ip.z())).norm());
+				}
+				else
+				{
+					values[index] = FLT_MAX;
+				//	//values[index] = 0.0f;
+				}
+			}
+			else
+			{
+				values[index] = FLT_MAX;
+			}
 		}
 	};
 
@@ -649,36 +740,31 @@ namespace NeonCUDA
 	{
 	}
 
-	TSDF::TSDF(float voxelSize, const Eigen::Vector3f& minPoint, const Eigen::Vector3f& maxPoint)
+	TSDF::TSDF(float voxelSize, const Eigen::Vector3f& inputMinPoint, const Eigen::Vector3f& inputMaxPoint)
 		: voxelSize(voxelSize)
 	{
+		minPoint.x() = floorf(inputMinPoint.x() / voxelSize) * voxelSize;
+		minPoint.y() = floorf(inputMinPoint.y() / voxelSize) * voxelSize;
+		minPoint.z() = floorf(inputMinPoint.z() / voxelSize) * voxelSize;
+
+		maxPoint.x() = ceilf(inputMaxPoint.x() / voxelSize) * voxelSize;
+		maxPoint.y() = ceilf(inputMaxPoint.y() / voxelSize) * voxelSize;
+		maxPoint.z() = ceilf(inputMaxPoint.z() / voxelSize) * voxelSize;
+
+		centerPoint = (maxPoint + minPoint) * 0.5f;
+
 		auto xLength = maxPoint.x() - minPoint.x();
 		auto yLength = maxPoint.y() - minPoint.y();
 		auto zLength = maxPoint.z() - minPoint.z();
 
-		voxelCountX = (size_t)ceilf(xLength / voxelSize) + 1;
-		voxelCountY = (size_t)ceilf(yLength / voxelSize) + 1;
-		voxelCountZ = (size_t)ceilf(zLength / voxelSize) + 1;
-
-		// Make voxel count even number
-		if (voxelCountX % 2 == 1) voxelCountX++;
-		if (voxelCountY % 2 == 1) voxelCountY++;
-		if (voxelCountZ % 2 == 1) voxelCountZ++;
+		voxelCountX = (size_t)(xLength / voxelSize);
+		voxelCountY = (size_t)(yLength / voxelSize);
+		voxelCountZ = (size_t)(zLength / voxelSize);
 
 		values = thrust::device_vector<float>(voxelCountZ * voxelCountY * voxelCountX, FLT_MAX);
 		positions = thrust::device_vector<Eigen::Vector3f>(voxelCountZ * voxelCountY * voxelCountX, Eigen::Vector3f(0.0f, 0.0f, 0.0f));
 		gridcells = thrust::device_vector<MarchingCubes::GRIDCELL>((voxelCountZ - 1) * (voxelCountY - 1) * (voxelCountX - 1));
 		triangles = thrust::device_vector<MarchingCubes::TRIANGLE>(voxelCountZ * voxelCountY * voxelCountX * 4);
-
-		centerPoint = (maxPoint + minPoint) * 0.5f;
-		this->minPoint = Eigen::Vector3f(
-			centerPoint.x() - voxelSize * (voxelCountX / 2),
-			centerPoint.y() - voxelSize * (voxelCountY / 2),
-			centerPoint.z() - voxelSize * (voxelCountZ / 2));
-		this->maxPoint = Eigen::Vector3f(
-			centerPoint.x() + voxelSize * (voxelCountX / 2),
-			centerPoint.y() + voxelSize * (voxelCountY / 2),
-			centerPoint.z() + voxelSize * (voxelCountZ / 2));
 
 #pragma region Fill default values
 		{
@@ -690,7 +776,9 @@ namespace NeonCUDA
 			fillFunctor.countX = voxelCountX;
 			fillFunctor.countY = voxelCountY;
 			fillFunctor.countZ = voxelCountZ;
-			fillFunctor.minPoint = this->minPoint;
+			fillFunctor.minX = minPoint.x();
+			fillFunctor.minY = minPoint.y();
+			fillFunctor.minZ = minPoint.z();
 			fillFunctor.voxelSize = voxelSize;
 
 			thrust::for_each(thrust::make_counting_iterator<size_t>(0),
@@ -701,13 +789,15 @@ namespace NeonCUDA
 #pragma endregion
 
 		printf("%d x %d x %d voxels\n", voxelCountX, voxelCountY, voxelCountZ);
+		//printf("min : %f, %f, %f\n", minPoint.x(), minPoint.y(), minPoint.z());
+		//printf("max : %f, %f, %f\n", maxPoint.x(), maxPoint.y(), maxPoint.z());
 	}
 
 	void TSDF::IntegrateWrap(
 		const std::vector<glm::vec3>& vertices,
 		const Eigen::Matrix4f& transform,
-		const Eigen::Vector3f& vmin, const Eigen::Vector3f& vmax,
-		int rows, int columns)
+		float width, float height,
+		int columns, int rows)
 	{
 		nvtxRangePushA("@Arron/IntegrateWrap");
 
@@ -718,7 +808,10 @@ namespace NeonCUDA
 		}
 
 		thrust::device_vector<Eigen::Vector3f> device_vertices(host_vertices.begin(), host_vertices.end());
-		Integrate(device_vertices, transform, vmin, vmax, rows, columns);
+
+		//cudaDeviceSynchronize();
+
+		Integrate(device_vertices, transform, width, height, columns, rows);
 
 		nvtxRangePop();
 	}
@@ -726,21 +819,35 @@ namespace NeonCUDA
 	void TSDF::Integrate(
 		const thrust::device_vector<Eigen::Vector3f>& vertices,
 		const Eigen::Matrix4f& transform,
-		const Eigen::Vector3f& vmin, const Eigen::Vector3f& vmax,
-		int rows, int columns)
+		float width, float height,
+		int columns, int rows)
 	{
 		nvtxRangePushA("@Arron/Integrate");
 
 		auto _values = thrust::raw_pointer_cast(values.data());
 		auto _positions = thrust::raw_pointer_cast(positions.data());
+		auto _inputPositions = thrust::raw_pointer_cast(vertices.data());
 
 		IntegrateFunctor integrateFunctor;
+		integrateFunctor.center = this->centerPoint;
 		integrateFunctor.values = _values;
 		integrateFunctor.positions = _positions;
 		integrateFunctor.countX = voxelCountX;
 		integrateFunctor.countY = voxelCountY;
 		integrateFunctor.countZ = voxelCountZ;
+		integrateFunctor.minX = this->minPoint.x();
+		integrateFunctor.minY = this->minPoint.y();
+		integrateFunctor.minZ = this->minPoint.z();
 		integrateFunctor.voxelSize = voxelSize;
+		integrateFunctor.inputPositions = _inputPositions;
+		integrateFunctor.transform = transform;
+		integrateFunctor.inverseTransform = transform.inverse();
+		integrateFunctor.width = width;
+		integrateFunctor.height = height;
+		integrateFunctor.rows = rows;
+		integrateFunctor.columns = columns;
+		integrateFunctor.xUnit = width / columns;
+		integrateFunctor.yUnit = height / rows;
 
 		thrust::for_each(thrust::make_counting_iterator<size_t>(0),
 			thrust::make_counting_iterator<size_t>(voxelCountX * voxelCountY * voxelCountZ),
@@ -763,7 +870,9 @@ namespace NeonCUDA
 		updateVoxelsFunctor.countX = voxelCountX;
 		updateVoxelsFunctor.countY = voxelCountY;
 		updateVoxelsFunctor.countZ = voxelCountZ;
-		updateVoxelsFunctor.minPoint = this->minPoint;
+		updateVoxelsFunctor.minX = this->minPoint.x();
+		updateVoxelsFunctor.minY = this->minPoint.y();
+		updateVoxelsFunctor.minZ = this->minPoint.z();
 		updateVoxelsFunctor.voxelSize = voxelSize;
 
 		thrust::for_each(thrust::make_counting_iterator<size_t>(0),
@@ -791,7 +900,9 @@ namespace NeonCUDA
 		buildGridFunctor.countX = voxelCountX;
 		buildGridFunctor.countY = voxelCountY;
 		buildGridFunctor.countZ = voxelCountZ;
-		buildGridFunctor.minPoint = this->minPoint;
+		buildGridFunctor.minX = this->minPoint.x();
+		buildGridFunctor.minY = this->minPoint.y();
+		buildGridFunctor.minZ = this->minPoint.z();
 		buildGridFunctor.voxelSize = voxelSize;
 		buildGridFunctor.isoValue = isoValue;
 
@@ -857,6 +968,168 @@ namespace NeonCUDA
 					{ t.p[1].x(), t.p[1].y(), t.p[1].z() },
 					{ t.p[2].x(), t.p[2].y(), t.p[2].z() });
 			}
+		}
+	}
+
+	void TSDF::ShowInversedVoxels(Neon::Scene* scene, const Eigen::Matrix4f& transform, Neon::Mesh* mesh)
+	{
+		float width = mesh->GetAABB().GetXLength();
+		float height = mesh->GetAABB().GetYLength();
+
+		float columns = 256;
+		float rows = 480;
+
+		float xUnit = width / columns;
+		float yUnit = height / rows;
+
+		auto& inputPositions = mesh->GetVertexBuffer()->GetElements();
+		
+		auto im = transform.inverse();
+		//auto im = transform;
+
+		auto org = im * Eigen::Vector4f(0.0f, 0.0f, 0.0f, 1.0f);
+		scene->Debug("orgin")->AddBox({ org.x(), org.y(), org.z() }, 1, 1, 1, glm::red);
+
+		for (size_t z = 0; z < voxelCountZ; z++)
+		{
+			for (size_t y = 0; y < voxelCountY; y++)
+			{
+				for (size_t x = 0; x < voxelCountX; x++)
+				{
+					Eigen::Vector4f point(
+						minPoint.x() + voxelSize * x + 0.5f * voxelSize,
+						minPoint.y() + voxelSize * y + 0.5f * voxelSize,
+						minPoint.z() + voxelSize * z + 0.5f * voxelSize,
+						1.0f);
+
+					//scene->Debug("inputPoint Line")->AddLine({ point.x(), point.y(), point.z()}, {point.x(), point.y(), 0.0f}, glm::red, glm::blue);
+
+					Eigen::Vector4f ip = im * point;
+					Eigen::Vector4f ip0 = im * Eigen::Vector4f(point.x(), point.y(), 0.0f, 1.0f);
+
+					float xPosition = ip.x() + width * 0.5f;
+					float yPosition = ip.y() + height * 0.5f;
+					float distance = ip.z();
+
+					if ((0 < xPosition && xPosition < width) &&
+						(0 < yPosition && yPosition < height))
+					{
+						int xIndex = ((int)(xPosition / xUnit) / 2) * 2;
+						int yIndex = ((int)(yPosition / yUnit) / 3) * 3;
+						//int xIndex = (int)floorf(xPosition / xUnit);
+						//int yIndex = (int)floorf(yPosition / yUnit);
+
+						auto inputPosition = inputPositions[yIndex * columns + xIndex];
+
+						if (FLT_VALID(inputPosition.x) && FLT_VALID(inputPosition.y) && FLT_VALID(inputPosition.z))
+						{
+							//printf("%f %f %f\n", inputPosition.x, inputPosition.y, inputPosition.z);
+
+							//scene->Debug("inputPoint")->AddPoint({ point.x(), point.y(), 0.0f}, glm::red);
+
+							//scene->Debug("inputPoint Line")->AddLine({ inputPosition.x, inputPosition.y, inputPosition.z }, { point.x(), point.y(), point.z()}, glm::red, glm::blue);
+						}
+						
+						//if (FLT_VALID(inputPosition.x()) && FLT_VALID(inputPosition.y()) && FLT_VALID(inputPosition.z()))
+						//{
+						//	//printf("[%d, %d] inputPosition : %f, %f, %f\n", xIndex, yIndex, inputPosition.x(), inputPosition.y(), inputPosition.z());
+						//	//values[index] = distance - inputPosition.z();
+
+						//	//printf("%f\n", (inputPosition - Eigen::Vector3f(ip.x(), ip.y(), ip.z())).norm());
+						//}
+						//else
+						//{
+						//	//values[index] = FLT_MAX;
+						//	//	//values[index] = 0.0f;
+						//}
+					}
+
+
+					//scene->Debug("original")->AddPoint({ point.x(), point.y(), point.z() }, glm::green);
+
+					//scene->Debug("inversed")->AddPoint({ ip.x(), ip.y(), ip.z() }, glm::yellow);
+				}
+			}
+		}
+	}
+
+	void TSDF::ShowInversedVoxelsSingle(Neon::Scene* scene, const Eigen::Matrix4f& transform, Neon::Mesh* mesh, int singleIndex)
+	{
+		float width = mesh->GetAABB().GetXLength();
+		float height = mesh->GetAABB().GetYLength();
+
+		float columns = 256;
+		float rows = 480;
+
+		float xUnit = width / columns;
+		float yUnit = height / rows;
+
+		auto& inputPositions = mesh->GetVertexBuffer()->GetElements();
+
+		auto im = transform.inverse();
+		//auto im = transform;
+
+		int z = singleIndex / (voxelCountY * voxelCountX);
+		int y = (singleIndex % (voxelCountY * voxelCountX)) / voxelCountX;
+		int x = (singleIndex % (voxelCountY * voxelCountX)) % voxelCountX;
+
+		printf("x: %d, y: %d, z: %d\n", x, y, z);
+
+		{
+			Eigen::Vector4f point(
+				minPoint.x() + voxelSize * x + 0.5f * voxelSize,
+				minPoint.y() + voxelSize * y + 0.5f * voxelSize,
+				minPoint.z() + voxelSize * z + 0.5f * voxelSize,
+				1.0f);
+
+			//scene->Debug("inputPoint Line")->AddLine({ point.x(), point.y(), point.z()}, {point.x(), point.y(), 0.0f}, glm::red, glm::blue);
+
+			Eigen::Vector4f ip = im * point;
+			Eigen::Vector4f ip0 = im * Eigen::Vector4f(point.x(), point.y(), 0.0f, 1.0f);
+
+			float xPosition = ip.x() + width * 0.5f;
+			float yPosition = ip.y() + height * 0.5f;
+			float distance = ip.z();
+
+			if ((0 < xPosition && xPosition < width) &&
+				(0 < yPosition && yPosition < height))
+			{
+				int xIndex = ((int)(xPosition / xUnit) / 2) * 2;
+				int yIndex = ((int)(yPosition / yUnit) / 3) * 3;
+				//int xIndex = (int)floorf(xPosition / xUnit);
+				//int yIndex = (int)floorf(yPosition / yUnit);
+
+				auto inputPosition = inputPositions[yIndex * columns + xIndex];
+
+				if (FLT_VALID(inputPosition.x) && FLT_VALID(inputPosition.y) && FLT_VALID(inputPosition.z))
+				{
+					//printf("%f %f %f\n", inputPosition.x, inputPosition.y, inputPosition.z);
+
+					scene->Debug("inputPoint")->AddPoint({ point.x(), point.y(), point.z()}, glm::red);
+
+					scene->Debug("inputPoint Line")->AddLine({ inputPosition.x, inputPosition.y, inputPosition.z }, { point.x(), point.y(), point.z() }, glm::red, glm::blue);
+				}
+
+				//if (FLT_VALID(inputPosition.x()) && FLT_VALID(inputPosition.y()) && FLT_VALID(inputPosition.z()))
+				//{
+				//	//printf("[%d, %d] inputPosition : %f, %f, %f\n", xIndex, yIndex, inputPosition.x(), inputPosition.y(), inputPosition.z());
+				//	//values[index] = distance - inputPosition.z();
+
+				//	//printf("%f\n", (inputPosition - Eigen::Vector3f(ip.x(), ip.y(), ip.z())).norm());
+				//}
+				//else
+				//{
+				//	//values[index] = FLT_MAX;
+				//	//	//values[index] = 0.0f;
+				//}
+			}
+
+
+			//scene->Debug("original")->AddPoint({ point.x(), point.y(), point.z() }, glm::green);
+
+			//scene->Debug("inversed")->AddPoint({ ip.x(), ip.y(), ip.z() }, glm::yellow);
+
+			return;
 		}
 	}
 }
