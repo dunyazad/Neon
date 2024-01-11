@@ -307,6 +307,99 @@ namespace NeonCUDA
 
 	}
 
+	std::vector<glm::vec3> FlipXInputArray(const std::vector<glm::vec3>& input, int columns, int rows)
+	{
+		std::vector<glm::vec3> result;
+
+		for (size_t row = 0; row < rows; row++)
+		{
+			for (size_t block = (size_t)(columns / 2) - 1; block >= 0; block--)
+			{
+				size_t index0 = row * columns + block * 2 + 0;
+				size_t index1 = row * columns + block * 2 + 1;
+
+				result.push_back(input[index0]);
+				result.push_back(input[index1]);
+
+				if (block == 0)
+					break;
+			}
+		}
+
+		return result;
+	}
+
+	void BuildDepthMapWrap(Neon::Scene* scene, Neon::Mesh* mesh, size_t hResolution, size_t vResolution, float xUnit, float yUnit)
+	{
+		thrust::device_vector<Eigen::Vector3f> result(hResolution * vResolution);
+
+		BuildDepthMap(scene, mesh, hResolution, vResolution, xUnit, yUnit, result);
+	}
+
+	void BuildDepthMap(Neon::Scene* scene, Neon::Mesh* mesh, size_t hResolution, size_t vResolution, float xUnit, float yUnit, thrust::device_vector<Eigen::Vector3f>& result)
+	{
+		auto inputPositions = FlipXInputArray(mesh->GetVertexBuffer()->GetElements(), hResolution, vResolution);
+
+		thrust::host_vector<Eigen::Vector3f> host_depthMapInput;
+		for (auto& v : inputPositions)
+		{
+			host_depthMapInput.push_back(Eigen::Vector3f(v.x, v.y, v.z));
+		}
+
+		thrust::device_vector<Eigen::Vector3f> depthMapInput(host_depthMapInput.begin(), host_depthMapInput.end());
+
+		float minX = -((float)hResolution * xUnit * 0.5f);
+		float maxX = ((float)hResolution * xUnit * 0.5f);
+		float minY = -((float)vResolution * yUnit * 0.5f);
+		float maxY = ((float)vResolution * yUnit * 0.5f);
+
+#pragma region Draw Grid
+		for (float y = minY; y <= maxY; y += yUnit)
+		{
+			scene->Debug("grid lines")->AddLine({ minX, y, 0.0f }, { maxX, y, 0.0f }, glm::black, glm::black);
+		}
+		for (float x = minX; x <= maxX; x += xUnit)
+		{
+			scene->Debug("grid lines")->AddLine({ x, minY, 0.0f }, { x, maxY, 0.0f }, glm::black, glm::black);
+		}
+#pragma endregion
+
+		auto _result = thrust::raw_pointer_cast(result.data());
+		auto _points = thrust::raw_pointer_cast(depthMapInput.data());
+		thrust::for_each(thrust::make_counting_iterator<size_t>(0), thrust::make_counting_iterator<size_t>(0) + depthMapInput.size(),
+			[_result, _points, hResolution, vResolution, xUnit, yUnit] __device__(size_t index) {
+
+			auto& point = _points[index];
+			if (FLT_VALID(point.x()) && FLT_VALID(point.y()) && FLT_VALID(point.z()))
+			{
+				auto xIndex = (int)floorf(point.x() / xUnit) + hResolution / 2;
+				auto yIndex = (int)floorf(point.y() / yUnit) + vResolution / 2;
+				_result[yIndex * hResolution + xIndex] = point;
+			}
+		});
+
+		thrust::host_vector<Eigen::Vector3f> host_result(result.begin(), result.end());
+
+		for (auto& p : host_result)
+		{
+			if (FLT_VALID(p.x()) && FLT_VALID(p.y()) && FLT_VALID(p.z()))
+			{
+				//scene->Debug("DepthMap_Result")->AddPoint({ p.x(), p.y(), 0.01f }, glm::yellow);
+				scene->Debug("DepthMap_Result_Lines")->AddLine({ p.x(), p.y(), 0.0f }, { p.x(), p.y(), p.z()}, glm::yellow, glm::yellow);
+			}
+
+			if (FLT_VALID(p.x()) && FLT_VALID(p.y()) && FLT_VALID(p.z()))
+			{
+				float x = floorf(p.x() / xUnit) * xUnit + xUnit * 0.5f;
+				float y = floorf(p.y() / yUnit) * yUnit + yUnit * 0.5f;
+				float z = floorf(p.z() / xUnit) * xUnit + xUnit * 0.5f;
+
+				//scene->Debug("DepthMap_Result_Quantized")->AddPoint({ x, y, 0.02f }, glm::red);
+				scene->Debug("DepthMap_Result_Quantized")->AddLine({ x, y, 0.0f }, { x, y, z }, glm::red, glm::red);
+			}
+		}
+	}
+
 #pragma region Math
 #define DOT(a, b) (a).x * (b).x + (a).y * (b).y + (a).z * (b).z
 #define CROSS(a, b) Eigen::Vector3f((a).y * (b).z - (b).y * (a).z, (a).z * (b).x - (b).z * (a).x, (a).x * (b).y - (b).x * (a).y)
@@ -607,7 +700,7 @@ namespace NeonCUDA
 		}
 
 		__device__
-		Eigen::Vector3f VertexInterp(float isolevel, const Eigen::Vector3f& p1, const Eigen::Vector3f& p2, float valp1, float valp2)
+			Eigen::Vector3f VertexInterp(float isolevel, const Eigen::Vector3f& p1, const Eigen::Vector3f& p2, float valp1, float valp2)
 		{
 			float mu;
 			Eigen::Vector3f p;
@@ -726,7 +819,7 @@ namespace NeonCUDA
 				else
 				{
 					values[index] = FLT_MAX;
-				//	//values[index] = 0.0f;
+					//	//values[index] = 0.0f;
 				}
 			}
 			else
@@ -791,13 +884,6 @@ namespace NeonCUDA
 		printf("%d x %d x %d voxels\n", voxelCountX, voxelCountY, voxelCountZ);
 		//printf("min : %f, %f, %f\n", minPoint.x(), minPoint.y(), minPoint.z());
 		//printf("max : %f, %f, %f\n", maxPoint.x(), maxPoint.y(), maxPoint.z());
-	}
-
-	void TSDF::BuildDepthMap(Neon::Mesh* mesh, size_t hResolution, size_t vResolution, float xUnit, float yUnit, thrust::device_vector<Eigen::Vector3f>& result)
-	{
-		auto inputPositions = FlipXInputArray(mesh->GetVertexBuffer()->GetElements(), hResolution, vResolution);
-
-
 	}
 
 	void TSDF::IntegrateWrap(
@@ -914,7 +1000,7 @@ namespace NeonCUDA
 		buildGridFunctor.isoValue = isoValue;
 
 		thrust::for_each(thrust::make_counting_iterator<size_t>(0),
-			thrust::make_counting_iterator<size_t>((voxelCountX -1) * (voxelCountY - 1) * (voxelCountZ - 1)),
+			thrust::make_counting_iterator<size_t>((voxelCountX - 1) * (voxelCountY - 1) * (voxelCountZ - 1)),
 			buildGridFunctor);
 
 		nvtxRangePop();
@@ -966,8 +1052,8 @@ namespace NeonCUDA
 
 		for (auto& t : host_triangles)
 		{
-			if ((t.p[0].x() != 0.0f && t.p[0].y() != 0.0f && t.p[0].z() != 0.0f)&&
-				(t.p[1].x() != 0.0f && t.p[1].y() != 0.0f && t.p[1].z() != 0.0f)&&
+			if ((t.p[0].x() != 0.0f && t.p[0].y() != 0.0f && t.p[0].z() != 0.0f) &&
+				(t.p[1].x() != 0.0f && t.p[1].y() != 0.0f && t.p[1].z() != 0.0f) &&
 				(t.p[2].x() != 0.0f && t.p[2].y() != 0.0f && t.p[2].z() != 0.0f))
 			{
 				scene->Debug("triangles")->AddTriangle(
@@ -1001,10 +1087,10 @@ namespace NeonCUDA
 		//float cx = mesh->GetAABB().GetCenter().x;
 		//float cy = mesh->GetAABB().GetCenter().y;
 
-		scene->Debug("BoxLine")->AddLine({ -width * 0.5f, -height * 0.5f, 0.0f }, {  width * 0.5f, -height * 0.5f, 0.0f });
+		scene->Debug("BoxLine")->AddLine({ -width * 0.5f, -height * 0.5f, 0.0f }, { width * 0.5f, -height * 0.5f, 0.0f });
 		scene->Debug("BoxLine")->AddLine({ -width * 0.5f, -height * 0.5f, 0.0f }, { -width * 0.5f,  height * 0.5f, 0.0f });
-		scene->Debug("BoxLine")->AddLine({  width * 0.5f,  height * 0.5f, 0.0f }, { -width * 0.5f,  height * 0.5f, 0.0f });
-		scene->Debug("BoxLine")->AddLine({  width * 0.5f,  height * 0.5f, 0.0f }, {  width * 0.5f, -height * 0.5f, 0.0f });
+		scene->Debug("BoxLine")->AddLine({ width * 0.5f,  height * 0.5f, 0.0f }, { -width * 0.5f,  height * 0.5f, 0.0f });
+		scene->Debug("BoxLine")->AddLine({ width * 0.5f,  height * 0.5f, 0.0f }, { width * 0.5f, -height * 0.5f, 0.0f });
 		scene->Debug("BoxLine")->AddLine({ -width * 0.5f,  0.0f, 0.0f }, { width * 0.5f, 0.0f, 0.0f });
 		scene->Debug("BoxLine")->AddLine({ 0.0f, height * 0.5f, 0.0f }, { 0.0f, -height * 0.5f, 0.0f });
 
@@ -1025,22 +1111,22 @@ namespace NeonCUDA
 				{
 					scene->Debug("input points")->AddPoint({ v.x, v.y, 0.0f });
 
-					//auto gridx = column * xUnit * 2 - (width * 0.5f);
-					//auto gridx = column * xUnit * 2 - width;
-					auto gridx = (float)column * xUnit - ((float)columns * xUnit * 0.5f);
-					auto gridxRight = ((float)column + 1) * xUnit - ((float)columns * xUnit * 0.5f);
-					auto gridy = -(float)rows * 0.5f * yUnit + (float)row * yUnit;
+					////////auto gridx = column * xUnit * 2 - (width * 0.5f);
+					////////auto gridx = column * xUnit * 2 - width;
+					//////auto gridx = (float)column * xUnit - ((float)columns * xUnit * 0.5f);
+					//////auto gridxRight = ((float)column + 1) * xUnit - ((float)columns * xUnit * 0.5f);
+					//////auto gridy = -(float)rows * 0.5f * yUnit + (float)row * yUnit;
 
-					//auto gridx = column * xUnit;
-					//auto gridxRight = (column + 1) * xUnit;
-					//auto gridy = row * yUnit;
+					////////auto gridx = column * xUnit;
+					////////auto gridxRight = (column + 1) * xUnit;
+					////////auto gridy = row * yUnit;
 
-					//if (v.x < gridx || gridxRight < v.x)
-					{
-						//printf("gridx : %f, gridRight : %f, v.x : %f\n", gridx, gridxRight, v.x);
+					////////if (v.x < gridx || gridxRight < v.x)
+					//////{
+					//////	//printf("gridx : %f, gridRight : %f, v.x : %f\n", gridx, gridxRight, v.x);
 
-						scene->Debug("input points")->AddPoint({ gridx, gridy, 1.0f }, glm::red);
-					}
+					//////	scene->Debug("input points")->AddPoint({ gridx, gridy, 1.0f }, glm::red);
+					//////}
 				}
 			}
 		}
@@ -1082,7 +1168,7 @@ namespace NeonCUDA
 		float yUnit = height / rows;
 
 		auto inputPositions = FlipXInputArray(mesh->GetVertexBuffer()->GetElements(), columns, rows);
-		
+
 		auto im = transform.inverse();
 		//auto im = transform;
 
@@ -1127,9 +1213,9 @@ namespace NeonCUDA
 						{
 							//printf("%f %f %f\n", inputPosition.x, inputPosition.y, inputPosition.z);
 
-							scene->Debug("inputPoint Line")->AddLine({ inputPosition.x, inputPosition.y, inputPosition.z }, { ip.x(), ip.y(), ip.z()}, glm::red, glm::blue);
+							scene->Debug("inputPoint Line")->AddLine({ inputPosition.x, inputPosition.y, inputPosition.z }, { ip.x(), ip.y(), ip.z() }, glm::red, glm::blue);
 						}
-						
+
 						//if (FLT_VALID(inputPosition.x()) && FLT_VALID(inputPosition.y()) && FLT_VALID(inputPosition.z()))
 						//{
 						//	//printf("[%d, %d] inputPosition : %f, %f, %f\n", xIndex, yIndex, inputPosition.x(), inputPosition.y(), inputPosition.z());
@@ -1203,9 +1289,9 @@ namespace NeonCUDA
 			{
 				int xIndex = ((int)(xPosition / xUnit) / 2) * 2;
 				int yIndex = ((int)(yPosition / yUnit) / 3) * 3;
-				
+
 				auto inputPosition = inputPositions[yIndex * columns + xIndex];
-				
+
 				//printf("\n");
 				//printf("[index    : %6d]\nx: %d, y: %d, z: %d\n", singleIndex, x, y, z);
 				//printf("ip        : %4.6f, %4.6f, %4.6f\n", ip.x(), ip.y(), ip.z());
@@ -1236,7 +1322,7 @@ namespace NeonCUDA
 
 					printf("%f %f %f\n", inputPosition.x, inputPosition.y, inputPosition.z);
 
-					scene->Debug("inputPoint")->AddPoint({ point.x(), point.y(), point.z()});
+					scene->Debug("inputPoint")->AddPoint({ point.x(), point.y(), point.z() });
 					scene->Debug("inputPoint")->AddPoint({ ip.x(), ip.y(), ip.z() }, glm::red);
 
 					scene->Debug("inputPoint Line")->AddLine({ inputPosition.x, inputPosition.y, inputPosition.z }, { ip.x(), ip.y(), ip.z() }, glm::red, glm::blue);
@@ -1251,27 +1337,5 @@ namespace NeonCUDA
 		}
 
 		return false;
-	}
-
-	std::vector<glm::vec3> TSDF::FlipXInputArray(const std::vector<glm::vec3>& input, int columns, int rows)
-	{
-		std::vector<glm::vec3> result;
-
-		for (size_t row = 0; row < rows; row++)
-		{
-			for (size_t block = (size_t)(columns / 2) - 1; block >= 0 ; block--)
-			{
-				size_t index0 = row * columns + block * 2 + 0;
-				size_t index1 = row * columns + block * 2 + 1;
-
-				result.push_back(input[index0]);
-				result.push_back(input[index1]);
-
-				if (block == 0)
-					break;
-			}
-		}
-
-		return result;
 	}
 }

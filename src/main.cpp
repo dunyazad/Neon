@@ -311,6 +311,8 @@ int main()
 				meshesAABB.Expand(glm::vec3(vmax4.x(), vmax4.y(), vmax4.z()));
 			}
 
+			NeonCUDA::BuildDepthMapWrap(scene, meshes[0], 256, 480, 0.1f, 0.1f);
+
 			auto& minPoint = meshesAABB.GetMinPoint();
 			auto& maxPoint = meshesAABB.GetMaxPoint();
 
