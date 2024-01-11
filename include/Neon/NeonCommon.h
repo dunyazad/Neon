@@ -27,7 +27,7 @@ using namespace std;
 
 #include <Neon/TriangleTriangleOverlap.h>
 
-#define FLT_VALID(x) (x < 3.402823466e+37F)
+#define FLT_VALID(x) (x < 3.402823466e+36F)
 
 
 #include <nlohmann/json.hpp>
@@ -183,11 +183,11 @@ namespace Neon
 		{
 			if (FLT_VALID(x) && x < xyz.x) { xyz.x = x; }
 			if (FLT_VALID(y) && y < xyz.y) { xyz.y = y; }
-			if (FLT_VALID(x) && z < xyz.z) { xyz.z = z; }
+			if (FLT_VALID(z) && z < xyz.z) { xyz.z = z; }
 
 			if (FLT_VALID(x) && x > XYZ.x) { XYZ.x = x; }
 			if (FLT_VALID(y) && y > XYZ.y) { XYZ.y = y; }
-			if (FLT_VALID(x) && z > XYZ.z) { XYZ.z = z; }
+			if (FLT_VALID(z) && z > XYZ.z) { XYZ.z = z; }
 
 			update();
 		}
@@ -196,11 +196,11 @@ namespace Neon
 		{
 			if (FLT_VALID(p.x) && p.x < xyz.x) { xyz.x = p.x; }
 			if (FLT_VALID(p.y) && p.y < xyz.y) { xyz.y = p.y; }
-			if (FLT_VALID(p.x) && p.z < xyz.z) { xyz.z = p.z; }
+			if (FLT_VALID(p.z) && p.z < xyz.z) { xyz.z = p.z; }
 
 			if (FLT_VALID(p.x) && p.x > XYZ.x) { XYZ.x = p.x; }
 			if (FLT_VALID(p.y) && p.y > XYZ.y) { XYZ.y = p.y; }
-			if (FLT_VALID(p.x) && p.z > XYZ.z) { XYZ.z = p.z; }
+			if (FLT_VALID(p.z) && p.z > XYZ.z) { XYZ.z = p.z; }
 
 			update();
 		}

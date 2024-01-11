@@ -32,6 +32,8 @@ namespace NeonCUDA
 
 		//void Apply(Neon::Mesh* mesh);
 
+		void BuildDepthMap(Neon::Mesh* mesh, size_t hResolution, size_t vResolution, float xUnit, float yUnit);
+
 		void IntegrateWrap(const std::vector<glm::vec3>& vertices, const Eigen::Matrix4f& transform, float width, float height, int columns, int rows);
 		void Integrate(const thrust::device_vector<Eigen::Vector3f>& vertices, const Eigen::Matrix4f& transform, float width, float height, int columns, int rows);
 
@@ -42,8 +44,12 @@ namespace NeonCUDA
 		void TestValues(Neon::Scene* scene);
 		void TestTriangles(Neon::Scene* scene);
 
+		void TestInput(Neon::Scene* scene, const Eigen::Matrix4f& transform, Neon::Mesh* mesh, const glm::vec4& color);
+
 		void ShowInversedVoxels(Neon::Scene* scene, const Eigen::Matrix4f& transform, Neon::Mesh* mesh);
-		void ShowInversedVoxelsSingle(Neon::Scene* scene, const Eigen::Matrix4f& transform, Neon::Mesh* mesh, int singleIndex);
+		bool ShowInversedVoxelsSingle(Neon::Scene* scene, const Eigen::Matrix4f& transform, Neon::Mesh* mesh, int singleIndex);
+
+		std::vector<glm::vec3> FlipXInputArray(const std::vector<glm::vec3>& input, int columns, int rows);
 
 		float voxelSize;
 		Eigen::Vector3f minPoint;

@@ -4,7 +4,6 @@
 
 #include <Neon/CUDA/CUDATest.h>
 #include <Neon/CUDA/CUDATSDF.h>
-#include "DT/DT.h"
 
 int gindex = 0;
 
@@ -161,20 +160,20 @@ int main()
 		vector<Neon::Mesh*> meshes;
 		Neon::AABB meshesAABB;
 
-		int currentModelIndex = 0;
+		int currentModelIndex = 10;
 
 #pragma region Preparing Datas
 		{
 #pragma region Transform Info File
 			thrust::host_vector<Eigen::Matrix4f> host_transforms;
-		
+
 			auto tfile = ifstream();
 			tfile.open("C:\\Resources\\MC_TESTDATA\\transform.txt", ios::in);
 			std::string line;
 			while (std::getline(tfile, line)) {
 				//std::cout << "Read line: " << line << std::endl;
 				stringstream ss(line);
-				
+
 				string word;
 				ss >> word;
 				Eigen::Matrix4f m;
@@ -232,12 +231,12 @@ int main()
 
 		{
 			//for (size_t i = 0; i < transforms.size(); i++)
-			for (size_t i = 1; i < 2; i++)
+			//for (size_t i = 1; i < 2; i++)
 			{
 				char buffer[128];
 				memset(buffer, 0, 128);
 
-				sprintf_s(buffer, "C:\\Resources\\MC_TESTDATA\\%00004d_source.ply", i);
+				sprintf_s(buffer, "C:\\Resources\\MC_TESTDATA\\%00004d_source.ply", currentModelIndex);
 
 				auto mesh = scene->CreateComponent<Neon::Mesh>(buffer);
 
@@ -343,22 +342,47 @@ int main()
 				}
 			}
 
-			//// Debug
-			//{
-			//	//auto center = (tsdfs[2]->maxPoint + tsdfs[2]->minPoint) * 0.5f;
+			glm::vec4 colors[8] = { glm::red, glm::green, glm::blue, glm::yellow, glm::cyan, glm::magenta, glm::gray, glm::black };
 
-			//	auto center = Eigen::Vector3f(5, 5, 5);
+			for (size_t z = 0; z < zcount; z++)
+			{
+				for (size_t y = 0; y < ycount; y++)
+				{
+					for (size_t x = 0; x < xcount; x++)
+					{
+						//if (y == 1)
+						{
+							tsdfs[z * ycount * xcount + y * xcount + x]->TestInput(scene, transforms[0], meshes[0], colors[z * ycount * xcount + y * xcount + x]);
+							break;
+						}
+					}
+				}
+			}
 
-			//	scene->Debug("Debug")->AddBox({center.x(), center.y(), center.z()}, 0.1f, 0.1f, 0.1f);
+			//return;
 
-			//	auto tm = transforms[currentModelIndex].inverse();
-			//	auto tc = tm * Eigen::Vector4f(center.x(), center.y(), center.z(), 1.0f);
+			//scene->Debug("MeshAABB")->AddAABB(meshes[0]->GetAABB());
 
-			//	scene->Debug("TC")->AddBox({ tc.x(), tc.y(), tc.z() }, 0.1f, 0.1f, 0.1f, glm::green);
+			auto FlipXInputArray = [](const std::vector<glm::vec3>& input, int columns, int rows) -> std::vector<glm::vec3>
+				{
+					std::vector<glm::vec3> result;
 
-			//}
+					for (size_t row = 0; row < rows; row++)
+					{
+						for (size_t block = (size_t)(columns / 2) - 1; block > 0; block--)
+						{
+							size_t index0 = row * columns + block * 2 + 0;
+							size_t index1 = row * columns + block * 2 + 1;
 
-			//auto& inputPositions = meshes[0]->GetVertexBuffer()->GetElements();
+							result.push_back(input[index0]);
+							result.push_back(input[index1]);
+						}
+					}
+
+					return result;
+				};
+
+			//auto& inputPositions = FlipXInputArray(meshes[0]->GetVertexBuffer()->GetElements(), 256, 480);
 			//{
 			//	auto entity = scene->CreateEntity("Temp111");
 			//	entity->AddKeyEventHandler(
@@ -373,9 +397,7 @@ int main()
 			//				printf("%f, %f, %f\n", v.x, v.y, v.z);
 			//			}
 			//		});
-			//}
-
-			//return;
+			//} 
 
 			//for (size_t z = 0; z < zcount; z++)
 			//{
@@ -388,16 +410,41 @@ int main()
 			//	}
 			//}
 
-			{
-				auto entity = scene->CreateEntity("Temp111");
-				entity->AddKeyEventHandler(
-					[scene, entity, tsdfs, transforms, meshes](const Neon::KeyEvent& event) {
-						if (GLFW_KEY_ENTER == event.key && (GLFW_RELEASE == event.action || GLFW_REPEAT == event.action)) {
-							tsdfs[0]->ShowInversedVoxelsSingle(scene, transforms[0], meshes[0], gindex);
-							gindex++;
-						}
-					});
-			}
+			//{
+			//	auto& inputPositions = FlipXInputArray(meshes[0]->GetVertexBuffer()->GetElements(), 256, 480);
+			//	for (auto& v : inputPositions)
+			//	{
+			//		scene->Debug("input")->AddPoint(v, glm::green);
+			//	}
+			//}
+
+			//{
+			//	auto entity = scene->CreateEntity("Temp Debugging");
+			//	entity->AddKeyEventHandler(
+			//		[scene, entity, tsdfs, transforms, meshes](const Neon::KeyEvent& event) {
+			//			if (GLFW_KEY_ENTER == event.key && (GLFW_RELEASE == event.action || GLFW_REPEAT == event.action)) {
+			//				for (size_t i = 0; i < 1; i++)
+			//				{
+			//					bool result = false;
+			//					while (false == result)
+			//					{
+			//						result = tsdfs[0]->ShowInversedVoxelsSingle(scene, transforms[0], meshes[0], gindex);
+			//						gindex++;
+			//					}
+			//				}
+			//			}
+			//		});
+			//}
+
+			//{
+			//	auto entity = scene->CreateEntity("Temp Debugging");
+			//	entity->AddKeyEventHandler(
+			//		[scene, entity, tsdfs, transforms, meshes](const Neon::KeyEvent& event) {
+			//			if (GLFW_KEY_ENTER == event.key && (GLFW_RELEASE == event.action || GLFW_REPEAT == event.action)) {
+			//					tsdfs[0]->ShowInversedVoxelsSingle(scene, transforms[0], meshes[0], 103);
+			//			}
+			//		});
+			//}
 
 			return;
 
@@ -562,11 +609,11 @@ int main()
 				9.999999E-01f, -3.041836E-04f, 5.392341E-05f, 0.000000E+00f,
 				3.043024E-04f, 9.999977E-01f, -2.120121E-03f, 0.000000E+00f,
 				-5.327794E-05f, 2.120084E-03f, 9.999976E-01f, 0.000000E+00f,
-				9.976241E-02f, 1.964474E-01f, - 4.013956E-01f, 1.000000E+00f;
+				9.976241E-02f, 1.964474E-01f, -4.013956E-01f, 1.000000E+00f;
 
-			for (size_t y = 0; y < 480 - 3; y+=3)
+			for (size_t y = 0; y < 480 - 3; y += 3)
 			{
-				for (size_t x = 0; x < 256 - 2; x+=2)
+				for (size_t x = 0; x < 256 - 2; x += 2)
 				{
 					auto i0 = 256 * y + x;
 					auto i1 = 256 * y + x + 2;

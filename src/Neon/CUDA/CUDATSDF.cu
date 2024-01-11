@@ -793,6 +793,13 @@ namespace NeonCUDA
 		//printf("max : %f, %f, %f\n", maxPoint.x(), maxPoint.y(), maxPoint.z());
 	}
 
+	void TSDF::BuildDepthMap(Neon::Mesh* mesh, size_t hResolution, size_t vResolution, float xUnit, float yUnit, thrust::device_vector<Eigen::Vector3f>& result)
+	{
+		auto inputPositions = FlipXInputArray(mesh->GetVertexBuffer()->GetElements(), hResolution, vResolution);
+
+
+	}
+
 	void TSDF::IntegrateWrap(
 		const std::vector<glm::vec3>& vertices,
 		const Eigen::Matrix4f& transform,
@@ -971,6 +978,98 @@ namespace NeonCUDA
 		}
 	}
 
+	void TSDF::TestInput(Neon::Scene* scene, const Eigen::Matrix4f& transform, Neon::Mesh* mesh, const glm::vec4& color)
+	{
+		size_t columns = 256;
+		size_t rows = 480;
+
+		//float xUnit = width / columns;
+		//float yUnit = height / rows;
+
+		float xUnit = 0.1f;
+		float yUnit = 0.1f / 3;
+
+		float width = xUnit * columns;
+		float height = yUnit * rows;
+
+		//float minX = mesh->GetAABB().GetMinPoint().x;
+		//float minY = mesh->GetAABB().GetMinPoint().y;
+
+		//float width = mesh->GetAABB().GetXLength();
+		//float height = mesh->GetAABB().GetYLength();
+
+		//float cx = mesh->GetAABB().GetCenter().x;
+		//float cy = mesh->GetAABB().GetCenter().y;
+
+		scene->Debug("BoxLine")->AddLine({ -width * 0.5f, -height * 0.5f, 0.0f }, {  width * 0.5f, -height * 0.5f, 0.0f });
+		scene->Debug("BoxLine")->AddLine({ -width * 0.5f, -height * 0.5f, 0.0f }, { -width * 0.5f,  height * 0.5f, 0.0f });
+		scene->Debug("BoxLine")->AddLine({  width * 0.5f,  height * 0.5f, 0.0f }, { -width * 0.5f,  height * 0.5f, 0.0f });
+		scene->Debug("BoxLine")->AddLine({  width * 0.5f,  height * 0.5f, 0.0f }, {  width * 0.5f, -height * 0.5f, 0.0f });
+		scene->Debug("BoxLine")->AddLine({ -width * 0.5f,  0.0f, 0.0f }, { width * 0.5f, 0.0f, 0.0f });
+		scene->Debug("BoxLine")->AddLine({ 0.0f, height * 0.5f, 0.0f }, { 0.0f, -height * 0.5f, 0.0f });
+
+
+		auto inputPositions = FlipXInputArray(mesh->GetVertexBuffer()->GetElements(), columns, rows);
+
+		auto im = transform.inverse();
+
+		for (size_t row = 0; row < rows; row++)
+		{
+			for (size_t column = 0; column < columns; column++)
+			{
+				auto index = row * columns + column;
+
+				auto& v = inputPositions[index];
+
+				if (FLT_VALID(v.x) && FLT_VALID(v.y) && FLT_VALID(v.z))
+				{
+					scene->Debug("input points")->AddPoint({ v.x, v.y, 0.0f });
+
+					//auto gridx = column * xUnit * 2 - (width * 0.5f);
+					//auto gridx = column * xUnit * 2 - width;
+					auto gridx = (float)column * xUnit - ((float)columns * xUnit * 0.5f);
+					auto gridxRight = ((float)column + 1) * xUnit - ((float)columns * xUnit * 0.5f);
+					auto gridy = -(float)rows * 0.5f * yUnit + (float)row * yUnit;
+
+					//auto gridx = column * xUnit;
+					//auto gridxRight = (column + 1) * xUnit;
+					//auto gridy = row * yUnit;
+
+					//if (v.x < gridx || gridxRight < v.x)
+					{
+						//printf("gridx : %f, gridRight : %f, v.x : %f\n", gridx, gridxRight, v.x);
+
+						scene->Debug("input points")->AddPoint({ gridx, gridy, 1.0f }, glm::red);
+					}
+				}
+			}
+		}
+
+		//for (auto& v : inputPositions)
+		//{
+		//	scene->Debug("input points")->AddPoint({v.x, v.y, 0.0f});
+		//}
+
+		//for (size_t z = 0; z < voxelCountZ; z++)
+		//{
+		//	for (size_t y = 0; y < voxelCountY; y++)
+		//	{
+		//		for (size_t x = 0; x < voxelCountX; x++)
+		//		{
+		//			Eigen::Vector4f point(
+		//				minPoint.x() + voxelSize * x + 0.5f * voxelSize,
+		//				minPoint.y() + voxelSize * y + 0.5f * voxelSize,
+		//				minPoint.z() + voxelSize * z + 0.5f * voxelSize,
+		//				1.0f);
+
+		//			auto ip = im * point;
+
+		//			scene->Debug("voxel points")->AddPoint({ ip.x(), ip.y(), ip.z() }, color);
+		//		}
+		//	}
+		//}
+	}
+
 	void TSDF::ShowInversedVoxels(Neon::Scene* scene, const Eigen::Matrix4f& transform, Neon::Mesh* mesh)
 	{
 		float width = mesh->GetAABB().GetXLength();
@@ -982,7 +1081,7 @@ namespace NeonCUDA
 		float xUnit = width / columns;
 		float yUnit = height / rows;
 
-		auto& inputPositions = mesh->GetVertexBuffer()->GetElements();
+		auto inputPositions = FlipXInputArray(mesh->GetVertexBuffer()->GetElements(), columns, rows);
 		
 		auto im = transform.inverse();
 		//auto im = transform;
@@ -1011,6 +1110,9 @@ namespace NeonCUDA
 					float yPosition = ip.y() + height * 0.5f;
 					float distance = ip.z();
 
+					//scene->Debug("inputPoint")->AddPoint({ ip.x(), ip.y(), ip.z() }, glm::red);
+					//scene->Debug("inputPoint Line")->AddLine({ ip.x(), ip.y(), ip.z() }, { ip.x(), ip.y(), 0.0f });
+
 					if ((0 < xPosition && xPosition < width) &&
 						(0 < yPosition && yPosition < height))
 					{
@@ -1025,9 +1127,7 @@ namespace NeonCUDA
 						{
 							//printf("%f %f %f\n", inputPosition.x, inputPosition.y, inputPosition.z);
 
-							//scene->Debug("inputPoint")->AddPoint({ point.x(), point.y(), 0.0f}, glm::red);
-
-							//scene->Debug("inputPoint Line")->AddLine({ inputPosition.x, inputPosition.y, inputPosition.z }, { point.x(), point.y(), point.z()}, glm::red, glm::blue);
+							scene->Debug("inputPoint Line")->AddLine({ inputPosition.x, inputPosition.y, inputPosition.z }, { ip.x(), ip.y(), ip.z()}, glm::red, glm::blue);
 						}
 						
 						//if (FLT_VALID(inputPosition.x()) && FLT_VALID(inputPosition.y()) && FLT_VALID(inputPosition.z()))
@@ -1053,7 +1153,7 @@ namespace NeonCUDA
 		}
 	}
 
-	void TSDF::ShowInversedVoxelsSingle(Neon::Scene* scene, const Eigen::Matrix4f& transform, Neon::Mesh* mesh, int singleIndex)
+	bool TSDF::ShowInversedVoxelsSingle(Neon::Scene* scene, const Eigen::Matrix4f& transform, Neon::Mesh* mesh, int singleIndex)
 	{
 		float width = mesh->GetAABB().GetXLength();
 		float height = mesh->GetAABB().GetYLength();
@@ -1064,16 +1164,24 @@ namespace NeonCUDA
 		float xUnit = width / columns;
 		float yUnit = height / rows;
 
-		auto& inputPositions = mesh->GetVertexBuffer()->GetElements();
+		auto meshCenter = mesh->GetAABB().center;
 
-		auto im = transform.inverse();
-		//auto im = transform;
+		auto inputPositions = FlipXInputArray(mesh->GetVertexBuffer()->GetElements(), columns, rows);
+
+		Eigen::Matrix4f translationMatrix = Eigen::Matrix4f::Identity();
+		translationMatrix.block<3, 1>(0, 3).x() = meshCenter.x;
+		translationMatrix.block<3, 1>(0, 3).y() = meshCenter.y;
+		translationMatrix.block<3, 1>(0, 3).z() = meshCenter.z;
+
+		auto tm = transform * translationMatrix;
+
+		auto im = tm.inverse();
 
 		int z = singleIndex / (voxelCountY * voxelCountX);
 		int y = (singleIndex % (voxelCountY * voxelCountX)) / voxelCountX;
 		int x = (singleIndex % (voxelCountY * voxelCountX)) % voxelCountX;
 
-		printf("x: %d, y: %d, z: %d\n", x, y, z);
+		//printf("[index : %6d] x: %d, y: %d, z: %d\n", singleIndex, x, y, z);
 
 		{
 			Eigen::Vector4f point(
@@ -1085,7 +1193,6 @@ namespace NeonCUDA
 			//scene->Debug("inputPoint Line")->AddLine({ point.x(), point.y(), point.z()}, {point.x(), point.y(), 0.0f}, glm::red, glm::blue);
 
 			Eigen::Vector4f ip = im * point;
-			Eigen::Vector4f ip0 = im * Eigen::Vector4f(point.x(), point.y(), 0.0f, 1.0f);
 
 			float xPosition = ip.x() + width * 0.5f;
 			float yPosition = ip.y() + height * 0.5f;
@@ -1096,40 +1203,75 @@ namespace NeonCUDA
 			{
 				int xIndex = ((int)(xPosition / xUnit) / 2) * 2;
 				int yIndex = ((int)(yPosition / yUnit) / 3) * 3;
-				//int xIndex = (int)floorf(xPosition / xUnit);
-				//int yIndex = (int)floorf(yPosition / yUnit);
-
+				
 				auto inputPosition = inputPositions[yIndex * columns + xIndex];
+				
+				//printf("\n");
+				//printf("[index    : %6d]\nx: %d, y: %d, z: %d\n", singleIndex, x, y, z);
+				//printf("ip        : %4.6f, %4.6f, %4.6f\n", ip.x(), ip.y(), ip.z());
+				//printf("xPosition : %4.6f,\tyPoisition : %4.6f,\tdistance : %4.6f\n", xPosition, yPosition, distance);
+				//printf("xUnit     : %4.6f,\tyUnit : %4.6f\n", xUnit, yUnit);
+				//printf("xIndex    : %6d,\tyIndex : %6d\n", xIndex, yIndex);
+				//printf("x         : %4.6f\n", -width * 0.5f + xIndex * xUnit);
+				//printf("inputPosition x : %f\n", inputPosition.x);
+				//int tempIndex = 0;
+				//float beginX = inputPositions[yIndex * columns + tempIndex].x;
+				//while (beginX > width)
+				//{
+				//	beginX = inputPositions[yIndex * columns + tempIndex++].x;
+				//}
+				//printf("row beginX: %4.6f\n", beginX);
+				//printf("beginX index :%d\n", tempIndex);
+				//return true;
 
 				if (FLT_VALID(inputPosition.x) && FLT_VALID(inputPosition.y) && FLT_VALID(inputPosition.z))
 				{
-					//printf("%f %f %f\n", inputPosition.x, inputPosition.y, inputPosition.z);
+					printf("\n");
+					printf("[index    : %6d]\nx: %d, y: %d, z: %d\n", singleIndex, x, y, z);
+					printf("ip        : %4.6f, %4.6f, %4.6f\n", ip.x(), ip.y(), ip.z());
+					printf("xPosition : %4.6f,\tyPoisition : %4.6f,\tdistance : %4.6f\n", xPosition, yPosition, distance);
+					printf("xUnit     : %4.6f,\tyUnit : %4.6f\n", xUnit, yUnit);
+					printf("xIndex    : %6d,\tyIndex : %6d\n", xIndex, yIndex);
+					printf("x         : %4.6f\n", -width * 0.5f + xIndex * xUnit);
 
-					scene->Debug("inputPoint")->AddPoint({ point.x(), point.y(), point.z()}, glm::red);
+					printf("%f %f %f\n", inputPosition.x, inputPosition.y, inputPosition.z);
 
-					scene->Debug("inputPoint Line")->AddLine({ inputPosition.x, inputPosition.y, inputPosition.z }, { point.x(), point.y(), point.z() }, glm::red, glm::blue);
+					scene->Debug("inputPoint")->AddPoint({ point.x(), point.y(), point.z()});
+					scene->Debug("inputPoint")->AddPoint({ ip.x(), ip.y(), ip.z() }, glm::red);
+
+					scene->Debug("inputPoint Line")->AddLine({ inputPosition.x, inputPosition.y, inputPosition.z }, { ip.x(), ip.y(), ip.z() }, glm::red, glm::blue);
+
+					scene->Debug("inputPoint Line")->AddLine({ ip.x(), ip.y(), ip.z() }, { ip.x(), ip.y(), 0.0f });
+
+					return true;
 				}
-
-				//if (FLT_VALID(inputPosition.x()) && FLT_VALID(inputPosition.y()) && FLT_VALID(inputPosition.z()))
-				//{
-				//	//printf("[%d, %d] inputPosition : %f, %f, %f\n", xIndex, yIndex, inputPosition.x(), inputPosition.y(), inputPosition.z());
-				//	//values[index] = distance - inputPosition.z();
-
-				//	//printf("%f\n", (inputPosition - Eigen::Vector3f(ip.x(), ip.y(), ip.z())).norm());
-				//}
-				//else
-				//{
-				//	//values[index] = FLT_MAX;
-				//	//	//values[index] = 0.0f;
-				//}
 			}
-
-
 			//scene->Debug("original")->AddPoint({ point.x(), point.y(), point.z() }, glm::green);
-
 			//scene->Debug("inversed")->AddPoint({ ip.x(), ip.y(), ip.z() }, glm::yellow);
-
-			return;
 		}
+
+		return false;
+	}
+
+	std::vector<glm::vec3> TSDF::FlipXInputArray(const std::vector<glm::vec3>& input, int columns, int rows)
+	{
+		std::vector<glm::vec3> result;
+
+		for (size_t row = 0; row < rows; row++)
+		{
+			for (size_t block = (size_t)(columns / 2) - 1; block >= 0 ; block--)
+			{
+				size_t index0 = row * columns + block * 2 + 0;
+				size_t index1 = row * columns + block * 2 + 1;
+
+				result.push_back(input[index0]);
+				result.push_back(input[index1]);
+
+				if (block == 0)
+					break;
+			}
+		}
+
+		return result;
 	}
 }
