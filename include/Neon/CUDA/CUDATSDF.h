@@ -29,6 +29,7 @@ namespace NeonCUDA
 	std::vector<glm::vec3> FlipXInputArray(const std::vector<glm::vec3>& input, int columns, int rows);
 
 	void BuildDepthMapWrap(Neon::Scene* scene, Neon::Mesh* mesh, size_t hResolution, size_t vResolution, float xUnit, float yUnit);
+	void BuildDepthMapOld(Neon::Scene* scene, Neon::Mesh* mesh, size_t hResolution, size_t vResolution, float xUnit, float yUnit, thrust::device_vector<Eigen::Vector3f>& result);
 	void BuildDepthMap(Neon::Scene* scene, Neon::Mesh* mesh, size_t hResolution, size_t vResolution, float xUnit, float yUnit, thrust::device_vector<Eigen::Vector3f>& result);
 
 	void UpscaleDepthMap(Neon::Scene* scene, Neon::Mesh* mesh, size_t hResolution, size_t vResolution, float xUnit, float yUnit, float voxelSize, const thrust::device_vector<Eigen::Vector3f>& input, thrust::device_vector<Eigen::Vector3f>& result);
@@ -36,10 +37,19 @@ namespace NeonCUDA
 	class TSDF
 	{
 	public:
+		struct TriangleIndicesPerVoxel
+		{
+			int triangleCount;
+			int triangleIndices[16];
+		};
+
+	public:
 		TSDF();
 		TSDF(float voxelSize, const Eigen::Vector3f& inputMinPoint, const Eigen::Vector3f& inputMaxPoint);
 
 		//void Apply(Neon::Mesh* mesh);
+
+		void IntegrateMesh(Neon::Scene* scene, Neon::Mesh* mesh);
 
 		void IntegrateWrap(const std::vector<glm::vec3>& vertices, const Eigen::Matrix4f& transform, float width, float height, int columns, int rows);
 		void Integrate(const thrust::device_vector<Eigen::Vector3f>& vertices, const Eigen::Matrix4f& transform, float width, float height, int columns, int rows);
@@ -69,6 +79,7 @@ namespace NeonCUDA
 		size_t voxelCountZ;
 
 		thrust::device_vector<float> values;
+		thrust::device_vector<TriangleIndicesPervoxel> triangleIndices;
 		thrust::device_vector<Eigen::Vector3f> positions;
 		thrust::device_vector<MarchingCubes::GRIDCELL> gridcells;
 		thrust::device_vector<MarchingCubes::TRIANGLE> triangles;

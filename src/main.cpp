@@ -163,13 +163,18 @@ int main()
 		}
 #pragma endregion
 
+		size_t hResolution = 256;
+		size_t vResolution = 480;
+		float xUnit = 0.1f;
+		float yUnit = 0.1f;
+		float voxelSize = 0.1f;
+
 		vector<Eigen::Matrix4f> transforms;
 		vector<Neon::Mesh*> meshes;
 		Neon::AABB meshesAABB;
 
 		int currentModelIndex = 10;
 
-#pragma region Preparing Datas
 		{
 #pragma region Transform Info File
 			thrust::host_vector<Eigen::Matrix4f> host_transforms;
@@ -237,8 +242,8 @@ int main()
 #pragma endregion
 
 		{
+#pragma region Load Mesh
 			//for (size_t i = 0; i < transforms.size(); i++)
-			//for (size_t i = 1; i < 2; i++)
 			{
 				char buffer[128];
 				memset(buffer, 0, 128);
@@ -317,449 +322,293 @@ int main()
 				meshesAABB.Expand(glm::vec3(vmin4.x(), vmin4.y(), vmin4.z()));
 				meshesAABB.Expand(glm::vec3(vmax4.x(), vmax4.y(), vmax4.z()));
 			}
+#pragma endregion
 
-			//NeonCUDA::BuildDepthMapWrap(scene, meshes[0], 256, 480, 0.1f, 0.1f);
-			NeonCUDA::DoWork(scene, meshes[0]);
+#pragma region Depth map way
+			{
+				//NeonCUDA::BuildDepthMapWrap(scene, meshes[0], 256, 480, 0.1f, 0.1f);
+				//NeonCUDA::DoWork(scene, meshes[0]);
+				//return;
+			}
+#pragma endregion
+
+#pragma region Mesh Integrating way
+			{
+				auto mesh = meshes[0];
+
+				auto minPoint = mesh->GetAABB().GetMinPoint();
+				minPoint.x = floorf(minPoint.x / voxelSize) * voxelSize;
+				minPoint.y = floorf(minPoint.y / voxelSize) * voxelSize;
+				minPoint.z = floorf(minPoint.z / voxelSize) * voxelSize;
+				auto maxPoint = mesh->GetAABB().GetMaxPoint();
+				maxPoint.x = ceilf(maxPoint.x / voxelSize) * voxelSize;
+				maxPoint.y = ceilf(maxPoint.y / voxelSize) * voxelSize;
+				maxPoint.z = ceilf(maxPoint.z / voxelSize) * voxelSize;
+
+				int xcount = 2;
+				int ycount = 2;
+				int zcount = 2;
+
+				float xoffset = (maxPoint.x - minPoint.x) / (float)xcount;
+				float yoffset = (maxPoint.y - minPoint.y) / (float)ycount;
+				float zoffset = (maxPoint.z - minPoint.z) / (float)zcount;
+
+				float voxelSize = 0.1f;
+				float isoValue = 0.0f;
+
+				NeonCUDA::TSDF** tsdfs = new NeonCUDA::TSDF * [xcount * ycount * zcount];
+				for (size_t z = 0; z < zcount; z++)
+				{
+					for (size_t y = 0; y < ycount; y++)
+					{
+						for (size_t x = 0; x < xcount; x++)
+						{
+							tsdfs[z * ycount * xcount + y * xcount + x] = new NeonCUDA::TSDF(
+								voxelSize,
+								Eigen::Vector3f(minPoint.x + x * xoffset, minPoint.y + y * yoffset, minPoint.z + z * zoffset),
+								Eigen::Vector3f(minPoint.x + (x + 1) * xoffset, minPoint.y + (y + 1) * yoffset, minPoint.z + (z + 1) * zoffset));
+						}
+					}
+				}
+
+				nvtxRangePushA("@Aaron/Integrate - Mesh");
+				for (size_t z = 0; z < zcount; z++)
+				{
+					for (size_t y = 0; y < ycount; y++)
+					{
+						for (size_t x = 0; x < xcount; x++)
+						{
+							tsdfs[z * ycount * xcount + y * xcount + x]->IntegrateMesh(scene, mesh);
+						}
+					}
+				}
+				nvtxRangePop();
+			}
+#pragma endregion
 			return;
 
-			auto& minPoint = meshesAABB.GetMinPoint();
-			auto& maxPoint = meshesAABB.GetMaxPoint();
-
-			//scene->Debug("AABB")->AddAABB(meshesAABB);
-
-			int xcount = 2;
-			int ycount = 2;
-			int zcount = 2;
-
-			float xoffset = meshesAABB.GetXLength() / (float)xcount;
-			float yoffset = meshesAABB.GetYLength() / (float)ycount;
-			float zoffset = meshesAABB.GetZLength() / (float)zcount;
-
-			float voxelSize = 0.5f;
-			float isoValue = 0.0f;
-
-			NeonCUDA::TSDF** tsdfs = new NeonCUDA::TSDF * [xcount * ycount * zcount];
-			for (size_t z = 0; z < zcount; z++)
-			{
-				for (size_t y = 0; y < ycount; y++)
-				{
-					for (size_t x = 0; x < xcount; x++)
-					{
-						tsdfs[z * ycount * xcount + y * xcount + x] = new NeonCUDA::TSDF(
-							voxelSize,
-							Eigen::Vector3f(minPoint.x + x * xoffset, minPoint.y + y * yoffset, minPoint.z + z * zoffset),
-							Eigen::Vector3f(minPoint.x + (x + 1) * xoffset, minPoint.y + (y + 1) * yoffset, minPoint.z + (z + 1) * zoffset));
-					}
-				}
-			}
-
-			glm::vec4 colors[8] = { glm::red, glm::green, glm::blue, glm::yellow, glm::cyan, glm::magenta, glm::gray, glm::black };
-
-			for (size_t z = 0; z < zcount; z++)
-			{
-				for (size_t y = 0; y < ycount; y++)
-				{
-					for (size_t x = 0; x < xcount; x++)
-					{
-						//if (y == 1)
-						{
-							tsdfs[z * ycount * xcount + y * xcount + x]->TestInput(scene, transforms[0], meshes[0], colors[z * ycount * xcount + y * xcount + x]);
-							break;
-						}
-					}
-				}
-			}
-
-			//return;
-
-			//scene->Debug("MeshAABB")->AddAABB(meshes[0]->GetAABB());
-
-			auto FlipXInputArray = [](const std::vector<glm::vec3>& input, int columns, int rows) -> std::vector<glm::vec3>
-				{
-					std::vector<glm::vec3> result;
-
-					for (size_t row = 0; row < rows; row++)
-					{
-						for (size_t block = (size_t)(columns / 2) - 1; block > 0; block--)
-						{
-							size_t index0 = row * columns + block * 2 + 0;
-							size_t index1 = row * columns + block * 2 + 1;
-
-							result.push_back(input[index0]);
-							result.push_back(input[index1]);
-						}
-					}
-
-					return result;
-				};
-
-			//auto& inputPositions = FlipXInputArray(meshes[0]->GetVertexBuffer()->GetElements(), 256, 480);
+#pragma region Old
 			//{
-			//	auto entity = scene->CreateEntity("Temp111");
-			//	entity->AddKeyEventHandler(
-			//		[scene, entity, inputPositions](const Neon::KeyEvent& event) {
-			//			if (GLFW_KEY_ENTER == event.key && (GLFW_RELEASE == event.action || GLFW_REPEAT == event.action)) {
-			//				auto v = inputPositions[gindex++];
-			//				while (FLT_VALID(v.x) == false || FLT_VALID(v.y) == false || FLT_VALID(v.z) == false)
-			//				{
-			//					v = inputPositions[gindex++];
-			//				}
-			//				scene->Debug("input")->AddPoint(v, glm::red);
-			//				printf("%f, %f, %f\n", v.x, v.y, v.z);
-			//			}
-			//		});
-			//} 
-
-			//for (size_t z = 0; z < zcount; z++)
-			//{
-			//	for (size_t y = 0; y < ycount; y++)
-			//	{
-			//		for (size_t x = 0; x < xcount; x++)
+			//	auto FlipXInputArray = [](const std::vector<glm::vec3>& input, int columns, int rows) -> std::vector<glm::vec3>
 			//		{
-			//			tsdfs[z * ycount * xcount + y * xcount + x]->ShowInversedVoxels(scene, transforms[0], meshes[0]);
+			//			std::vector<glm::vec3> result;
+
+			//			for (size_t row = 0; row < rows; row++)
+			//			{
+			//				for (size_t block = (size_t)(columns / 2) - 1; block > 0; block--)
+			//				{
+			//					size_t index0 = row * columns + block * 2 + 0;
+			//					size_t index1 = row * columns + block * 2 + 1;
+
+			//					result.push_back(input[index0]);
+			//					result.push_back(input[index1]);
+			//				}
+			//			}
+
+			//			return result;
+			//		};
+
+			//	//auto& inputPositions = FlipXInputArray(meshes[0]->GetVertexBuffer()->GetElements(), 256, 480);
+			//	//{
+			//	//	auto entity = scene->CreateEntity("Temp111");
+			//	//	entity->AddKeyEventHandler(
+			//	//		[scene, entity, inputPositions](const Neon::KeyEvent& event) {
+			//	//			if (GLFW_KEY_ENTER == event.key && (GLFW_RELEASE == event.action || GLFW_REPEAT == event.action)) {
+			//	//				auto v = inputPositions[gindex++];
+			//	//				while (FLT_VALID(v.x) == false || FLT_VALID(v.y) == false || FLT_VALID(v.z) == false)
+			//	//				{
+			//	//					v = inputPositions[gindex++];
+			//	//				}
+			//	//				scene->Debug("input")->AddPoint(v, glm::red);
+			//	//				printf("%f, %f, %f\n", v.x, v.y, v.z);
+			//	//			}
+			//	//		});
+			//	//} 
+
+			//	//for (size_t z = 0; z < zcount; z++)
+			//	//{
+			//	//	for (size_t y = 0; y < ycount; y++)
+			//	//	{
+			//	//		for (size_t x = 0; x < xcount; x++)
+			//	//		{
+			//	//			tsdfs[z * ycount * xcount + y * xcount + x]->ShowInversedVoxels(scene, transforms[0], meshes[0]);
+			//	//		}
+			//	//	}
+			//	//}
+
+			//	//{
+			//	//	auto& inputPositions = FlipXInputArray(meshes[0]->GetVertexBuffer()->GetElements(), 256, 480);
+			//	//	for (auto& v : inputPositions)
+			//	//	{
+			//	//		scene->Debug("input")->AddPoint(v, glm::green);
+			//	//	}
+			//	//}
+
+			//	//{
+			//	//	auto entity = scene->CreateEntity("Temp Debugging");
+			//	//	entity->AddKeyEventHandler(
+			//	//		[scene, entity, tsdfs, transforms, meshes](const Neon::KeyEvent& event) {
+			//	//			if (GLFW_KEY_ENTER == event.key && (GLFW_RELEASE == event.action || GLFW_REPEAT == event.action)) {
+			//	//				for (size_t i = 0; i < 1; i++)
+			//	//				{
+			//	//					bool result = false;
+			//	//					while (false == result)
+			//	//					{
+			//	//						result = tsdfs[0]->ShowInversedVoxelsSingle(scene, transforms[0], meshes[0], gindex);
+			//	//						gindex++;
+			//	//					}
+			//	//				}
+			//	//			}
+			//	//		});
+			//	//}
+
+			//	//{
+			//	//	auto entity = scene->CreateEntity("Temp Debugging");
+			//	//	entity->AddKeyEventHandler(
+			//	//		[scene, entity, tsdfs, transforms, meshes](const Neon::KeyEvent& event) {
+			//	//			if (GLFW_KEY_ENTER == event.key && (GLFW_RELEASE == event.action || GLFW_REPEAT == event.action)) {
+			//	//					tsdfs[0]->ShowInversedVoxelsSingle(scene, transforms[0], meshes[0], 103);
+			//	//			}
+			//	//		});
+			//	//}
+
+			//	//return;
+
+			//	int xcount = 2;
+			//	int ycount = 2;
+			//	int zcount = 2;
+
+			//	for (size_t i = 0; i < meshes.size(); i++)
+			//	{
+			//		auto& mesh = meshes[i];
+
+			//		//auto vmin3 = Eigen::Vector3f(mesh->GetAABB().GetMinPoint().x, mesh->GetAABB().GetMinPoint().y, mesh->GetAABB().GetMinPoint().z);
+			//		//auto vmax3 = Eigen::Vector3f(mesh->GetAABB().GetMaxPoint().x, mesh->GetAABB().GetMaxPoint().y, mesh->GetAABB().GetMaxPoint().z);
+
+			//		//Eigen::Vector4f vmin4 = transforms[i] * Eigen::Vector4f(vmin3.x(), vmin3.y(), vmin3.z(), 1.0f);
+			//		//Eigen::Vector4f vmax4 = transforms[i] * Eigen::Vector4f(vmax3.x(), vmax3.y(), vmax3.z(), 1.0f);
+
+			//		//Neon::AABB aabb;
+			//		//aabb.Expand({ vmin4.x(), vmin4.y(), vmin4.z() });
+			//		//aabb.Expand({ vmax4.x(), vmax4.y(), vmax4.z() });
+
+			//		auto vmin = Eigen::Vector3f(mesh->GetAABB().GetMinPoint().x, mesh->GetAABB().GetMinPoint().y, mesh->GetAABB().GetMinPoint().z);
+			//		auto vmax = Eigen::Vector3f(mesh->GetAABB().GetMaxPoint().x, mesh->GetAABB().GetMaxPoint().y, mesh->GetAABB().GetMaxPoint().z);
+
+			//		Neon::AABB aabb;
+			//		aabb.Expand({ vmin.x(), vmin.y(), vmin.z() });
+			//		aabb.Expand({ vmax.x(), vmax.y(), vmax.z() });
+
+			//		nvtxRangePushA("@Aaron/Integrate - Total");
+			//		for (size_t z = 0; z < zcount; z++)
+			//		{
+			//			for (size_t y = 0; y < ycount; y++)
+			//			{
+			//				for (size_t x = 0; x < xcount; x++)
+			//				{
+			//					tsdfs[z * ycount * xcount + y * xcount + x]->IntegrateWrap(
+			//						mesh->GetVertexBuffer()->GetElements(),
+			//						transforms[i],
+			//						aabb.GetXLength(), aabb.GetYLength(),
+			//						256, 480);
+			//				}
+			//			}
+			//		}
+			//		nvtxRangePop();
+
+			//		//nvtxRangePushA("@Aaron/UpdateValues");
+			//		//for (size_t z = 0; z < zcount; z++)
+			//		//{
+			//		//	for (size_t y = 0; y < ycount; y++)
+			//		//	{
+			//		//		for (size_t x = 0; x < xcount; x++)
+			//		//		{
+			//		//			tsdfs[z * ycount * xcount + y * xcount + x]->UpdateValues();
+			//		//		}
+			//		//	}
+			//		//}
+			//		//nvtxRangePop();
+
+			//		nvtxRangePushA("@Aaron/BuildGridCells");
+			//		for (size_t z = 0; z < zcount; z++)
+			//		{
+			//			for (size_t y = 0; y < ycount; y++)
+			//			{
+			//				for (size_t x = 0; x < xcount; x++)
+			//				{
+			//					tsdfs[z * ycount * xcount + y * xcount + x]->BuildGridCells(isoValue);
+			//				}
+			//			}
+			//		}
+			//		nvtxRangePop();
+			//	}
+
+			//	nvtxRangePushA("@Aaron/TestTriangles");
+
+			//	for (size_t z = 0; z < zcount; z++)
+			//	{
+			//		for (size_t y = 0; y < ycount; y++)
+			//		{
+			//			for (size_t x = 0; x < xcount; x++)
+			//			{
+			//				tsdfs[z * ycount * xcount + y * xcount + x]->TestTriangles(scene);
+			//			}
 			//		}
 			//	}
-			//}
+			//	nvtxRangePop();
 
-			//{
-			//	auto& inputPositions = FlipXInputArray(meshes[0]->GetVertexBuffer()->GetElements(), 256, 480);
-			//	for (auto& v : inputPositions)
+			//	return;
+			//	cudaDeviceSynchronize();
+
+			//	nvtxRangePushA("@Aaron/Total");
+
+			//	for (size_t i = 0; i < 1; i++)
 			//	{
-			//		scene->Debug("input")->AddPoint(v, glm::green);
-			//	}
-			//}
-
-			//{
-			//	auto entity = scene->CreateEntity("Temp Debugging");
-			//	entity->AddKeyEventHandler(
-			//		[scene, entity, tsdfs, transforms, meshes](const Neon::KeyEvent& event) {
-			//			if (GLFW_KEY_ENTER == event.key && (GLFW_RELEASE == event.action || GLFW_REPEAT == event.action)) {
-			//				for (size_t i = 0; i < 1; i++)
+			//		nvtxRangePushA("@Aaron/UpdateValues - Total");
+			//		for (size_t z = 0; z < zcount; z++)
+			//		{
+			//			for (size_t y = 0; y < ycount; y++)
+			//			{
+			//				for (size_t x = 0; x < xcount; x++)
 			//				{
-			//					bool result = false;
-			//					while (false == result)
-			//					{
-			//						result = tsdfs[0]->ShowInversedVoxelsSingle(scene, transforms[0], meshes[0], gindex);
-			//						gindex++;
-			//					}
+			//					tsdfs[z * ycount * xcount + y * xcount + x]->UpdateValues();
 			//				}
 			//			}
-			//		});
-			//}
+			//		}
+			//		nvtxRangePop();
 
-			//{
-			//	auto entity = scene->CreateEntity("Temp Debugging");
-			//	entity->AddKeyEventHandler(
-			//		[scene, entity, tsdfs, transforms, meshes](const Neon::KeyEvent& event) {
-			//			if (GLFW_KEY_ENTER == event.key && (GLFW_RELEASE == event.action || GLFW_REPEAT == event.action)) {
-			//					tsdfs[0]->ShowInversedVoxelsSingle(scene, transforms[0], meshes[0], 103);
+			//		nvtxRangePushA("@Aaron/BuildGridCells - Total");
+			//		for (size_t z = 0; z < zcount; z++)
+			//		{
+			//			for (size_t y = 0; y < ycount; y++)
+			//			{
+			//				for (size_t x = 0; x < xcount; x++)
+			//				{
+			//					tsdfs[z * ycount * xcount + y * xcount + x]->BuildGridCells(isoValue);
+			//				}
 			//			}
-			//		});
-			//}
+			//		}
+			//		nvtxRangePop();
+			//	}
 
-			return;
+			//	nvtxRangePushA("@Aaron/TestTriangles - Total");
 
-			for (size_t i = 0; i < meshes.size(); i++)
-			{
-				auto& mesh = meshes[i];
+			//	for (size_t z = 0; z < zcount; z++)
+			//	{
+			//		for (size_t y = 0; y < ycount; y++)
+			//		{
+			//			for (size_t x = 0; x < xcount; x++)
+			//			{
+			//				tsdfs[z * ycount * xcount + y * xcount + x]->TestTriangles(scene);
+			//			}
+			//		}
+			//	}
+			//	nvtxRangePop();
 
-				//auto vmin3 = Eigen::Vector3f(mesh->GetAABB().GetMinPoint().x, mesh->GetAABB().GetMinPoint().y, mesh->GetAABB().GetMinPoint().z);
-				//auto vmax3 = Eigen::Vector3f(mesh->GetAABB().GetMaxPoint().x, mesh->GetAABB().GetMaxPoint().y, mesh->GetAABB().GetMaxPoint().z);
-
-				//Eigen::Vector4f vmin4 = transforms[i] * Eigen::Vector4f(vmin3.x(), vmin3.y(), vmin3.z(), 1.0f);
-				//Eigen::Vector4f vmax4 = transforms[i] * Eigen::Vector4f(vmax3.x(), vmax3.y(), vmax3.z(), 1.0f);
-
-				//Neon::AABB aabb;
-				//aabb.Expand({ vmin4.x(), vmin4.y(), vmin4.z() });
-				//aabb.Expand({ vmax4.x(), vmax4.y(), vmax4.z() });
-
-				auto vmin = Eigen::Vector3f(mesh->GetAABB().GetMinPoint().x, mesh->GetAABB().GetMinPoint().y, mesh->GetAABB().GetMinPoint().z);
-				auto vmax = Eigen::Vector3f(mesh->GetAABB().GetMaxPoint().x, mesh->GetAABB().GetMaxPoint().y, mesh->GetAABB().GetMaxPoint().z);
-
-				Neon::AABB aabb;
-				aabb.Expand({ vmin.x(), vmin.y(), vmin.z() });
-				aabb.Expand({ vmax.x(), vmax.y(), vmax.z() });
-
-				nvtxRangePushA("@Aaron/Integrate - Total");
-				for (size_t z = 0; z < zcount; z++)
-				{
-					for (size_t y = 0; y < ycount; y++)
-					{
-						for (size_t x = 0; x < xcount; x++)
-						{
-							tsdfs[z * ycount * xcount + y * xcount + x]->IntegrateWrap(
-								mesh->GetVertexBuffer()->GetElements(),
-								transforms[i],
-								aabb.GetXLength(), aabb.GetYLength(),
-								256, 480);
-						}
-					}
-				}
-				nvtxRangePop();
-
-				//nvtxRangePushA("@Aaron/UpdateValues");
-				//for (size_t z = 0; z < zcount; z++)
-				//{
-				//	for (size_t y = 0; y < ycount; y++)
-				//	{
-				//		for (size_t x = 0; x < xcount; x++)
-				//		{
-				//			tsdfs[z * ycount * xcount + y * xcount + x]->UpdateValues();
-				//		}
-				//	}
-				//}
-				//nvtxRangePop();
-
-				nvtxRangePushA("@Aaron/BuildGridCells");
-				for (size_t z = 0; z < zcount; z++)
-				{
-					for (size_t y = 0; y < ycount; y++)
-					{
-						for (size_t x = 0; x < xcount; x++)
-						{
-							tsdfs[z * ycount * xcount + y * xcount + x]->BuildGridCells(isoValue);
-						}
-					}
-				}
-				nvtxRangePop();
-			}
-
-			nvtxRangePushA("@Aaron/TestTriangles");
-
-			for (size_t z = 0; z < zcount; z++)
-			{
-				for (size_t y = 0; y < ycount; y++)
-				{
-					for (size_t x = 0; x < xcount; x++)
-					{
-						tsdfs[z * ycount * xcount + y * xcount + x]->TestTriangles(scene);
-					}
-				}
-			}
-			nvtxRangePop();
-
-			return;
-			cudaDeviceSynchronize();
-
-			nvtxRangePushA("@Aaron/Total");
-
-			for (size_t i = 0; i < 1; i++)
-			{
-				nvtxRangePushA("@Aaron/UpdateValues - Total");
-				for (size_t z = 0; z < zcount; z++)
-				{
-					for (size_t y = 0; y < ycount; y++)
-					{
-						for (size_t x = 0; x < xcount; x++)
-						{
-							tsdfs[z * ycount * xcount + y * xcount + x]->UpdateValues();
-						}
-					}
-				}
-				nvtxRangePop();
-
-				nvtxRangePushA("@Aaron/BuildGridCells - Total");
-				for (size_t z = 0; z < zcount; z++)
-				{
-					for (size_t y = 0; y < ycount; y++)
-					{
-						for (size_t x = 0; x < xcount; x++)
-						{
-							tsdfs[z * ycount * xcount + y * xcount + x]->BuildGridCells(isoValue);
-						}
-					}
-				}
-				nvtxRangePop();
-			}
-
-			nvtxRangePushA("@Aaron/TestTriangles - Total");
-
-			for (size_t z = 0; z < zcount; z++)
-			{
-				for (size_t y = 0; y < ycount; y++)
-				{
-					for (size_t x = 0; x < xcount; x++)
-					{
-						tsdfs[z * ycount * xcount + y * xcount + x]->TestTriangles(scene);
-					}
-				}
-			}
-			nvtxRangePop();
-
-			nvtxRangePop();
-		}
+			//	nvtxRangePop();
 #pragma endregion
-
-		return;
-
-		{
-			auto entity = scene->CreateEntity("Entity/TSDF");
-#pragma region Entity Toggler
-			entity->AddKeyEventHandler([scene, entity](const Neon::KeyEvent& event) {
-				if (GLFW_KEY_ESCAPE == event.key && GLFW_RELEASE == event.action) {
-					auto mesh = entity->GetComponent<Neon::Mesh>(0);
-					if (nullptr != mesh)
-					{
-						mesh->ToggleFillMode();
-						cout << "Toggle Fill Mode : " << mesh->GetName() << endl;
-					}
-				}
-				});
-#pragma endregion
-
-			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/PLY Input");
-			entity->AddComponent(mesh);
-			//mesh->FromPLYFile("C:\\saveData\\0000_target.ply");
-			mesh->FromPLYFile("C:\\Resources\\MC_TESTDATA\\0000_1st_TargetPC.ply");
-
-			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", Neon::URL::Resource("/shader/lighting.vs"), Neon::URL::Resource("/shader/lighting.fs"));
-			entity->AddComponent(shader);
-
-			Eigen::Matrix4f transformMatrix;
-			transformMatrix <<
-				9.999999E-01f, -3.041836E-04f, 5.392341E-05f, 0.000000E+00f,
-				3.043024E-04f, 9.999977E-01f, -2.120121E-03f, 0.000000E+00f,
-				-5.327794E-05f, 2.120084E-03f, 9.999976E-01f, 0.000000E+00f,
-				9.976241E-02f, 1.964474E-01f, -4.013956E-01f, 1.000000E+00f;
-
-			for (size_t y = 0; y < 480 - 3; y += 3)
-			{
-				for (size_t x = 0; x < 256 - 2; x += 2)
-				{
-					auto i0 = 256 * y + x;
-					auto i1 = 256 * y + x + 2;
-					auto i2 = 256 * (y + 3) + x;
-					auto i3 = 256 * (y + 3) + x + 2;
-
-					mesh->AddIndex(i0);
-					mesh->AddIndex(i1);
-					mesh->AddIndex(i2);
-
-					mesh->AddIndex(i2);
-					mesh->AddIndex(i1);
-					mesh->AddIndex(i3);
-
-					//auto& v0 = mesh->GetVertex(i0);
-					//auto& v1 = mesh->GetVertex(i1);
-					//auto& v2 = mesh->GetVertex(i2);
-					//auto& v3 = mesh->GetVertex(i3);
-
-					//if ((FLT_VALID(v0.x) && FLT_VALID(v0.y) && FLT_VALID(v0.z)) &&
-					//	(FLT_VALID(v1.x) && FLT_VALID(v1.y) && FLT_VALID(v1.z)) &&
-					//	(FLT_VALID(v2.x) && FLT_VALID(v2.y) && FLT_VALID(v2.z)))
-					//{
-					//	scene->Debug("Triangles")->AddTriangle(v0, v2, v1);
-					//}
-
-					//if ((FLT_VALID(v2.x) && FLT_VALID(v2.y) && FLT_VALID(v2.z)) &&
-					//	(FLT_VALID(v1.x) && FLT_VALID(v1.y) && FLT_VALID(v1.z)) &&
-					//	(FLT_VALID(v3.x) && FLT_VALID(v3.y) && FLT_VALID(v3.z)))
-					//{
-					//	scene->Debug("Triangles")->AddTriangle(v2, v3, v1);
-					//}
-				}
-			}
-
-			scene->Debug("Mesh")->AddMesh(mesh);
-
-			mesh->Bake({
-				9.999999E-01, -3.041836E-04, 5.392341E-05, 0.000000E+00,
-				3.043024E-04, 9.999977E-01, -2.120121E-03, 0.000000E+00,
-				-5.327794E-05, 2.120084E-03, 9.999976E-01, 0.000000E+00,
-				9.976241E-02, 1.964474E-01, -4.013956E-01, 1.000000E+00 });
-			mesh->FillColor(glm::green);
-
-			auto& minPoint = mesh->GetAABB().GetMinPoint();
-			auto& maxPoint = mesh->GetAABB().GetMaxPoint();
-
-			float xoffset = (maxPoint.x - minPoint.x) * 0.5f;
-			float yoffset = (maxPoint.y - minPoint.y) * 0.5f;
-			float zoffset = (maxPoint.z - minPoint.z) * 0.5f;
-
-			int xcount = 3;
-			int ycount = 3;
-			int zcount = 3;
-
-			float voxelSize = 0.05f;
-			float isoValue = 0.0f;
-
-			NeonCUDA::TSDF** tsdfs = new NeonCUDA::TSDF * [xcount * ycount * zcount];
-			for (size_t z = 0; z < zcount; z++)
-			{
-				for (size_t y = 0; y < ycount; y++)
-				{
-					for (size_t x = 0; x < xcount; x++)
-					{
-						tsdfs[z * ycount * xcount + y * xcount + x] = new NeonCUDA::TSDF(
-							voxelSize,
-							Eigen::Vector3f(minPoint.x + x * xoffset, minPoint.y + y * yoffset, minPoint.z + z * zoffset),
-							Eigen::Vector3f(minPoint.x + (x + 1) * xoffset, minPoint.y + (y + 1) * yoffset, minPoint.z + (z + 1) * zoffset));
-					}
-				}
-			}
-
-			auto theO = transformMatrix * Eigen::Vector4f(0.0f, 0.0f, 0.0f, 1.0f);
-			mesh->GetAABB().Clear();
-			for (auto& v : mesh->GetVertexBuffer()->GetElements())
-			{
-				v.z = theO.z();
-
-				mesh->GetAABB().Expand(v);
-			}
-			mesh->GetVertexBuffer()->SetDirty();
-
-			scene->Debug("AABB")->AddAABB(mesh->GetAABB());
-
-
-			cudaDeviceSynchronize();
-
-			nvtxRangePushA("@Aaron/Total");
-
-			for (size_t i = 0; i < 1; i++)
-			{
-				nvtxRangePushA("@Aaron/UpdateValues - Total");
-				for (size_t z = 0; z < zcount; z++)
-				{
-					for (size_t y = 0; y < ycount; y++)
-					{
-						for (size_t x = 0; x < xcount; x++)
-						{
-							tsdfs[z * ycount * xcount + y * xcount + x]->UpdateValues();
-						}
-					}
-				}
-				nvtxRangePop();
-
-				nvtxRangePushA("@Aaron/BuildGridCells - Total");
-				for (size_t z = 0; z < zcount; z++)
-				{
-					for (size_t y = 0; y < ycount; y++)
-					{
-						for (size_t x = 0; x < xcount; x++)
-						{
-							tsdfs[z * ycount * xcount + y * xcount + x]->BuildGridCells(isoValue);
-						}
-					}
-				}
-				nvtxRangePop();
-			}
-
-			nvtxRangePushA("@Aaron/TestTriangles - Total");
-
-			for (size_t z = 0; z < zcount; z++)
-			{
-				for (size_t y = 0; y < ycount; y++)
-				{
-					for (size_t x = 0; x < xcount; x++)
-					{
-						tsdfs[z * ycount * xcount + y * xcount + x]->TestTriangles(scene);
-					}
-				}
-			}
-			nvtxRangePop();
-
-			nvtxRangePop();
 		}
+
 		});
 
 
