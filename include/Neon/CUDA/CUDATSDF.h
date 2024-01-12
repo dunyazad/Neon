@@ -29,6 +29,8 @@ namespace NeonCUDA
 	void BuildDepthMapWrap(Neon::Scene* scene, Neon::Mesh* mesh, size_t hResolution, size_t vResolution, float xUnit, float yUnit);
 	void BuildDepthMap(Neon::Scene* scene, Neon::Mesh* mesh, size_t hResolution, size_t vResolution, float xUnit, float yUnit, thrust::device_vector<Eigen::Vector3f>& result);
 
+	void UpscaleDepthMap(Neon::Scene* scene, Neon::Mesh* mesh, size_t hResolution, size_t vResolution, float xUnit, float yUnit, float voxelSize, thrust::device_vector<Eigen::Vector3f>& result);
+
 	class TSDF
 	{
 	public:
