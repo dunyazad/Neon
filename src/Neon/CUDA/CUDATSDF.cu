@@ -338,12 +338,14 @@ namespace NeonCUDA
 
 	void BuildDepthMap(Neon::Scene* scene, Neon::Mesh* mesh, size_t hResolution, size_t vResolution, float xUnit, float yUnit, thrust::device_vector<Eigen::Vector3f>& result)
 	{
-		auto inputPositions = FlipXInputArray(mesh->GetVertexBuffer()->GetElements(), hResolution, vResolution);
+		auto inputPositions = mesh->GetVertexBuffer()->GetElements();
 
 		thrust::host_vector<Eigen::Vector3f> host_depthMapInput;
 		for (auto& v : inputPositions)
 		{
 			host_depthMapInput.push_back(Eigen::Vector3f(v.x, v.y, v.z));
+
+			scene->Debug("DepthMap_Input")->AddPoint({ v.x, v.y, 0.0f });
 		}
 
 		thrust::device_vector<Eigen::Vector3f> depthMapInput(host_depthMapInput.begin(), host_depthMapInput.end());
@@ -364,6 +366,8 @@ namespace NeonCUDA
 		}
 #pragma endregion
 
+		thrust::fill(result.begin(), result.end(), Eigen::Vector3f(FLT_MAX, FLT_MAX, FLT_MAX));
+
 		auto _result = thrust::raw_pointer_cast(result.data());
 		auto _points = thrust::raw_pointer_cast(depthMapInput.data());
 		thrust::for_each(thrust::make_counting_iterator<size_t>(0), thrust::make_counting_iterator<size_t>(0) + depthMapInput.size(),
@@ -374,7 +378,22 @@ namespace NeonCUDA
 			{
 				auto xIndex = (int)floorf(point.x() / xUnit) + hResolution / 2;
 				auto yIndex = (int)floorf(point.y() / yUnit) + vResolution / 2;
-				_result[yIndex * hResolution + xIndex] = point;
+
+				if (FLT_VALID(_result[yIndex * hResolution + xIndex].x()) &&
+					FLT_VALID(_result[yIndex * hResolution + xIndex].y()) &&
+					FLT_VALID(_result[yIndex * hResolution + xIndex].z()))
+				{
+					auto mean = (point + _result[yIndex * hResolution + xIndex]) * 0.5f;
+
+					printf("Already exists.\nexists    %4.6f, %4.6f, %4.6f\nto insert %4.6f, %4.6f, %4.6f\nmean      %4.6f, %4.6f, %4.6f\n",
+					_result[yIndex * hResolution + xIndex].x(), _result[yIndex * hResolution + xIndex].y(), _result[yIndex * hResolution + xIndex].z(),
+					point.x(), point.y(), point.z(), mean.x(), mean.y(), mean.z());
+					_result[yIndex * hResolution + xIndex] = mean;
+				}
+				else
+				{
+					_result[yIndex * hResolution + xIndex] = point;
+				}
 			}
 		});
 
@@ -384,7 +403,7 @@ namespace NeonCUDA
 		{
 			if (FLT_VALID(p.x()) && FLT_VALID(p.y()) && FLT_VALID(p.z()))
 			{
-				//scene->Debug("DepthMap_Result")->AddPoint({ p.x(), p.y(), 0.01f }, glm::yellow);
+				scene->Debug("DepthMap_Result")->AddPoint({ p.x(), p.y(), 0.0f }, glm::yellow);
 				scene->Debug("DepthMap_Result_Lines")->AddLine({ p.x(), p.y(), 0.0f }, { p.x(), p.y(), p.z()}, glm::yellow, glm::yellow);
 			}
 
@@ -393,9 +412,10 @@ namespace NeonCUDA
 				float x = floorf(p.x() / xUnit) * xUnit + xUnit * 0.5f;
 				float y = floorf(p.y() / yUnit) * yUnit + yUnit * 0.5f;
 				float z = floorf(p.z() / xUnit) * xUnit + xUnit * 0.5f;
+				//float z = (floorf(p.z() / xUnit) - 1) * xUnit + xUnit * 0.5f;
 
-				//scene->Debug("DepthMap_Result_Quantized")->AddPoint({ x, y, 0.02f }, glm::red);
-				scene->Debug("DepthMap_Result_Quantized")->AddLine({ x, y, 0.0f }, { x, y, z }, glm::red, glm::red);
+				scene->Debug("DepthMap_Result_Quantized")->AddPoint({ x, y, 0.0f }, glm::red);
+				scene->Debug("DepthMap_Result_Quantized_Lines")->AddLine({ x, y, 0.0f }, { x, y, z }, glm::red, glm::red);
 			}
 		}
 	}

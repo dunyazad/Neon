@@ -47,6 +47,9 @@ namespace Neon
 			if (nullptr == entity)
 				continue;
 
+			if (false == entity->IsVisible())
+				continue;
+
 			auto mesh = entity->GetComponent<Mesh>(0);
 			if (nullptr == mesh)
 				continue;
@@ -128,6 +131,9 @@ namespace Neon
 		for (auto& entity : debugEntities)
 		{
 			if (nullptr == entity)
+				continue;
+
+			if (false == entity->IsVisible())
 				continue;
 
 			auto mesh = entity->GetComponent<Mesh>(0);

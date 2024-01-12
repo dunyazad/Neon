@@ -21,15 +21,21 @@ namespace Neon
 	{
 		{
 			auto entities = scene->GetEntities();
-			for (auto& entity : entities)
+			for (auto& kvp : entities)
 			{
-				entity.second->OnUpdate(now, timeDelta);
+				if (false == kvp.second->IsActive())
+					continue;
+
+				kvp.second->OnUpdate(now, timeDelta);
 			}
 		}
 		{
 			auto entities = scene->GetDebugEntities();
 			for (auto& entity : entities)
 			{
+				if (false == entity)
+					continue;
+
 				entity->OnUpdate(now, timeDelta);
 			}
 		}

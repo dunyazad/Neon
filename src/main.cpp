@@ -43,8 +43,15 @@ int main()
 						auto mesh = entity->GetComponent<Neon::Mesh>(0);
 						if (nullptr != mesh)
 						{
-							mesh->ToggleFillMode();
-							cout << "Toggle Fill Mode : " << mesh->GetName() << endl;
+							if (GLFW_KEY_LEFT_SHIFT == event.key || GLFW_KEY_RIGHT_SHIFT == event.key)
+							{
+								mesh->ToggleFillMode();
+								cout << "Toggle Fill Mode : " << mesh->GetName() << endl;
+							}
+							else
+							{
+								entity->ToggleVisible();
+							}
 						}
 					}
 				}
@@ -312,6 +319,7 @@ int main()
 			}
 
 			NeonCUDA::BuildDepthMapWrap(scene, meshes[0], 256, 480, 0.1f, 0.1f);
+			return;
 
 			auto& minPoint = meshesAABB.GetMinPoint();
 			auto& maxPoint = meshesAABB.GetMaxPoint();

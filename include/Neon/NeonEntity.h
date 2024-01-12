@@ -49,6 +49,13 @@ namespace Neon
 
 		inline Scene* GetScene() const { return scene; }
 
+		bool IsActive() const { return active; }
+		void SetActive(bool isActive) { active = isActive; }
+		void ToggleActive() { active = !active; }
+		bool IsVisible() const { return visible; }
+		void SetVisible(bool isVisible) { visible = isVisible; }
+		void ToggleVisible() { visible = !visible; }
+
 		virtual void OnKeyEvent(const KeyEvent& event);
 		virtual void OnMouseButtonEvent(const MouseButtonEvent& event);
 		virtual void OnCursorPosEvent(const CursorPosEvent& event);
@@ -57,5 +64,8 @@ namespace Neon
 	protected:
 		Scene* scene;
 		map<const type_info*, vector<ComponentBase*>> components;
+
+		bool active = true;
+		bool visible = true;
 	};
 }
