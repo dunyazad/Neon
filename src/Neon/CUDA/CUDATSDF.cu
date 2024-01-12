@@ -302,6 +302,457 @@ namespace NeonCUDA
 		{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1} };
 	}
 
+#pragma region Math
+#define DOT(a, b) (a).x() * (b).x() + (a).y() * (b).y() + (a).z() * (b).z()
+#define CROSS(a, b) Eigen::Vector3f((a).y() * (b).z() - (b).y() * (a).z(), (a).z() * (b).x() - (b).z() * (a).x(), (a).x() * (b).y() - (b).x() * (a).y())
+#define LENGTHSQUARED(a) DOT((a), (a))
+#define LENGTH(a) __fsqrt_rn(LENGTHSQUARED(a))
+#define DISTANCESQUARED(a, b) LENGTHSQUARED((a) - (b))
+#define DISTANCE(a, b) __fsqrt_rn(DISTANCESQUARED((a), (b)))
+#define NORMALIZE(a) (a) / (LENGTH(a))
+
+	//__device__ __host__ Eigen::Vector3f operator+(const Eigen::Vector3f& a, const Eigen::Vector3f& b) {
+	//	return Eigen::Vector3f(a.x + b.x, a.y + b.y, a.z + b.z);
+	//}
+	//__device__ __host__ Eigen::Vector3f operator-(const Eigen::Vector3f& a, const Eigen::Vector3f& b) {
+	//	return Eigen::Vector3f(a.x - b.x, a.y - b.y, a.z - b.z);
+	//}
+
+	//__device__ __host__ Eigen::Vector3f operator*(float a, const Eigen::Vector3f& b) {
+	//	return Eigen::Vector3f(a * b.x, a * b.y, a * b.z);
+	//}
+	//__device__ __host__ Eigen::Vector3f operator*(const Eigen::Vector3f& a, float b) {
+	//	return Eigen::Vector3f(a.x * b, a.y * b, a.z * b);
+	//}
+	//__device__ __host__ Eigen::Vector3f operator/(const Eigen::Vector3f& a, float b) {
+	//	return Eigen::Vector3f(a.x / b, a.y / b, a.z / b);
+	//}
+
+	//__device__ __host__ float dot(const Eigen::Vector3f& a, const Eigen::Vector3f& b) {
+	//	return a.x * b.x + a.y * b.y + a.z * b.z;
+	//}
+
+	//__device__ __host__ Eigen::Vector3f cross(const Eigen::Vector3f& a, const Eigen::Vector3f& b) {
+	//	return Eigen::Vector3f((a).y * (b).z - (b).y * (a).z, (a).z * (b).x - (b).z * (a).x, (a).x * (b).y - (b).x * (a).y);
+	//}
+
+	//__device__ __host__ float length_squared(const Eigen::Vector3f& a, const Eigen::Vector3f& b) {
+	//	return dot(a - b, a - b);
+	//}
+
+	//__device__ float length(const Eigen::Vector3f& a, const Eigen::Vector3f& b) {
+	//	return __fsqrt_rn(dot(a - b, a - b));
+	//}
+
+	//__device__ __host__ float length_squared(const Eigen::Vector3f& a) {
+	//	return dot(a, a);
+	//}
+
+	//__device__ float length(const Eigen::Vector3f& a) {
+	//	return __fsqrt_rn(dot(a, a));
+	//}
+
+	//__device__ Eigen::Vector3f normalize(const Eigen::Vector3f& a) {
+	//	return a / length(a);
+	//}
+
+	//__device__ __host__ float distance_squared(const Eigen::Vector3f& a, const Eigen::Vector3f& b) {
+	//	return dot((a - b), (a - b));
+	//}
+
+	//__device__ float distance(const Eigen::Vector3f& a, const Eigen::Vector3f& b) {
+	//	return __fsqrt_rn(dot((a - b), (a - b)));
+	//}
+
+	//__device__
+	//	float pointTriangleDistance(const Eigen::Vector3f& point, const Eigen::Vector3f& v0, const Eigen::Vector3f& v1, const Eigen::Vector3f& v2) {
+	//	// Calculate the normal of the triangle
+	//	Eigen::Vector3f normal = normalize(cross(v1 - v0, v2 - v0));
+
+	//	// Calculate the distance between the point and the plane of the triangle
+	//	float dist = dot(point - v0, normal);
+
+	//	// Check if the point is above or below the triangle
+	//	Eigen::Vector3f projectedPoint = point - dist * normal;
+	//	if (dot(normal, cross(v1 - v0, projectedPoint - v0)) > 0 &&
+	//		dot(normal, cross(v2 - v1, projectedPoint - v1)) > 0 &&
+	//		dot(normal, cross(v0 - v2, projectedPoint - v2)) > 0) {
+	//		// Point is inside the triangle
+	//		//return std::abs(distance);
+	//		return dist;
+	//	}
+	//	else {
+	//		// Point is outside the triangle
+	//		// You can return the distance to the closest edge or vertex if needed
+	//		return min(min(distance(point, v0), distance(point, v1)), distance(point, v2));
+	//	}
+	//}
+#pragma endregion
+
+	struct FillFunctor
+	{
+		float* values;
+		Eigen::Vector3f* positions;
+		int countX;
+		int countY;
+		int countZ;
+		float minX;
+		float minY;
+		float minZ;
+		float voxelSize;
+
+		__device__
+			void operator()(size_t index)
+		{
+			auto z = index / (countX * countY);
+			auto y = (index % (countX * countY)) / countX;
+			auto x = (index % (countX * countY)) % countX;
+
+			Eigen::Vector3f position(
+				minX + x * voxelSize + 0.5f * voxelSize,
+				minY + y * voxelSize + 0.5f * voxelSize,
+				minZ + z * voxelSize + 0.5f * voxelSize);
+
+			values[index] = -FLT_MAX;
+			positions[index] = position;
+		}
+	};
+
+	struct UpdateVoxelsFunctor
+	{
+		Eigen::Vector3f center;
+		float* values;
+		Eigen::Vector3f* positions;
+		int countX;
+		int countY;
+		int countZ;
+		float minX;
+		float minY;
+		float minZ;
+		float voxelSize;
+
+		__device__
+			void operator()(size_t index)
+		{
+			auto z = index / (countX * countY);
+			auto y = (index % (countX * countY)) / countX;
+			auto x = (index % (countX * countY)) % countX;
+
+			Eigen::Vector3f position(
+				minX + x * voxelSize + 0.5f * voxelSize,
+				minY + y * voxelSize + 0.5f * voxelSize,
+				minZ + z * voxelSize + 0.5f * voxelSize);
+
+			float dist = __fsqrt_rn((position - center).squaredNorm());
+
+			//if (2.0 < dist)
+			//////if (dist > 3.0)
+			////if (2.5 < dist)
+			//{
+			//	values[index] = 1.0f;
+			//}
+			//else
+			//{
+			//	values[index] = 0;
+			//}
+
+			values[index] = dist;
+
+			//values[index] = position.z;
+		}
+	};
+
+	struct BuildGridFunctor
+	{
+		Eigen::Vector3f center;
+		float* values;
+		//Eigen::Vector3f* positions;
+		MarchingCubes::GRIDCELL* gridcells;
+		MarchingCubes::TRIANGLE* triangles;
+		int countX;
+		int countY;
+		int countZ;
+		float minX;
+		float minY;
+		float minZ;
+		float voxelSize;
+		float isoValue;
+
+		__device__
+			void operator()(size_t index)
+		{
+			auto z = index / (countX * countY);
+			auto y = (index % (countX * countY)) / countX;
+			auto x = (index % (countX * countY)) % countX;
+
+			//printf("[%d, %d, %d]\n", x, y, z);
+			//return;
+
+			Eigen::Vector3f position(
+				minX + x * voxelSize + 0.5f * voxelSize,
+				minY + y * voxelSize + 0.5f * voxelSize,
+				minZ + z * voxelSize + 0.5f * voxelSize);
+
+			//printf("Position : %f, %f, %f\n", position.x(), position.y(), position.z());
+
+			MarchingCubes::GRIDCELL gridcell;
+			gridcell.p[0] = Eigen::Vector3f(
+				minX + x * voxelSize + 0.5f * voxelSize,
+				minY + y * voxelSize + 0.5f * voxelSize,
+				minZ + z * voxelSize + 0.5f * voxelSize);
+			gridcell.p[1] = Eigen::Vector3f(
+				minX + (x + 1) * voxelSize + 0.5f * voxelSize,
+				minY + y * voxelSize + 0.5f * voxelSize,
+				minZ + z * voxelSize + 0.5f * voxelSize);
+			gridcell.p[2] = Eigen::Vector3f(
+				minX + (x + 1) * voxelSize + 0.5f * voxelSize,
+				minY + y * voxelSize + 0.5f * voxelSize,
+				minZ + (z + 1) * voxelSize + 0.5f * voxelSize);
+			gridcell.p[3] = Eigen::Vector3f(
+				minX + x * voxelSize + 0.5f * voxelSize,
+				minY + y * voxelSize + 0.5f * voxelSize,
+				minZ + (z + 1) * voxelSize + 0.5f * voxelSize);
+			gridcell.p[4] = Eigen::Vector3f(
+				minX + x * voxelSize + 0.5f * voxelSize,
+				minY + (y + 1) * voxelSize + 0.5f * voxelSize,
+				minZ + z * voxelSize + 0.5f * voxelSize);
+			gridcell.p[5] = Eigen::Vector3f(
+				minX + (x + 1) * voxelSize + 0.5f * voxelSize,
+				minY + (y + 1) * voxelSize + 0.5f * voxelSize,
+				minZ + z * voxelSize + 0.5f * voxelSize);
+			gridcell.p[6] = Eigen::Vector3f(
+				minX + (x + 1) * voxelSize + 0.5f * voxelSize,
+				minY + (y + 1) * voxelSize + 0.5f * voxelSize,
+				minZ + (z + 1) * voxelSize + 0.5f * voxelSize);
+			gridcell.p[7] = Eigen::Vector3f(
+				minX + x * voxelSize + 0.5f * voxelSize,
+				minY + (y + 1) * voxelSize + 0.5f * voxelSize,
+				minZ + (z + 1) * voxelSize + 0.5f * voxelSize);
+
+			gridcell.val[0] = values[z * countX * countY + y * countX + x];
+			gridcell.val[1] = values[z * countX * countY + y * countX + (x + 1)];
+			gridcell.val[2] = values[(z + 1) * countX * countY + y * countX + (x + 1)];
+			gridcell.val[3] = values[(z + 1) * countX * countY + y * countX + x];
+			gridcell.val[4] = values[z * countX * countY + (y + 1) * countX + x];
+			gridcell.val[5] = values[z * countX * countY + (y + 1) * countX + (x + 1)];
+			gridcell.val[6] = values[(z + 1) * countX * countY + (y + 1) * countX + (x + 1)];
+			gridcell.val[7] = values[(z + 1) * countX * countY + (y + 1) * countX + x];
+
+			int cubeindex = 0;
+			float isolevel = isoValue;
+			Eigen::Vector3f vertlist[12];
+
+			if (gridcell.val[0] < isolevel) cubeindex |= 1;
+			if (gridcell.val[1] < isolevel) cubeindex |= 2;
+			if (gridcell.val[2] < isolevel) cubeindex |= 4;
+			if (gridcell.val[3] < isolevel) cubeindex |= 8;
+			if (gridcell.val[4] < isolevel) cubeindex |= 16;
+			if (gridcell.val[5] < isolevel) cubeindex |= 32;
+			if (gridcell.val[6] < isolevel) cubeindex |= 64;
+			if (gridcell.val[7] < isolevel) cubeindex |= 128;
+
+			if (MarchingCubes::edgeTable[cubeindex] == 0)
+				return;
+
+			if (MarchingCubes::edgeTable[cubeindex] & 1)
+				vertlist[0] =
+				VertexInterp(isolevel, gridcell.p[0], gridcell.p[1], gridcell.val[0], gridcell.val[1]);
+			if (MarchingCubes::edgeTable[cubeindex] & 2)
+				vertlist[1] =
+				VertexInterp(isolevel, gridcell.p[1], gridcell.p[2], gridcell.val[1], gridcell.val[2]);
+			if (MarchingCubes::edgeTable[cubeindex] & 4)
+				vertlist[2] =
+				VertexInterp(isolevel, gridcell.p[2], gridcell.p[3], gridcell.val[2], gridcell.val[3]);
+			if (MarchingCubes::edgeTable[cubeindex] & 8)
+				vertlist[3] =
+				VertexInterp(isolevel, gridcell.p[3], gridcell.p[0], gridcell.val[3], gridcell.val[0]);
+			if (MarchingCubes::edgeTable[cubeindex] & 16)
+				vertlist[4] =
+				VertexInterp(isolevel, gridcell.p[4], gridcell.p[5], gridcell.val[4], gridcell.val[5]);
+			if (MarchingCubes::edgeTable[cubeindex] & 32)
+				vertlist[5] =
+				VertexInterp(isolevel, gridcell.p[5], gridcell.p[6], gridcell.val[5], gridcell.val[6]);
+			if (MarchingCubes::edgeTable[cubeindex] & 64)
+				vertlist[6] =
+				VertexInterp(isolevel, gridcell.p[6], gridcell.p[7], gridcell.val[6], gridcell.val[7]);
+			if (MarchingCubes::edgeTable[cubeindex] & 128)
+				vertlist[7] =
+				VertexInterp(isolevel, gridcell.p[7], gridcell.p[4], gridcell.val[7], gridcell.val[4]);
+			if (MarchingCubes::edgeTable[cubeindex] & 256)
+				vertlist[8] =
+				VertexInterp(isolevel, gridcell.p[0], gridcell.p[4], gridcell.val[0], gridcell.val[4]);
+			if (MarchingCubes::edgeTable[cubeindex] & 512)
+				vertlist[9] =
+				VertexInterp(isolevel, gridcell.p[1], gridcell.p[5], gridcell.val[1], gridcell.val[5]);
+			if (MarchingCubes::edgeTable[cubeindex] & 1024)
+				vertlist[10] =
+				VertexInterp(isolevel, gridcell.p[2], gridcell.p[6], gridcell.val[2], gridcell.val[6]);
+			if (MarchingCubes::edgeTable[cubeindex] & 2048)
+				vertlist[11] =
+				VertexInterp(isolevel, gridcell.p[3], gridcell.p[7], gridcell.val[3], gridcell.val[7]);
+
+			MarchingCubes::TRIANGLE tris[4];
+			int ntriang = 0;
+			for (int i = 0; MarchingCubes::triTable[cubeindex][i] != -1; i += 3) {
+				auto v0 = vertlist[MarchingCubes::triTable[cubeindex][i]];
+				auto v1 = vertlist[MarchingCubes::triTable[cubeindex][i + 1]];
+				auto v2 = vertlist[MarchingCubes::triTable[cubeindex][i + 2]];
+
+				auto normal = NORMALIZE(CROSS(NORMALIZE(v1 - v0), NORMALIZE(v2 - v0)));
+				auto zAxis = Eigen::Vector3f(0.0f, 0.0f, 1.0f);
+				auto dot = DOT(normal, zAxis);
+				if (0 < dot)
+				{
+					tris[ntriang].p[0] = v0;
+					tris[ntriang].p[1] = v1;
+					tris[ntriang].p[2] = v2;
+					ntriang++;
+				}
+			}
+
+			//if (ntriang != 0)
+			//{
+			//	printf("ntriang : %d\n", ntriang);
+			//}
+
+			for (size_t i = 0; i < ntriang; i++)
+			{
+				triangles[index * 4 + i] = tris[i];
+
+				//printf("%f, %f, %f\n", tris[i].p->x(), tris[i].p->y(), tris[i].p->z());
+			}
+		}
+
+		__device__
+			Eigen::Vector3f VertexInterp(float isolevel, const Eigen::Vector3f& p1, const Eigen::Vector3f& p2, float valp1, float valp2)
+		{
+			float mu;
+			Eigen::Vector3f p;
+
+			if (fabsf(isolevel - valp1) < 0.00001f)
+				return(p1);
+			if (fabsf(isolevel - valp2) < 0.00001f)
+				return(p2);
+			if (fabsf(valp1 - valp2) < 0.00001f)
+				return(p1);
+			mu = (isolevel - valp1) / (valp2 - valp1);
+			p.x() = p1.x() + mu * (p2.x() - p1.x());
+			p.y() = p1.y() + mu * (p2.y() - p1.y());
+			p.z() = p1.z() + mu * (p2.z() - p1.z());
+
+			return p;
+		}
+	};
+
+	struct IntegrateFunctor
+	{
+		Eigen::Vector3f center;
+		float* values;
+		Eigen::Vector3f* positions;
+		int countX;
+		int countY;
+		int countZ;
+		float minX;
+		float minY;
+		float minZ;
+		float voxelSize;
+
+		const Eigen::Vector3f* inputPositions;
+		Eigen::Matrix4f transform;
+		Eigen::Matrix4f inverseTransform;
+		float width;
+		float height;
+		int rows;
+		int columns;
+		float xUnit;
+		float yUnit;
+
+		__device__
+			void operator()(size_t index)
+		{
+			//if (index == 0)
+			//{
+			//	for (size_t y = 0; y < 480 - 3; y += 3)
+			//	{
+			//		for (size_t x = 0; x < 256 - 2; x += 2)
+			//		{
+			//			auto& v = inputPositions[y * 256 + x];
+			//			if (FLT_VALID(v.x()) && FLT_VALID(v.y()) && FLT_VALID(v.z()))
+			//			{
+			//				printf("input : %f, %f, %f\n", v.x(), v.y(), v.z());
+			//			}
+			//		}
+			//	}
+			//}
+			//else
+			//	return;
+
+			if (index == 0)
+			{
+				printf("min : %f, %f, %f\n", minX, minY, minZ);
+				printf("xUnit : %f, yUnit : %f\n", xUnit, yUnit);
+				printf("center: %f, %f, %f\n", center.x(), center.y(), center.z());
+			}
+
+			auto z = index / (countX * countY);
+			auto y = (index % (countX * countY)) / countX;
+			auto x = (index % (countX * countY)) % countX;
+
+			Eigen::Vector3f position(
+				minX + x * voxelSize + 0.5f * voxelSize,
+				minY + y * voxelSize + 0.5f * voxelSize,
+				minZ + z * voxelSize + 0.5f * voxelSize);
+
+			//if ((position - center).norm() < 1.0f)
+			//{
+			//	values[index] = (position - center).norm() - 1.0f;
+			//}
+			//else
+			//{
+			//	values[index] = FLT_MAX;
+			//}
+
+			//if (x % 2 == 0 || y % 2 == 0 || z % 2 == 0)
+			//	values[index] = -1.0f;
+			//else
+			//	values[index] = 1.0f;
+			//return;
+
+			//Eigen::Vector4f ip = (inverseTransform * Eigen::Vector4f(position.x(), position.y(), position.z(), 1.0f));
+			Eigen::Vector3f ip = position;
+
+			float xPosition = ip.x() + width * 0.5f;
+			float yPosition = ip.y() + height * 0.5f;
+			float distance = ip.z();
+
+			if ((0 < xPosition && xPosition < width) &&
+				(0 < yPosition && yPosition < height))
+			{
+				int xIndex = ((int)(xPosition / xUnit) / 2) * 2;
+				int yIndex = ((int)(yPosition / yUnit) / 3) * 3;
+
+				auto inputPosition = inputPositions[yIndex * columns + xIndex];
+
+				if (FLT_VALID(inputPosition.x()) && FLT_VALID(inputPosition.y()) && FLT_VALID(inputPosition.z()))
+				{
+					//printf("[%d, %d] inputPosition : %f, %f, %f\n", xIndex, yIndex, inputPosition.x(), inputPosition.y(), inputPosition.z());
+					values[index] = distance - inputPosition.z();
+
+					//printf("%f\n", (inputPosition - Eigen::Vector3f(ip.x(), ip.y(), ip.z())).norm());
+				}
+				else
+				{
+					values[index] = FLT_MAX;
+					//	//values[index] = 0.0f;
+				}
+			}
+			else
+			{
+				values[index] = FLT_MAX;
+			}
+		}
+	};
+
 	void Test()
 	{
 
@@ -313,15 +764,101 @@ namespace NeonCUDA
 		size_t vResolution = 480;
 		float xUnit = 0.1f;
 		float yUnit = 0.1f;
-		float voxelSize = 0.05f;
+		float voxelSize = 0.1f;
 
 		thrust::device_vector<Eigen::Vector3f> depthMap(hResolution * vResolution);
 
 		BuildDepthMap(scene, mesh, hResolution, vResolution, xUnit, yUnit, depthMap);
 
-		thrust::device_vector<Eigen::Vector3f> upscaledDepthMap(hResolution * 2 * vResolution * 2);
+		size_t voxelCountX = hResolution;
+		size_t voxelCountY = vResolution;
+		size_t voxelCountZ = hResolution;
+		size_t voxelCount = voxelCountX * voxelCountY * voxelCountZ;
+		thrust::device_vector<float> voxelValues(voxelCount);
+		auto _voxelValues = thrust::raw_pointer_cast(voxelValues.data());
+		auto _depthMap = thrust::raw_pointer_cast(depthMap.data());
 
-		UpscaleDepthMap(scene, mesh, hResolution * 2, vResolution * 2, xUnit * 0.5f, yUnit * 0.5f, voxelSize, depthMap, upscaledDepthMap);
+		thrust::for_each(thrust::make_counting_iterator<size_t>(0), thrust::make_counting_iterator<size_t>(voxelCount),
+			[voxelSize, voxelCountX, voxelCountY, voxelCountZ, voxelCount, _voxelValues, _depthMap, hResolution, vResolution]__device__(size_t index) {
+
+			auto z = index / (voxelCountX * voxelCountY);
+			auto y = (index % (voxelCountX * voxelCountY)) / voxelCountX;
+			auto x = (index % (voxelCountX * voxelCountY)) % voxelCountX;
+
+			float xpos = (float)x * voxelSize - ((float)voxelCountX * voxelSize * 0.5f + voxelSize * 0.5f);
+			float ypos = (float)y * voxelSize - ((float)voxelCountY * voxelSize * 0.5f + voxelSize * 0.5f);
+			float zpos = (float)z * voxelSize - ((float)voxelCountZ * voxelSize * 0.5f + voxelSize * 0.5f);
+
+			if (FLT_VALID(_depthMap[y * hResolution + x].z()))
+			{
+				float value = zpos - _depthMap[y * hResolution + x].z();
+				if (-0.5f < value && value < 0.5f)
+				{
+					_voxelValues[index] = value;
+				}
+				else
+				{
+					_voxelValues[index] = FLT_MAX;
+				}
+			}
+			else
+			{
+				_voxelValues[index] = FLT_MAX;
+			}
+		});
+
+		{
+			float isoValue = 0.0f;
+
+			nvtxRangePushA("@Arron/BuildGridCells");
+
+			auto gridcells = thrust::device_vector<MarchingCubes::GRIDCELL>((voxelCountZ - 1) * (voxelCountY - 1) * (voxelCountX - 1));
+			auto triangles = thrust::device_vector<MarchingCubes::TRIANGLE>(voxelCountZ * voxelCountY * voxelCountX * 4);
+
+			//auto _positions = thrust::raw_pointer_cast(positions.data());
+			auto _gridcells = thrust::raw_pointer_cast(gridcells.data());
+			auto _triangles = thrust::raw_pointer_cast(triangles.data());
+
+			BuildGridFunctor buildGridFunctor;
+			buildGridFunctor.center = Eigen::Vector3f(0.0f, 0.0f, 0.0f);
+			buildGridFunctor.values = _voxelValues;
+			buildGridFunctor.gridcells = _gridcells;
+			//buildGridFunctor.positions = _positions;
+			buildGridFunctor.triangles = _triangles;
+			buildGridFunctor.countX = voxelCountX;
+			buildGridFunctor.countY = voxelCountY;
+			buildGridFunctor.countZ = voxelCountZ;
+			buildGridFunctor.minX = -(float)voxelCountX * voxelSize * 0.5f;
+			buildGridFunctor.minY = -(float)voxelCountY * voxelSize * 0.5f;
+			buildGridFunctor.minZ = -(float)voxelCountZ * voxelSize * 0.5f;
+			buildGridFunctor.voxelSize = voxelSize;
+			buildGridFunctor.isoValue = isoValue;
+
+			printf("Start\n");
+
+			thrust::for_each(thrust::make_counting_iterator<size_t>(0),
+				thrust::make_counting_iterator<size_t>((voxelCountX - 1) * (voxelCountY - 1) * (voxelCountZ - 1)),
+				buildGridFunctor);
+
+			printf("End\n");
+
+			nvtxRangePop();
+
+			thrust::host_vector<MarchingCubes::TRIANGLE> host_triangles(triangles.begin(), triangles.end());
+
+			for (auto& t : host_triangles)
+			{
+				if ((t.p[0].x() != 0.0f && t.p[0].y() != 0.0f && t.p[0].z() != 0.0f) &&
+					(t.p[1].x() != 0.0f && t.p[1].y() != 0.0f && t.p[1].z() != 0.0f) &&
+					(t.p[2].x() != 0.0f && t.p[2].y() != 0.0f && t.p[2].z() != 0.0f))
+				{
+					scene->Debug("triangles")->AddTriangle(
+						{ t.p[0].x(), t.p[0].y(), t.p[0].z() },
+						{ t.p[1].x(), t.p[1].y(), t.p[1].z() },
+						{ t.p[2].x(), t.p[2].y(), t.p[2].z() });
+				}
+			}
+		}
 
 #pragma region Draw Grid
 		{
@@ -355,6 +892,64 @@ namespace NeonCUDA
 			}
 		}
 #pragma endregion
+
+//#pragma region Draw result
+//		{
+//			thrust::host_vector<Eigen::Vector3f> host_result(upscaledDepthMap.begin(), upscaledDepthMap.end());
+//
+//			for (auto& p : host_result)
+//			{
+//				if (VECTOR3_VALID(p))
+//				{
+//					scene->Debug("Upscaling_Result")->AddPoint({ p.x(), p.y(), 0.0f }, glm::yellow);
+//					//scene->Debug("Interpolation_Result_Lines")->AddLine({ p.x(), p.y(), 0.0f }, { p.x(), p.y(), p.z() }, glm::yellow, glm::yellow);
+//				}
+//
+//				if (FLT_VALID(p.x()))
+//				{
+//					float x = floorf(p.x() / xUnit) * xUnit + xUnit * 0.5f;
+//					float y = floorf(p.y() / yUnit) * yUnit + yUnit * 0.5f;
+//					float z = floorf(p.z() / xUnit) * xUnit + xUnit * 0.5f;
+//					//float z = (floorf(p.z() / xUnit) - 1) * xUnit + xUnit * 0.5f;
+//
+//					scene->Debug("Interpolation_Result_Quantized")->AddPoint({ x, y, 0.0f }, glm::red);
+//					//scene->Debug("Interpolation_Result_Lines_Quantized_Lines")->AddLine({ x, y, 0.0f }, { x, y, z }, glm::red, glm::red);
+//				}
+//			}
+//		}
+//#pragma endregion
+
+#pragma region Draw Voxel Points
+		{
+			thrust::host_vector<float> host_voxelValues(voxelValues.begin(), voxelValues.end());
+
+			for (size_t z = 0; z < voxelCountZ; z++)
+			{
+				for (size_t y = 0; y < voxelCountY; y++)
+				{
+					for (size_t x = 0; x < voxelCountX; x++)
+					{
+						float xpos = (float)x * voxelSize - ((float)voxelCountX * voxelSize * 0.5f + voxelSize * 0.5f);
+						float ypos = (float)y * voxelSize - ((float)voxelCountY * voxelSize * 0.5f + voxelSize * 0.5f);
+						float zpos = (float)z * voxelSize - ((float)voxelCountZ * voxelSize * 0.5f + voxelSize * 0.5f);
+
+						size_t index = z * voxelCountX * voxelCountY + y * voxelCountX + x;
+						auto voxelValue = host_voxelValues[index];
+
+						if (-0.125f <= voxelValue && voxelValue <= 0.125f)
+						{
+							float ratio = (voxelValue + 0.125f) / 0.25f;
+
+							glm::vec4 c = (1.0f - ratio) * glm::blue + ratio * glm::red;
+
+							scene->Debug("Voxels")->AddPoint({ xpos, ypos, zpos }, c);
+						}
+					}
+				}
+			}
+		}
+#pragma endregion
+
 	}
 
 	std::vector<glm::vec3> FlipXInputArray(const std::vector<glm::vec3>& input, int columns, int rows)
@@ -682,439 +1277,17 @@ namespace NeonCUDA
 		auto _result = thrust::raw_pointer_cast(result.data());
 		thrust::for_each(thrust::make_counting_iterator<size_t>(0),
 			thrust::make_counting_iterator<size_t>(0) + vResolution * hResolution,
-			[]__device__(size_t index) {
-			//printf("index : %d\n", index);
+			[_input, _result, hResolution, vResolution, voxelSize]__device__(size_t index) {
+			size_t yIndex = index / hResolution;
+			size_t xIndex = index % hResolution;
+
+			auto& inputPoint = _input[(yIndex / 2) * (hResolution / 2) + (xIndex / 2)];
+			_result[(yIndex + 0) * hResolution + xIndex + 0] = Eigen::Vector3f(inputPoint.x(), inputPoint.y(), inputPoint.z());
+			_result[(yIndex + 0) * hResolution + xIndex + 1] = Eigen::Vector3f(inputPoint.x() + voxelSize, inputPoint.y(), inputPoint.z());
+			_result[(yIndex + 1) * hResolution + xIndex + 0] = Eigen::Vector3f(inputPoint.x(), inputPoint.y() + voxelSize, inputPoint.z());
+			_result[(yIndex + 1) * hResolution + xIndex + 1] = Eigen::Vector3f(inputPoint.x() + voxelSize, inputPoint.y() + voxelSize, inputPoint.z());
 		});
 	}
-
-#pragma region Math
-#define DOT(a, b) (a).x * (b).x + (a).y * (b).y + (a).z * (b).z
-#define CROSS(a, b) Eigen::Vector3f((a).y * (b).z - (b).y * (a).z, (a).z * (b).x - (b).z * (a).x, (a).x * (b).y - (b).x * (a).y)
-#define LENGTHSQUARED(a) DOT((a), (a))
-#define LENGTH(a) __fsqrt_rn(LENGTHSQUARED(a))
-#define DISTANCESQUARED(a, b) LENGTHSQUARED((a) - (b))
-#define DISTANCE(a, b) __fsqrt_rn(DISTANCESQUARED((a), (b)))
-#define NORMALIZE(a) (a) / (LENGTH(a))
-
-	//__device__ __host__ Eigen::Vector3f operator+(const Eigen::Vector3f& a, const Eigen::Vector3f& b) {
-	//	return Eigen::Vector3f(a.x + b.x, a.y + b.y, a.z + b.z);
-	//}
-	//__device__ __host__ Eigen::Vector3f operator-(const Eigen::Vector3f& a, const Eigen::Vector3f& b) {
-	//	return Eigen::Vector3f(a.x - b.x, a.y - b.y, a.z - b.z);
-	//}
-
-	//__device__ __host__ Eigen::Vector3f operator*(float a, const Eigen::Vector3f& b) {
-	//	return Eigen::Vector3f(a * b.x, a * b.y, a * b.z);
-	//}
-	//__device__ __host__ Eigen::Vector3f operator*(const Eigen::Vector3f& a, float b) {
-	//	return Eigen::Vector3f(a.x * b, a.y * b, a.z * b);
-	//}
-	//__device__ __host__ Eigen::Vector3f operator/(const Eigen::Vector3f& a, float b) {
-	//	return Eigen::Vector3f(a.x / b, a.y / b, a.z / b);
-	//}
-
-	//__device__ __host__ float dot(const Eigen::Vector3f& a, const Eigen::Vector3f& b) {
-	//	return a.x * b.x + a.y * b.y + a.z * b.z;
-	//}
-
-	//__device__ __host__ Eigen::Vector3f cross(const Eigen::Vector3f& a, const Eigen::Vector3f& b) {
-	//	return Eigen::Vector3f((a).y * (b).z - (b).y * (a).z, (a).z * (b).x - (b).z * (a).x, (a).x * (b).y - (b).x * (a).y);
-	//}
-
-	//__device__ __host__ float length_squared(const Eigen::Vector3f& a, const Eigen::Vector3f& b) {
-	//	return dot(a - b, a - b);
-	//}
-
-	//__device__ float length(const Eigen::Vector3f& a, const Eigen::Vector3f& b) {
-	//	return __fsqrt_rn(dot(a - b, a - b));
-	//}
-
-	//__device__ __host__ float length_squared(const Eigen::Vector3f& a) {
-	//	return dot(a, a);
-	//}
-
-	//__device__ float length(const Eigen::Vector3f& a) {
-	//	return __fsqrt_rn(dot(a, a));
-	//}
-
-	//__device__ Eigen::Vector3f normalize(const Eigen::Vector3f& a) {
-	//	return a / length(a);
-	//}
-
-	//__device__ __host__ float distance_squared(const Eigen::Vector3f& a, const Eigen::Vector3f& b) {
-	//	return dot((a - b), (a - b));
-	//}
-
-	//__device__ float distance(const Eigen::Vector3f& a, const Eigen::Vector3f& b) {
-	//	return __fsqrt_rn(dot((a - b), (a - b)));
-	//}
-
-	//__device__
-	//	float pointTriangleDistance(const Eigen::Vector3f& point, const Eigen::Vector3f& v0, const Eigen::Vector3f& v1, const Eigen::Vector3f& v2) {
-	//	// Calculate the normal of the triangle
-	//	Eigen::Vector3f normal = normalize(cross(v1 - v0, v2 - v0));
-
-	//	// Calculate the distance between the point and the plane of the triangle
-	//	float dist = dot(point - v0, normal);
-
-	//	// Check if the point is above or below the triangle
-	//	Eigen::Vector3f projectedPoint = point - dist * normal;
-	//	if (dot(normal, cross(v1 - v0, projectedPoint - v0)) > 0 &&
-	//		dot(normal, cross(v2 - v1, projectedPoint - v1)) > 0 &&
-	//		dot(normal, cross(v0 - v2, projectedPoint - v2)) > 0) {
-	//		// Point is inside the triangle
-	//		//return std::abs(distance);
-	//		return dist;
-	//	}
-	//	else {
-	//		// Point is outside the triangle
-	//		// You can return the distance to the closest edge or vertex if needed
-	//		return min(min(distance(point, v0), distance(point, v1)), distance(point, v2));
-	//	}
-	//}
-#pragma endregion
-
-	struct FillFunctor
-	{
-		float* values;
-		Eigen::Vector3f* positions;
-		int countX;
-		int countY;
-		int countZ;
-		float minX;
-		float minY;
-		float minZ;
-		float voxelSize;
-
-		__device__
-			void operator()(size_t index)
-		{
-			auto z = index / (countX * countY);
-			auto y = (index % (countX * countY)) / countX;
-			auto x = (index % (countX * countY)) % countX;
-
-			Eigen::Vector3f position(
-				minX + x * voxelSize + 0.5f * voxelSize,
-				minY + y * voxelSize + 0.5f * voxelSize,
-				minZ + z * voxelSize + 0.5f * voxelSize);
-
-			values[index] = -FLT_MAX;
-			positions[index] = position;
-		}
-	};
-
-	struct UpdateVoxelsFunctor
-	{
-		Eigen::Vector3f center;
-		float* values;
-		Eigen::Vector3f* positions;
-		int countX;
-		int countY;
-		int countZ;
-		float minX;
-		float minY;
-		float minZ;
-		float voxelSize;
-
-		__device__
-			void operator()(size_t index)
-		{
-			auto z = index / (countX * countY);
-			auto y = (index % (countX * countY)) / countX;
-			auto x = (index % (countX * countY)) % countX;
-
-			Eigen::Vector3f position(
-				minX + x * voxelSize + 0.5f * voxelSize,
-				minY + y * voxelSize + 0.5f * voxelSize,
-				minZ + z * voxelSize + 0.5f * voxelSize);
-
-			float dist = __fsqrt_rn((position - center).squaredNorm());
-
-			//if (2.0 < dist)
-			//////if (dist > 3.0)
-			////if (2.5 < dist)
-			//{
-			//	values[index] = 1.0f;
-			//}
-			//else
-			//{
-			//	values[index] = 0;
-			//}
-
-			values[index] = dist;
-
-			//values[index] = position.z;
-		}
-	};
-
-	struct BuildGridFunctor
-	{
-		Eigen::Vector3f center;
-		float* values;
-		Eigen::Vector3f* positions;
-		MarchingCubes::GRIDCELL* gridcells;
-		MarchingCubes::TRIANGLE* triangles;
-		int countX;
-		int countY;
-		int countZ;
-		float minX;
-		float minY;
-		float minZ;
-		float voxelSize;
-		float isoValue;
-
-		__device__
-			void operator()(size_t index)
-		{
-			auto z = index / (countX * countY);
-			auto y = (index % (countX * countY)) / countX;
-			auto x = (index % (countX * countY)) % countX;
-
-			Eigen::Vector3f position(
-				minX + x * voxelSize + 0.5f * voxelSize,
-				minY + y * voxelSize + 0.5f * voxelSize,
-				minZ + z * voxelSize + 0.5f * voxelSize);
-
-			MarchingCubes::GRIDCELL gridcell;
-			gridcell.p[0] = Eigen::Vector3f(
-				minX + x * voxelSize + 0.5f * voxelSize,
-				minY + y * voxelSize + 0.5f * voxelSize,
-				minZ + z * voxelSize + 0.5f * voxelSize);
-			gridcell.p[1] = Eigen::Vector3f(
-				minX + (x + 1) * voxelSize + 0.5f * voxelSize,
-				minY + y * voxelSize + 0.5f * voxelSize,
-				minZ + z * voxelSize + 0.5f * voxelSize);
-			gridcell.p[2] = Eigen::Vector3f(
-				minX + (x + 1) * voxelSize + 0.5f * voxelSize,
-				minY + y * voxelSize + 0.5f * voxelSize,
-				minZ + (z + 1) * voxelSize + 0.5f * voxelSize);
-			gridcell.p[3] = Eigen::Vector3f(
-				minX + x * voxelSize + 0.5f * voxelSize,
-				minY + y * voxelSize + 0.5f * voxelSize,
-				minZ + (z + 1) * voxelSize + 0.5f * voxelSize);
-			gridcell.p[4] = Eigen::Vector3f(
-				minX + x * voxelSize + 0.5f * voxelSize,
-				minY + (y + 1) * voxelSize + 0.5f * voxelSize,
-				minZ + z * voxelSize + 0.5f * voxelSize);
-			gridcell.p[5] = Eigen::Vector3f(
-				minX + (x + 1) * voxelSize + 0.5f * voxelSize,
-				minY + (y + 1) * voxelSize + 0.5f * voxelSize,
-				minZ + z * voxelSize + 0.5f * voxelSize);
-			gridcell.p[6] = Eigen::Vector3f(
-				minX + (x + 1) * voxelSize + 0.5f * voxelSize,
-				minY + (y + 1) * voxelSize + 0.5f * voxelSize,
-				minZ + (z + 1) * voxelSize + 0.5f * voxelSize);
-			gridcell.p[7] = Eigen::Vector3f(
-				minX + x * voxelSize + 0.5f * voxelSize,
-				minY + (y + 1) * voxelSize + 0.5f * voxelSize,
-				minZ + (z + 1) * voxelSize + 0.5f * voxelSize);
-
-			gridcell.val[0] = values[z * countX * countY + y * countX + x];
-			gridcell.val[1] = values[z * countX * countY + y * countX + (x + 1)];
-			gridcell.val[2] = values[(z + 1) * countX * countY + y * countX + (x + 1)];
-			gridcell.val[3] = values[(z + 1) * countX * countY + y * countX + x];
-			gridcell.val[4] = values[z * countX * countY + (y + 1) * countX + x];
-			gridcell.val[5] = values[z * countX * countY + (y + 1) * countX + (x + 1)];
-			gridcell.val[6] = values[(z + 1) * countX * countY + (y + 1) * countX + (x + 1)];
-			gridcell.val[7] = values[(z + 1) * countX * countY + (y + 1) * countX + x];
-
-			int cubeindex = 0;
-			float isolevel = isoValue;
-			Eigen::Vector3f vertlist[12];
-
-			if (gridcell.val[0] < isolevel) cubeindex |= 1;
-			if (gridcell.val[1] < isolevel) cubeindex |= 2;
-			if (gridcell.val[2] < isolevel) cubeindex |= 4;
-			if (gridcell.val[3] < isolevel) cubeindex |= 8;
-			if (gridcell.val[4] < isolevel) cubeindex |= 16;
-			if (gridcell.val[5] < isolevel) cubeindex |= 32;
-			if (gridcell.val[6] < isolevel) cubeindex |= 64;
-			if (gridcell.val[7] < isolevel) cubeindex |= 128;
-
-			if (MarchingCubes::edgeTable[cubeindex] == 0)
-				return;
-
-			if (MarchingCubes::edgeTable[cubeindex] & 1)
-				vertlist[0] =
-				VertexInterp(isolevel, gridcell.p[0], gridcell.p[1], gridcell.val[0], gridcell.val[1]);
-			if (MarchingCubes::edgeTable[cubeindex] & 2)
-				vertlist[1] =
-				VertexInterp(isolevel, gridcell.p[1], gridcell.p[2], gridcell.val[1], gridcell.val[2]);
-			if (MarchingCubes::edgeTable[cubeindex] & 4)
-				vertlist[2] =
-				VertexInterp(isolevel, gridcell.p[2], gridcell.p[3], gridcell.val[2], gridcell.val[3]);
-			if (MarchingCubes::edgeTable[cubeindex] & 8)
-				vertlist[3] =
-				VertexInterp(isolevel, gridcell.p[3], gridcell.p[0], gridcell.val[3], gridcell.val[0]);
-			if (MarchingCubes::edgeTable[cubeindex] & 16)
-				vertlist[4] =
-				VertexInterp(isolevel, gridcell.p[4], gridcell.p[5], gridcell.val[4], gridcell.val[5]);
-			if (MarchingCubes::edgeTable[cubeindex] & 32)
-				vertlist[5] =
-				VertexInterp(isolevel, gridcell.p[5], gridcell.p[6], gridcell.val[5], gridcell.val[6]);
-			if (MarchingCubes::edgeTable[cubeindex] & 64)
-				vertlist[6] =
-				VertexInterp(isolevel, gridcell.p[6], gridcell.p[7], gridcell.val[6], gridcell.val[7]);
-			if (MarchingCubes::edgeTable[cubeindex] & 128)
-				vertlist[7] =
-				VertexInterp(isolevel, gridcell.p[7], gridcell.p[4], gridcell.val[7], gridcell.val[4]);
-			if (MarchingCubes::edgeTable[cubeindex] & 256)
-				vertlist[8] =
-				VertexInterp(isolevel, gridcell.p[0], gridcell.p[4], gridcell.val[0], gridcell.val[4]);
-			if (MarchingCubes::edgeTable[cubeindex] & 512)
-				vertlist[9] =
-				VertexInterp(isolevel, gridcell.p[1], gridcell.p[5], gridcell.val[1], gridcell.val[5]);
-			if (MarchingCubes::edgeTable[cubeindex] & 1024)
-				vertlist[10] =
-				VertexInterp(isolevel, gridcell.p[2], gridcell.p[6], gridcell.val[2], gridcell.val[6]);
-			if (MarchingCubes::edgeTable[cubeindex] & 2048)
-				vertlist[11] =
-				VertexInterp(isolevel, gridcell.p[3], gridcell.p[7], gridcell.val[3], gridcell.val[7]);
-
-			MarchingCubes::TRIANGLE tris[4];
-			int ntriang = 0;
-			for (int i = 0; MarchingCubes::triTable[cubeindex][i] != -1; i += 3) {
-				tris[ntriang].p[0] = vertlist[MarchingCubes::triTable[cubeindex][i]];
-				tris[ntriang].p[1] = vertlist[MarchingCubes::triTable[cubeindex][i + 1]];
-				tris[ntriang].p[2] = vertlist[MarchingCubes::triTable[cubeindex][i + 2]];
-				ntriang++;
-			}
-
-			for (size_t i = 0; i < ntriang; i++)
-			{
-				triangles[index * 4 + i] = tris[i];
-			}
-		}
-
-		__device__
-			Eigen::Vector3f VertexInterp(float isolevel, const Eigen::Vector3f& p1, const Eigen::Vector3f& p2, float valp1, float valp2)
-		{
-			float mu;
-			Eigen::Vector3f p;
-
-			if (fabsf(isolevel - valp1) < 0.00001f)
-				return(p1);
-			if (fabsf(isolevel - valp2) < 0.00001f)
-				return(p2);
-			if (fabsf(valp1 - valp2) < 0.00001f)
-				return(p1);
-			mu = (isolevel - valp1) / (valp2 - valp1);
-			p.x() = p1.x() + mu * (p2.x() - p1.x());
-			p.y() = p1.y() + mu * (p2.y() - p1.y());
-			p.z() = p1.z() + mu * (p2.z() - p1.z());
-
-			return p;
-		}
-	};
-
-	struct IntegrateFunctor
-	{
-		Eigen::Vector3f center;
-		float* values;
-		Eigen::Vector3f* positions;
-		int countX;
-		int countY;
-		int countZ;
-		float minX;
-		float minY;
-		float minZ;
-		float voxelSize;
-
-		const Eigen::Vector3f* inputPositions;
-		Eigen::Matrix4f transform;
-		Eigen::Matrix4f inverseTransform;
-		float width;
-		float height;
-		int rows;
-		int columns;
-		float xUnit;
-		float yUnit;
-
-		__device__
-			void operator()(size_t index)
-		{
-			//if (index == 0)
-			//{
-			//	for (size_t y = 0; y < 480 - 3; y += 3)
-			//	{
-			//		for (size_t x = 0; x < 256 - 2; x += 2)
-			//		{
-			//			auto& v = inputPositions[y * 256 + x];
-			//			if (FLT_VALID(v.x()) && FLT_VALID(v.y()) && FLT_VALID(v.z()))
-			//			{
-			//				printf("input : %f, %f, %f\n", v.x(), v.y(), v.z());
-			//			}
-			//		}
-			//	}
-			//}
-			//else
-			//	return;
-
-			if (index == 0)
-			{
-				printf("min : %f, %f, %f\n", minX, minY, minZ);
-				printf("xUnit : %f, yUnit : %f\n", xUnit, yUnit);
-				printf("center: %f, %f, %f\n", center.x(), center.y(), center.z());
-			}
-
-			auto z = index / (countX * countY);
-			auto y = (index % (countX * countY)) / countX;
-			auto x = (index % (countX * countY)) % countX;
-
-			Eigen::Vector3f position(
-				minX + x * voxelSize + 0.5f * voxelSize,
-				minY + y * voxelSize + 0.5f * voxelSize,
-				minZ + z * voxelSize + 0.5f * voxelSize);
-
-			//if ((position - center).norm() < 1.0f)
-			//{
-			//	values[index] = (position - center).norm() - 1.0f;
-			//}
-			//else
-			//{
-			//	values[index] = FLT_MAX;
-			//}
-
-			//if (x % 2 == 0 || y % 2 == 0 || z % 2 == 0)
-			//	values[index] = -1.0f;
-			//else
-			//	values[index] = 1.0f;
-			//return;
-
-			//Eigen::Vector4f ip = (inverseTransform * Eigen::Vector4f(position.x(), position.y(), position.z(), 1.0f));
-			Eigen::Vector3f ip = position;
-
-			float xPosition = ip.x() + width * 0.5f;
-			float yPosition = ip.y() + height * 0.5f;
-			float distance = ip.z();
-
-			if ((0 < xPosition && xPosition < width) &&
-				(0 < yPosition && yPosition < height))
-			{
-				int xIndex = ((int)(xPosition / xUnit) / 2) * 2;
-				int yIndex = ((int)(yPosition / yUnit) / 3) * 3;
-
-				auto inputPosition = inputPositions[yIndex * columns + xIndex];
-
-				if (FLT_VALID(inputPosition.x()) && FLT_VALID(inputPosition.y()) && FLT_VALID(inputPosition.z()))
-				{
-					//printf("[%d, %d] inputPosition : %f, %f, %f\n", xIndex, yIndex, inputPosition.x(), inputPosition.y(), inputPosition.z());
-					values[index] = distance - inputPosition.z();
-
-					//printf("%f\n", (inputPosition - Eigen::Vector3f(ip.x(), ip.y(), ip.z())).norm());
-				}
-				else
-				{
-					values[index] = FLT_MAX;
-					//	//values[index] = 0.0f;
-				}
-			}
-			else
-			{
-				values[index] = FLT_MAX;
-			}
-		}
-	};
 
 	TSDF::TSDF()
 	{
@@ -1236,6 +1409,103 @@ namespace NeonCUDA
 		nvtxRangePop();
 	}
 
+	void TSDF::IntegrateDepthMapWrap(
+		Neon::Scene* scene, Neon::Mesh* mesh,
+		const Eigen::Matrix4f& transform,
+		float width, float height,
+		int columns, int rows)
+	{
+		//size_t hResolution = 256;
+		//size_t vResolution = 480;
+		//size_t uhResolution = 256 * 2;
+		//size_t uvResolution = 480 * 2;
+		//float xUnit = 0.1f;
+		//float yUnit = 0.1f;
+		//float voxelSize = 0.1f;
+
+		//thrust::device_vector<Eigen::Vector3f> depthMap(hResolution * vResolution);
+
+		//BuildDepthMap(scene, mesh, hResolution, vResolution, xUnit, yUnit, depthMap);
+
+		//size_t voxelCountX = hResolution;
+		//size_t voxelCountY = vResolution;
+		//size_t voxelCountZ = hResolution;
+		//size_t voxelCount = voxelCountX * voxelCountY * voxelCountZ;
+		//thrust::device_vector<float> voxelValues(voxelCount);
+		//auto _voxelValues = thrust::raw_pointer_cast(voxelValues.data());
+		//auto _depthMap = thrust::raw_pointer_cast(depthMap.data());
+
+		//thrust::for_each(thrust::make_counting_iterator<size_t>(0), thrust::make_counting_iterator<size_t>(voxelCount),
+		//	[voxelSize, voxelCountX, voxelCountY, voxelCountZ, voxelCount, _voxelValues, _depthMap, uhResolution, uvResolution]__device__(size_t index) {
+
+		//	auto z = index / (voxelCountX * voxelCountY);
+		//	auto y = (index % (voxelCountX * voxelCountY)) / voxelCountX;
+		//	auto x = (index % (voxelCountX * voxelCountY)) % voxelCountX;
+
+		//	float xpos = (float)x * voxelSize - ((float)voxelCountX * voxelSize * 0.5f + voxelSize * 0.5f);
+		//	float ypos = (float)y * voxelSize - ((float)voxelCountY * voxelSize * 0.5f + voxelSize * 0.5f);
+		//	float zpos = (float)z * voxelSize - ((float)voxelCountZ * voxelSize * 0.5f + voxelSize * 0.5f);
+
+		//	_voxelValues[index] = zpos - _depthMap[y * hResolution + x].z();
+		//});
+
+		//nvtxRangePushA("@Arron/IntegrateWrap");
+
+		//thrust::host_vector<Eigen::Vector3f> host_vertices;
+		//for (auto& v : vertices)
+		//{
+		//	host_vertices.push_back(Eigen::Vector3f(v.x, v.y, v.z));
+		//}
+
+		//thrust::device_vector<Eigen::Vector3f> device_vertices(host_vertices.begin(), host_vertices.end());
+
+		////cudaDeviceSynchronize();
+
+		//Integrate(device_vertices, transform, width, height, columns, rows);
+
+		//nvtxRangePop();
+	}
+
+	void TSDF::IntegrateDepthMap(
+		const thrust::device_vector<Eigen::Vector3f>& vertices,
+		const Eigen::Matrix4f& transform,
+		float width, float height,
+		int columns, int rows)
+	{
+		nvtxRangePushA("@Arron/Integrate");
+
+		auto _values = thrust::raw_pointer_cast(values.data());
+		auto _positions = thrust::raw_pointer_cast(positions.data());
+		auto _inputPositions = thrust::raw_pointer_cast(vertices.data());
+
+		IntegrateFunctor integrateFunctor;
+		integrateFunctor.center = this->centerPoint;
+		integrateFunctor.values = _values;
+		integrateFunctor.positions = _positions;
+		integrateFunctor.countX = voxelCountX;
+		integrateFunctor.countY = voxelCountY;
+		integrateFunctor.countZ = voxelCountZ;
+		integrateFunctor.minX = this->minPoint.x();
+		integrateFunctor.minY = this->minPoint.y();
+		integrateFunctor.minZ = this->minPoint.z();
+		integrateFunctor.voxelSize = voxelSize;
+		integrateFunctor.inputPositions = _inputPositions;
+		integrateFunctor.transform = transform;
+		integrateFunctor.inverseTransform = transform.inverse();
+		integrateFunctor.width = width;
+		integrateFunctor.height = height;
+		integrateFunctor.rows = rows;
+		integrateFunctor.columns = columns;
+		integrateFunctor.xUnit = width / columns;
+		integrateFunctor.yUnit = height / rows;
+
+		thrust::for_each(thrust::make_counting_iterator<size_t>(0),
+			thrust::make_counting_iterator<size_t>(voxelCountX * voxelCountY * voxelCountZ),
+			integrateFunctor);
+
+		nvtxRangePop();
+	}
+
 	void TSDF::UpdateValues()
 	{
 		nvtxRangePushA("@Arron/UpdateValues");
@@ -1267,7 +1537,7 @@ namespace NeonCUDA
 		nvtxRangePushA("@Arron/BuildGridCells");
 
 		auto _values = thrust::raw_pointer_cast(values.data());
-		auto _positions = thrust::raw_pointer_cast(positions.data());
+		//auto _positions = thrust::raw_pointer_cast(positions.data());
 		auto _gridcells = thrust::raw_pointer_cast(gridcells.data());
 		auto _triangles = thrust::raw_pointer_cast(triangles.data());
 
@@ -1275,7 +1545,7 @@ namespace NeonCUDA
 		buildGridFunctor.center = this->centerPoint;
 		buildGridFunctor.values = _values;
 		buildGridFunctor.gridcells = _gridcells;
-		buildGridFunctor.positions = _positions;
+		//buildGridFunctor.positions = _positions;
 		buildGridFunctor.triangles = _triangles;
 		buildGridFunctor.countX = voxelCountX;
 		buildGridFunctor.countY = voxelCountY;

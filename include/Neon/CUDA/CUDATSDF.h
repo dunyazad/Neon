@@ -44,6 +44,9 @@ namespace NeonCUDA
 		void IntegrateWrap(const std::vector<glm::vec3>& vertices, const Eigen::Matrix4f& transform, float width, float height, int columns, int rows);
 		void Integrate(const thrust::device_vector<Eigen::Vector3f>& vertices, const Eigen::Matrix4f& transform, float width, float height, int columns, int rows);
 
+		void IntegrateDepthMapWrap(Neon::Scene* scene, Neon::Mesh* mesh, const Eigen::Matrix4f& transform, float width, float height, int columns, int rows);
+		void IntegrateDepthMap(const thrust::device_vector<Eigen::Vector3f>& vertices, const Eigen::Matrix4f& transform, float width, float height, int columns, int rows);
+
 		void UpdateValues();
 
 		void BuildGridCells(float isoValue);
