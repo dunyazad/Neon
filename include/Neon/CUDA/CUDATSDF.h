@@ -24,12 +24,14 @@ namespace NeonCUDA
 
 	void Test();
 
+	void DoWork(Neon::Scene* scene, Neon::Mesh* mesh);
+
 	std::vector<glm::vec3> FlipXInputArray(const std::vector<glm::vec3>& input, int columns, int rows);
 
 	void BuildDepthMapWrap(Neon::Scene* scene, Neon::Mesh* mesh, size_t hResolution, size_t vResolution, float xUnit, float yUnit);
 	void BuildDepthMap(Neon::Scene* scene, Neon::Mesh* mesh, size_t hResolution, size_t vResolution, float xUnit, float yUnit, thrust::device_vector<Eigen::Vector3f>& result);
 
-	void UpscaleDepthMap(Neon::Scene* scene, Neon::Mesh* mesh, size_t hResolution, size_t vResolution, float xUnit, float yUnit, float voxelSize, thrust::device_vector<Eigen::Vector3f>& result);
+	void UpscaleDepthMap(Neon::Scene* scene, Neon::Mesh* mesh, size_t hResolution, size_t vResolution, float xUnit, float yUnit, float voxelSize, const thrust::device_vector<Eigen::Vector3f>& input, thrust::device_vector<Eigen::Vector3f>& result);
 
 	class TSDF
 	{

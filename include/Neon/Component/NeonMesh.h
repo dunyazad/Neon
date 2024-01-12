@@ -72,7 +72,7 @@ namespace Neon
 
 		inline FillMode GetFillMode() { return fillMode; }
 		inline void SetFillMode(FillMode mode) { fillMode = mode; }
-		inline void ToggleFillMode() { int f = fillMode; f++; fillMode = (Mesh::FillMode)(f % ((int)Mesh::FillMode::None + 1)); }
+		inline void ToggleFillMode() { int f = fillMode; f++; fillMode = (Mesh::FillMode)(f % ((int)Mesh::FillMode::Point + 1)); }
 
 		inline AABB& GetAABB() { return aabb; }
 		inline const AABB& GetAABB() const { return aabb; }

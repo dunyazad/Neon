@@ -43,7 +43,7 @@ int main()
 						auto mesh = entity->GetComponent<Neon::Mesh>(0);
 						if (nullptr != mesh)
 						{
-							if (GLFW_KEY_LEFT_SHIFT == event.key || GLFW_KEY_RIGHT_SHIFT == event.key)
+							if (GLFW_MOD_SHIFT & event.mods)
 							{
 								mesh->ToggleFillMode();
 								cout << "Toggle Fill Mode : " << mesh->GetName() << endl;
@@ -318,7 +318,8 @@ int main()
 				meshesAABB.Expand(glm::vec3(vmax4.x(), vmax4.y(), vmax4.z()));
 			}
 
-			NeonCUDA::BuildDepthMapWrap(scene, meshes[0], 256, 480, 0.1f, 0.1f);
+			//NeonCUDA::BuildDepthMapWrap(scene, meshes[0], 256, 480, 0.1f, 0.1f);
+			NeonCUDA::DoWork(scene, meshes[0]);
 			return;
 
 			auto& minPoint = meshesAABB.GetMinPoint();
