@@ -1573,6 +1573,7 @@ namespace NeonCUDA
 #pragma endregion
 
 #pragma region Mesh Indices
+		nvtxRangePushA("@Aaron/Build Mesh Indices");
 		thrust::device_vector<GLuint> meshIndices(hResolution * vResolution * 6);
 		auto _meshIndices = thrust::raw_pointer_cast(meshIndices.data());
 
@@ -1606,28 +1607,31 @@ namespace NeonCUDA
 				_meshIndices[index * 6 + 5] = i3;
 			}
 		});
+		nvtxRangePop();
 #pragma endregion
 
 #pragma region Draw Mesh
-		thrust::host_vector<GLuint> host_meshIndices(meshIndices);
-
-		for (size_t i = 0; i < hResolution * vResolution * 2; i++)
 		{
-			auto i0 = host_meshIndices[i * 3 + 0];
-			auto i1 = host_meshIndices[i * 3 + 1];
-			auto i2 = host_meshIndices[i * 3 + 2];
+			thrust::host_vector<GLuint> host_meshIndices(meshIndices);
 
-			auto v0 = inputPositions[i0];
-			auto v1 = inputPositions[i1];
-			auto v2 = inputPositions[i2];
-
-			if (VEC3_VALID(v0) && VEC3_VALID(v1) && VEC3_VALID(v2))
+			for (size_t i = 0; i < hResolution * vResolution * 2; i++)
 			{
-				v0.z = 0;
-				v1.z = 0;
-				v2.z = 0;
+				auto i0 = host_meshIndices[i * 3 + 0];
+				auto i1 = host_meshIndices[i * 3 + 1];
+				auto i2 = host_meshIndices[i * 3 + 2];
 
-				scene->Debug("Meshing Result")->AddTriangle(v0, v2, v1, glm::green, glm::green, glm::green);
+				auto v0 = inputPositions[i0];
+				auto v1 = inputPositions[i1];
+				auto v2 = inputPositions[i2];
+
+				if (VEC3_VALID(v0) && VEC3_VALID(v1) && VEC3_VALID(v2))
+				{
+					v0.z = 0;
+					v1.z = 0;
+					v2.z = 0;
+
+					scene->Debug("Meshing Result")->AddTriangle(v0, v2, v1, glm::green, glm::green, glm::green);
+				}
 			}
 		}
 #pragma endregion
@@ -1639,69 +1643,73 @@ namespace NeonCUDA
 		float _yMin = -(vResolution * yUnit) * 0.5f;
 
 #pragma region Fill Depth Map
-		thrust::for_each(
-			thrust::make_counting_iterator<size_t>(0),
-			thrust::make_counting_iterator<size_t>(hResolution * vResolution * 2),
-			[_meshVertices, _meshIndices, hResolution, vResolution, _depthMap, _xMin, _yMin, xUnit, yUnit]
-		__device__(size_t index) {
-			auto i0 = _meshIndices[index * 3 + 0];
-			auto i1 = _meshIndices[index * 3 + 1];
-			auto i2 = _meshIndices[index * 3 + 2];
+		nvtxRangePushA("@Aaron/Fill Depth Map");
+		{
+			thrust::for_each(
+				thrust::make_counting_iterator<size_t>(0),
+				thrust::make_counting_iterator<size_t>(hResolution * vResolution * 2),
+				[_meshVertices, _meshIndices, hResolution, vResolution, _depthMap, _xMin, _yMin, xUnit, yUnit]
+			__device__(size_t index) {
+				auto i0 = _meshIndices[index * 3 + 0];
+				auto i1 = _meshIndices[index * 3 + 1];
+				auto i2 = _meshIndices[index * 3 + 2];
 
-			auto& v0 = _meshVertices[i0];
-			auto& v1 = _meshVertices[i1];
-			auto& v2 = _meshVertices[i2];
+				auto& v0 = _meshVertices[i0];
+				auto& v1 = _meshVertices[i1];
+				auto& v2 = _meshVertices[i2];
 
-			if (false == VECTOR3_VALID(v0) || false == VECTOR3_VALID(v1) || false == VECTOR3_VALID(v2))
-				return;
+				if (false == VECTOR3_VALID(v0) || false == VECTOR3_VALID(v1) || false == VECTOR3_VALID(v2))
+					return;
 
-			float minX = FLT_MAX; minX = min(minX, v0.x()); minX = min(minX, v1.x()); minX = min(minX, v2.x());
-			float minY = FLT_MAX; minY = min(minY, v0.y()); minY = min(minY, v1.y()); minY = min(minY, v2.y());
-			float maxX = -FLT_MAX; maxX = max(maxX, v0.x()); maxX = max(maxX, v1.x()); maxX = max(maxX, v2.x());
-			float maxY = -FLT_MAX; maxY = max(maxY, v0.y()); maxY = max(maxY, v1.y()); maxY = max(maxY, v2.y());
+				float minX = FLT_MAX; minX = min(minX, v0.x()); minX = min(minX, v1.x()); minX = min(minX, v2.x());
+				float minY = FLT_MAX; minY = min(minY, v0.y()); minY = min(minY, v1.y()); minY = min(minY, v2.y());
+				float maxX = -FLT_MAX; maxX = max(maxX, v0.x()); maxX = max(maxX, v1.x()); maxX = max(maxX, v2.x());
+				float maxY = -FLT_MAX; maxY = max(maxY, v0.y()); maxY = max(maxY, v1.y()); maxY = max(maxY, v2.y());
 
-			float aabbMinX = floorf(minX / xUnit) * xUnit;
-			float aabbMinY = floorf(minY / yUnit) * yUnit;
+				float aabbMinX = floorf(minX / xUnit) * xUnit;
+				float aabbMinY = floorf(minY / yUnit) * yUnit;
 
-			float aabbMaxX = ceilf(maxX / xUnit) * xUnit;
-			float aabbMaxY = ceilf(maxY / yUnit) * yUnit;
+				float aabbMaxX = ceilf(maxX / xUnit) * xUnit;
+				float aabbMaxY = ceilf(maxY / yUnit) * yUnit;
 
-			int cnt = 0;
-			for (float y = aabbMinY; y <= aabbMaxY; y += yUnit)
-			{
-				for (float x = aabbMinX; x <= aabbMaxX; x += xUnit)
-				{
-					float distance = 0.0f;
-					if (ray_triangle_intersect({ x + xUnit * 0.5f, y + yUnit * 0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f }, v0, v1, v2, false, distance))
-						//if (rayTriangleIntersect({ x, y, 0.0f }, { 0.0f, 0.0f, 1.0f }, v0, v1, v2, false, distance))
-					{
-						auto xIndex = (size_t)floorf((x + xUnit * 0.5f - _xMin) / xUnit);
-						auto yIndex = (size_t)floorf((y + yUnit * 0.5f - _yMin) / yUnit);
-
-						_depthMap[yIndex * hResolution + xIndex] = distance;
-						cnt++;
-					}
-				}
-			}
-
-			if (cnt == 0)
-			{
-				printf("xmin: %f xmax: %f ymin: %f ymax: %f dx: %f dy: %f\n",
-					aabbMinX, aabbMaxX, aabbMinY, aabbMaxY, aabbMaxX - aabbMinX, aabbMaxY - aabbMinY);
-
-				/*
+				//int cnt = 0;
 				for (float y = aabbMinY; y <= aabbMaxY; y += yUnit)
 				{
 					for (float x = aabbMinX; x <= aabbMaxX; x += xUnit)
 					{
-						auto xIndex = (size_t)floorf((x - _xMin) / xUnit);
-						auto yIndex = (size_t)floorf((y - _yMin) / yUnit);
-						_depthMap[yIndex * hResolution + xIndex] = -100.0f;
+						float distance = 0.0f;
+						if (ray_triangle_intersect({ x + xUnit * 0.5f, y + yUnit * 0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f }, v0, v1, v2, false, distance))
+							//if (rayTriangleIntersect({ x, y, 0.0f }, { 0.0f, 0.0f, 1.0f }, v0, v1, v2, false, distance))
+						{
+							auto xIndex = (size_t)floorf((x + xUnit * 0.5f - _xMin) / xUnit);
+							auto yIndex = (size_t)floorf((y + yUnit * 0.5f - _yMin) / yUnit);
+
+							_depthMap[yIndex * hResolution + xIndex] = distance;
+							//cnt++;
+						}
 					}
 				}
-				*/
-			}
-		});
+
+				//if (cnt == 0)
+				//{
+				//	printf("xmin: %f xmax: %f ymin: %f ymax: %f dx: %f dy: %f\n",
+				//		aabbMinX, aabbMaxX, aabbMinY, aabbMaxY, aabbMaxX - aabbMinX, aabbMaxY - aabbMinY);
+
+				//	/*
+				//	for (float y = aabbMinY; y <= aabbMaxY; y += yUnit)
+				//	{
+				//		for (float x = aabbMinX; x <= aabbMaxX; x += xUnit)
+				//		{
+				//			auto xIndex = (size_t)floorf((x - _xMin) / xUnit);
+				//			auto yIndex = (size_t)floorf((y - _yMin) / yUnit);
+				//			_depthMap[yIndex * hResolution + xIndex] = -100.0f;
+				//		}
+				//	}
+				//	*/
+				//}
+			});
+		}
+		nvtxRangePop();
 #pragma endregion
 
 		thrust::host_vector<float> host_depthMap(depthMap);
@@ -1716,8 +1724,8 @@ namespace NeonCUDA
 
 			if (FLT_VALID(z) && 0 < fabsf(z))
 			{
-				//scene->Debug("Depth Map Result with Line")->AddLine({x, y, 0.0f}, {x, y, z}, glm::red, glm::red);
-				scene->Debug("Depth Map Result with Point")->AddPoint({ x, y, 0.0f }, glm::red);
+				scene->Debug("Depth Map Result with Line")->AddLine({x, y, 0.0f}, {x, y, z}, glm::red, glm::red);
+				scene->Debug("Depth Map Result with Point")->AddPoint({ x, y, z }, glm::red);
 			}
 			else if (-101.0f < z && z < -99.0f)
 			{
@@ -1729,10 +1737,6 @@ namespace NeonCUDA
 				//scene->Debug("Depth Map Result with Point")->AddPoint({ x, y, 0.0f }, glm::green);
 			}
 		}
-
-		return;
-
-
 
 		float width = (float)hResolution * xUnit;
 		float height = (float)vResolution * yUnit;
@@ -1788,20 +1792,19 @@ namespace NeonCUDA
 #pragma endregion
 
 #pragma region Draw Depthmap Result
-		{
-			thrust::host_vector<Eigen::Vector3f> host_result(result.begin(), result.end());
+		//{
+		//	thrust::host_vector<Eigen::Vector3f> host_result(result.begin(), result.end());
 
-			for (auto& p : host_result)
-			{
-				if (VECTOR3_VALID(p))
-				{
-					scene->Debug("DepthMap_Result")->AddPoint({ p.x(), p.y(), 0.0f }, glm::blue);
-					//scene->Debug("DepthMap_Result_Lines")->AddLine({ p.x(), p.y(), 0.0f }, { p.x(), p.y(), p.z() }, glm::blue, glm::blue);
-				}
-			}
-		}
+		//	for (auto& p : host_result)
+		//	{
+		//		if (VECTOR3_VALID(p))
+		//		{
+		//			scene->Debug("DepthMap_Result")->AddPoint({ p.x(), p.y(), 0.0f }, glm::blue);
+		//			//scene->Debug("DepthMap_Result_Lines")->AddLine({ p.x(), p.y(), 0.0f }, { p.x(), p.y(), p.z() }, glm::blue, glm::blue);
+		//		}
+		//	}
+		//}
 #pragma endregion
-		return;
 
 #pragma region Interpolate and populate Grid
 		{
@@ -1945,29 +1948,29 @@ namespace NeonCUDA
 		//#pragma endregion
 
 #pragma region Draw Result
-		//{
-		//	thrust::host_vector<Eigen::Vector3f> host_result(result.begin(), result.end());
+		{
+			thrust::host_vector<Eigen::Vector3f> host_result(result.begin(), result.end());
 
-		//	for (auto& p : host_result)
-		//	{
-		//		if (VECTOR3_VALID(p))
-		//		{
-		//			scene->Debug("Interpolation_Result")->AddPoint({ p.x(), p.y(), 0.0f }, glm::yellow);
-		//			//scene->Debug("Interpolation_Result_Lines")->AddLine({ p.x(), p.y(), 0.0f }, { p.x(), p.y(), p.z() }, glm::yellow, glm::yellow);
-		//		}
+			for (auto& p : host_result)
+			{
+				if (VECTOR3_VALID(p))
+				{
+					scene->Debug("Interpolation_Result")->AddPoint({ p.x(), p.y(), 0.0f }, glm::yellow);
+					//scene->Debug("Interpolation_Result_Lines")->AddLine({ p.x(), p.y(), 0.0f }, { p.x(), p.y(), p.z() }, glm::yellow, glm::yellow);
+				}
 
-		//		if (FLT_VALID(p.x()))
-		//		{
-		//			float x = floorf(p.x() / xUnit) * xUnit + xUnit * 0.5f;
-		//			float y = floorf(p.y() / yUnit) * yUnit + yUnit * 0.5f;
-		//			float z = floorf(p.z() / xUnit) * xUnit + xUnit * 0.5f;
-		//			//float z = (floorf(p.z() / xUnit) - 1) * xUnit + xUnit * 0.5f;
+				if (FLT_VALID(p.x()))
+				{
+					float x = floorf(p.x() / xUnit) * xUnit + xUnit * 0.5f;
+					float y = floorf(p.y() / yUnit) * yUnit + yUnit * 0.5f;
+					float z = floorf(p.z() / xUnit) * xUnit + xUnit * 0.5f;
+					//float z = (floorf(p.z() / xUnit) - 1) * xUnit + xUnit * 0.5f;
 
-		//			scene->Debug("Interpolation_Result_Quantized")->AddPoint({ x, y, 0.0f }, glm::red);
-		//			//scene->Debug("Interpolation_Result_Lines_Quantized_Lines")->AddLine({ x, y, 0.0f }, { x, y, z }, glm::red, glm::red);
-		//		}
-		//	}
-		//}
+					scene->Debug("Interpolation_Result_Quantized")->AddPoint({ x, y, 0.0f }, glm::red);
+					//scene->Debug("Interpolation_Result_Lines_Quantized_Lines")->AddLine({ x, y, 0.0f }, { x, y, z }, glm::red, glm::red);
+				}
+			}
+		}
 #pragma endregion
 	}
 
