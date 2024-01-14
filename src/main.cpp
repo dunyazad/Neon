@@ -63,13 +63,13 @@ int main()
 		{
 			auto sceneEventHandler = scene->CreateEntity("Scene/EventHandler");
 			sceneEventHandler->AddKeyEventHandler([scene](const Neon::KeyEvent& event) {
-				if ((GLFW_KEY_KP_ADD == event.key) && (GLFW_RELEASE == event.action || GLFW_REPEAT == event.action)) {
+				if ((GLFW_KEY_KP_ADD == event.key || GLFW_KEY_EQUAL == event.key) && (GLFW_RELEASE == event.action || GLFW_REPEAT == event.action)) {
 					GLfloat pointSize;
 					glGetFloatv(GL_POINT_SIZE, &pointSize);
 					pointSize += 1.0f;
 					glPointSize(pointSize);
 				}
-				else if ((GLFW_KEY_KP_SUBTRACT == event.key) && (GLFW_RELEASE == event.action || GLFW_REPEAT == event.action)) {
+				else if ((GLFW_KEY_KP_SUBTRACT == event.key || GLFW_KEY_MINUS == event.key) && (GLFW_RELEASE == event.action || GLFW_REPEAT == event.action)) {
 					GLfloat pointSize;
 					glGetFloatv(GL_POINT_SIZE, &pointSize);
 					pointSize -= 1.0f;
@@ -241,6 +241,42 @@ int main()
 		}
 #pragma endregion
 
+#pragma region Draw Grid
+		{
+			size_t hResolution = 256;
+			size_t vResolution = 480;
+
+			float minX = -((float)hResolution * xUnit * 0.5f);
+			float maxX = ((float)hResolution * xUnit * 0.5f);
+			float minY = -((float)vResolution * yUnit * 0.5f);
+			float maxY = ((float)vResolution * yUnit * 0.5f);
+
+			for (float y = minY; y <= maxY; y += yUnit)
+			{
+				scene->Debug("grid lines")->AddLine({ minX, y, 0.0f }, { maxX, y, 0.0f }, glm::lightgray, glm::lightgray);
+			}
+			for (float x = minX; x <= maxX; x += xUnit)
+			{
+				scene->Debug("grid lines")->AddLine({ x, minY, 0.0f }, { x, maxY, 0.0f }, glm::lightgray, glm::lightgray);
+			}
+		}
+		{
+			float minX = -((float)hResolution * xUnit * 0.5f) + xUnit * 0.5f;
+			float maxX = ((float)hResolution * xUnit * 0.5f) - xUnit * 0.5f;
+			float minY = -((float)vResolution * yUnit * 0.5f) + yUnit * 0.5f;
+			float maxY = ((float)vResolution * yUnit * 0.5f) - yUnit * 0.5f;
+
+			for (float y = minY; y <= maxY; y += yUnit)
+			{
+				scene->Debug("grid lines")->AddLine({ minX, y, 0.0f }, { maxX, y, 0.0f }, glm::gray, glm::gray);
+			}
+			for (float x = minX; x <= maxX; x += xUnit)
+			{
+				scene->Debug("grid lines")->AddLine({ x, minY, 0.0f }, { x, maxY, 0.0f }, glm::gray, glm::gray);
+			}
+		}
+#pragma endregion
+
 		{
 #pragma region Load Mesh
 			//for (size_t i = 0; i < transforms.size(); i++)
@@ -326,9 +362,9 @@ int main()
 
 #pragma region Depth map way
 			{
-				//NeonCUDA::BuildDepthMapWrap(scene, meshes[0], 256, 480, 0.1f, 0.1f);
+				NeonCUDA::BuildDepthMapWrap(scene, meshes[0], 256, 480, 0.1f, 0.1f);
 				//NeonCUDA::DoWork(scene, meshes[0]);
-				//return;
+				return;
 			}
 #pragma endregion
 

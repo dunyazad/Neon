@@ -36,6 +36,7 @@
 #include <Eigen/LU>
 
 #define FLT_VALID(x) (x < 3.402823466e+36F)
+#define VEC3_VALID(v) (FLT_VALID((v).x) && FLT_VALID((v).y) && FLT_VALID((v).z))
 #define VECTOR3_VALID(v) (FLT_VALID((v).x()) && FLT_VALID((v).y()) && FLT_VALID((v).z()))
 
 #include <vector>

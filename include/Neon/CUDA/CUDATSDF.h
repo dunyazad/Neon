@@ -31,6 +31,7 @@ namespace NeonCUDA
 	void BuildDepthMapWrap(Neon::Scene* scene, Neon::Mesh* mesh, size_t hResolution, size_t vResolution, float xUnit, float yUnit);
 	void BuildDepthMapOld(Neon::Scene* scene, Neon::Mesh* mesh, size_t hResolution, size_t vResolution, float xUnit, float yUnit, thrust::device_vector<Eigen::Vector3f>& result);
 	void BuildDepthMap(Neon::Scene* scene, Neon::Mesh* mesh, size_t hResolution, size_t vResolution, float xUnit, float yUnit, thrust::device_vector<Eigen::Vector3f>& result);
+	void BuildDepthMapNew(Neon::Scene* scene, Neon::Mesh* mesh, size_t hResolution, size_t vResolution, float xUnit, float yUnit, thrust::device_vector<Eigen::Vector3f>& result);
 
 	void UpscaleDepthMap(Neon::Scene* scene, Neon::Mesh* mesh, size_t hResolution, size_t vResolution, float xUnit, float yUnit, float voxelSize, const thrust::device_vector<Eigen::Vector3f>& input, thrust::device_vector<Eigen::Vector3f>& result);
 
@@ -79,7 +80,7 @@ namespace NeonCUDA
 		size_t voxelCountZ;
 
 		thrust::device_vector<float> values;
-		thrust::device_vector<TriangleIndicesPervoxel> triangleIndices;
+		thrust::device_vector<TriangleIndicesPerVoxel> triangleIndices;
 		thrust::device_vector<Eigen::Vector3f> positions;
 		thrust::device_vector<MarchingCubes::GRIDCELL> gridcells;
 		thrust::device_vector<MarchingCubes::TRIANGLE> triangles;
