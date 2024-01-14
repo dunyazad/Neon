@@ -362,8 +362,8 @@ int main()
 
 #pragma region Depth map way
 			{
-				NeonCUDA::BuildDepthMapWrap(scene, meshes[0], 256, 480, 0.1f, 0.1f);
-				//NeonCUDA::DoWork(scene, meshes[0]);
+				//NeonCUDA::BuildDepthMapWrap(scene, meshes[0], 256, 480, 0.1f, 0.1f);
+				NeonCUDA::DoWork(scene, meshes[0]);
 				return;
 			}
 #pragma endregion

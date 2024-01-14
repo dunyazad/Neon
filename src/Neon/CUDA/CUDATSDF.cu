@@ -829,9 +829,9 @@ namespace NeonCUDA
 		float yUnit = 0.1f;
 		float voxelSize = 0.1f;
 
-		thrust::device_vector<Eigen::Vector3f> depthMap(hResolution * vResolution);
+		thrust::device_vector<Eigen::Vector3f> depthMap((size_t)((float)hResolution / xUnit) * (size_t)((float)vResolution / yUnit));
 
-		BuildDepthMap(scene, mesh, hResolution, vResolution, xUnit, yUnit, depthMap);
+		BuildDepthMapNew(scene, mesh, hResolution, vResolution, xUnit, yUnit, depthMap);
 
 		size_t voxelCountX = hResolution;
 		size_t voxelCountY = vResolution;
@@ -1636,8 +1636,8 @@ namespace NeonCUDA
 		}
 #pragma endregion
 
-		thrust::device_vector<float> depthMap((size_t)((float)hResolution / xUnit) * (size_t)((float)vResolution / yUnit));
-		auto _depthMap = thrust::raw_pointer_cast(depthMap.data());
+		//thrust::device_vector<float> depthMap((size_t)((float)hResolution / xUnit) * (size_t)((float)vResolution / yUnit));
+		auto _depthMap = thrust::raw_pointer_cast(result.data());
 
 		float _xMin = -(hResolution * xUnit) * 0.5f;
 		float _yMin = -(vResolution * yUnit) * 0.5f;
@@ -1684,7 +1684,7 @@ namespace NeonCUDA
 							auto xIndex = (size_t)floorf((x + xUnit * 0.5f - _xMin) / xUnit);
 							auto yIndex = (size_t)floorf((y + yUnit * 0.5f - _yMin) / yUnit);
 
-							_depthMap[yIndex * hResolution + xIndex] = distance;
+							_depthMap[yIndex * hResolution + xIndex] = Eigen::Vector3f(x, y, distance);
 							//cnt++;
 						}
 					}
@@ -1710,267 +1710,6 @@ namespace NeonCUDA
 			});
 		}
 		nvtxRangePop();
-#pragma endregion
-
-		thrust::host_vector<float> host_depthMap(depthMap);
-		for (size_t i = 0; i < hResolution * vResolution; i++)
-		{
-			auto yIndex = i / hResolution;
-			auto xIndex = i % hResolution;
-
-			auto x = _xMin + xIndex * xUnit + xUnit * 0.5f;
-			auto y = _yMin + yIndex * yUnit + yUnit * 0.5f;
-			auto z = host_depthMap[i];
-
-			if (FLT_VALID(z) && 0 < fabsf(z))
-			{
-				scene->Debug("Depth Map Result with Line")->AddLine({x, y, 0.0f}, {x, y, z}, glm::red, glm::red);
-				scene->Debug("Depth Map Result with Point")->AddPoint({ x, y, z }, glm::red);
-			}
-			else if (-101.0f < z && z < -99.0f)
-			{
-				scene->Debug("Depth Map Result with Error Point")->AddPoint({ x, y, 1.0f }, glm::blue);
-			}
-			else
-			{
-				//scene->Debug("Depth Map Result with Point")->AddPoint({ x, y, 0.0f }, glm::red);
-				//scene->Debug("Depth Map Result with Point")->AddPoint({ x, y, 0.0f }, glm::green);
-			}
-		}
-
-		float width = (float)hResolution * xUnit;
-		float height = (float)vResolution * yUnit;
-
-#pragma region Populate Grid
-		auto _result = thrust::raw_pointer_cast(result.data());
-		auto _points = thrust::raw_pointer_cast(meshVertices.data());
-		thrust::for_each(
-			thrust::make_counting_iterator<size_t>(0),
-			thrust::make_counting_iterator<size_t>(0) + meshVertices.size(),
-			[_result, _points, hResolution, vResolution, xUnit, yUnit] __device__(size_t index) {
-
-			auto& point = _points[index];
-			if (VECTOR3_VALID(point))
-			{
-				auto xIndex = (int)floorf(point.x() / xUnit) + hResolution / 2;
-				auto yIndex = (int)floorf(point.y() / yUnit) + vResolution / 2;
-
-				if (VECTOR3_VALID(_result[yIndex * hResolution + xIndex]))
-				{
-					auto mean = (point + _result[yIndex * hResolution + xIndex]) * 0.5f;
-
-					//printf("Already exists.\nexists    %4.6f, %4.6f, %4.6f\nto insert %4.6f, %4.6f, %4.6f\nmean      %4.6f, %4.6f, %4.6f\n",
-					//	_result[yIndex * hResolution + xIndex].x(), _result[yIndex * hResolution + xIndex].y(), _result[yIndex * hResolution + xIndex].z(),
-					//	point.x(), point.y(), point.z(), mean.x(), mean.y(), mean.z());
-					_result[yIndex * hResolution + xIndex] = mean;
-				}
-				else
-				{
-					_result[yIndex * hResolution + xIndex] = point;
-				}
-
-				if (0 == index % 2)
-				{
-					if (VECTOR3_VALID(_result[yIndex * hResolution + xIndex + 1]))
-					{
-						auto mean = (point + _result[yIndex * hResolution + xIndex + 1]) * 0.5f;
-
-						//printf("Already exists.\nexists    %4.6f, %4.6f, %4.6f\nto insert %4.6f, %4.6f, %4.6f\nmean      %4.6f, %4.6f, %4.6f\n",
-						//	_result[yIndex * hResolution + xIndex].x(), _result[yIndex * hResolution + xIndex].y(), _result[yIndex * hResolution + xIndex].z(),
-						//	point.x(), point.y(), point.z(), mean.x(), mean.y(), mean.z());
-						_result[yIndex * hResolution + xIndex + 1] = mean;
-					}
-					else
-					{
-						auto newPoint = point;
-						newPoint.x() += xUnit;
-						_result[yIndex * hResolution + xIndex + 1] = newPoint;
-					}
-				}
-			}
-		});
-#pragma endregion
-
-#pragma region Draw Depthmap Result
-		//{
-		//	thrust::host_vector<Eigen::Vector3f> host_result(result.begin(), result.end());
-
-		//	for (auto& p : host_result)
-		//	{
-		//		if (VECTOR3_VALID(p))
-		//		{
-		//			scene->Debug("DepthMap_Result")->AddPoint({ p.x(), p.y(), 0.0f }, glm::blue);
-		//			//scene->Debug("DepthMap_Result_Lines")->AddLine({ p.x(), p.y(), 0.0f }, { p.x(), p.y(), p.z() }, glm::blue, glm::blue);
-		//		}
-		//	}
-		//}
-#pragma endregion
-
-#pragma region Interpolate and populate Grid
-		{
-			thrust::for_each(thrust::make_counting_iterator<size_t>(0), thrust::make_counting_iterator<size_t>(0) + meshVertices.size(),
-				[_result, hResolution, vResolution, xUnit, yUnit] __device__(size_t index) {
-
-				auto& p = _result[index];
-				if (VECTOR3_VALID(p))
-					return;
-
-				int yIndex = (int)(index / hResolution);
-				int xIndex = (int)(index % hResolution);
-
-				if (1 < xIndex && xIndex < hResolution - 1)
-				{
-					auto left = _result[yIndex * hResolution + xIndex - 1];
-					if (false == VECTOR3_VALID(left))
-					{
-						left = _result[yIndex * hResolution + xIndex - 2];
-					}
-
-					auto right = _result[yIndex * hResolution + xIndex + 1];
-					if (false == VECTOR3_VALID(right))
-					{
-						right = _result[yIndex * hResolution + xIndex + 2];
-					}
-
-					if (VECTOR3_VALID(left) && VECTOR3_VALID(right))
-					{
-						_result[index] = (left + right) * 0.5f;
-					}
-					else if (VECTOR3_VALID(left))
-					{
-						_result[index] = left;
-					}
-					else if (VECTOR3_VALID(right))
-					{
-						_result[index] = right;
-					}
-
-				}
-				else if (xIndex == 0)
-				{
-					auto right = _result[yIndex * hResolution + xIndex + 1];
-					if (false == VECTOR3_VALID(right))
-					{
-						right = _result[yIndex * hResolution + xIndex + 2];
-					}
-
-					if (VECTOR3_VALID(right))
-					{
-						_result[index] = right;
-					}
-				}
-				else if (xIndex == hResolution - 1)
-				{
-					auto left = _result[yIndex * hResolution + xIndex - 1];
-					if (false == VECTOR3_VALID(left))
-					{
-						left = _result[yIndex * hResolution + xIndex - 2];
-					}
-
-					else if (VECTOR3_VALID(left))
-					{
-						_result[index] = left;
-					}
-				}
-			});
-		}
-#pragma endregion
-		//
-		//#pragma region Fill crack
-		//		{
-		//			thrust::for_each(thrust::make_counting_iterator<size_t>(0), thrust::make_counting_iterator<size_t>(0) + depthMapInput.size(),
-		//				[_result, hResolution, vResolution, xUnit, yUnit] __device__(size_t index) {
-		//
-		//				auto& p = _result[index];
-		//				if (VECTOR3_VALID(p))
-		//					return;
-		//
-		//				int yIndex = (int)(index / hResolution);
-		//				int xIndex = (int)(index % hResolution);
-		//
-		//				_result[index] = Eigen::Vector3f(
-		//					xUnit * (float)xIndex -((float)hResolution * xUnit * 0.5f),
-		//					yUnit * (float)yIndex -((float)vResolution * yUnit * 0.5f),
-		//					-20.f);
-		//				return;
-		//
-		//				auto mean = Eigen::Vector3f(
-		//					xUnit * (float)xIndex -((float)hResolution * xUnit * 0.5f),
-		//					yUnit * (float)yIndex -((float)vResolution * yUnit * 0.5f),
-		//					FLT_MAX);
-		//				int validCount = 0;
-		//				for (int y = -1; y < 2; y++)
-		//				{
-		//					for (int x = -1; x < 2; x++)
-		//					{
-		//						int ix = xIndex + x;
-		//						int iy = yIndex + y;
-		//
-		//						if (ix < 0 || ix > hResolution)
-		//							continue;
-		//						if (iy < 0 || iy > vResolution)
-		//							continue;
-		//						if (x == 0 && y == 0)
-		//							continue;
-		//
-		//						auto& np = _result[iy * hResolution + ix];
-		//
-		//						if (VECTOR3_VALID(np))
-		//						{
-		//							if (FLT_VALID(mean.z()))
-		//							{
-		//								mean += np;
-		//							}
-		//							else
-		//							{
-		//								mean.x() += np.x();
-		//								mean.y() += np.y();
-		//								mean.z() = np.z();
-		//							}
-		//							validCount++;
-		//						}
-		//					}
-		//				}
-		//
-		//				if (validCount > 0)
-		//				{
-		//					//_result[index] = Eigen::Vector3f(
-		//					//	xUnit * (float)xIndex -((float)hResolution * xUnit * 0.5f),
-		//					//	yUnit * (float)yIndex -((float)vResolution * yUnit * 0.5f),
-		//					//	-200.f);
-		//					//return;
-		//
-		//					mean /= (float)validCount;
-		//					_result[index] = mean;
-		//				}
-		//			});
-		//		}
-		//#pragma endregion
-
-#pragma region Draw Result
-		{
-			thrust::host_vector<Eigen::Vector3f> host_result(result.begin(), result.end());
-
-			for (auto& p : host_result)
-			{
-				if (VECTOR3_VALID(p))
-				{
-					scene->Debug("Interpolation_Result")->AddPoint({ p.x(), p.y(), 0.0f }, glm::yellow);
-					//scene->Debug("Interpolation_Result_Lines")->AddLine({ p.x(), p.y(), 0.0f }, { p.x(), p.y(), p.z() }, glm::yellow, glm::yellow);
-				}
-
-				if (FLT_VALID(p.x()))
-				{
-					float x = floorf(p.x() / xUnit) * xUnit + xUnit * 0.5f;
-					float y = floorf(p.y() / yUnit) * yUnit + yUnit * 0.5f;
-					float z = floorf(p.z() / xUnit) * xUnit + xUnit * 0.5f;
-					//float z = (floorf(p.z() / xUnit) - 1) * xUnit + xUnit * 0.5f;
-
-					scene->Debug("Interpolation_Result_Quantized")->AddPoint({ x, y, 0.0f }, glm::red);
-					//scene->Debug("Interpolation_Result_Lines_Quantized_Lines")->AddLine({ x, y, 0.0f }, { x, y, z }, glm::red, glm::red);
-				}
-			}
-		}
 #pragma endregion
 	}
 
