@@ -14,9 +14,11 @@
 #include <thrust/iterator/counting_iterator.h>
 #include <thrust/copy.h>
 #include <thrust/device_vector.h>
+#include <thrust/extrema.h>
 #include <thrust/functional.h>
 #include <thrust/generate.h>
 #include <thrust/host_vector.h>
+#include <thrust/reduce.h>
 #include <thrust/sort.h>
 #include <thrust/tuple.h>
 #include <thrust/iterator/zip_iterator.h>
@@ -61,4 +63,16 @@ if (err != cudaSuccess && err != cudaErrorUnknown) { \
 namespace NeonCUDA {
 	float Trimax(float a, float b, float c);
 	float Trimin(float a, float b, float c);
+
+	namespace MarchingCubes
+	{
+		typedef struct {
+			Eigen::Vector3f p[8];
+			float val[8];
+		} GRIDCELL;
+
+		typedef struct {
+			Eigen::Vector3f p[3];
+		} TRIANGLE;
+	}
 }

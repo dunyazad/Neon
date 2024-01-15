@@ -29,13 +29,13 @@ src/Neon/CUDA/CUDACommon.cu
 
 src/Neon/CUDA/CUDATest.cu
 src/Neon/CUDA/CUDATSDF.cu
+src/Neon/CUDA/CUDASurfaceExtraction.cu
 )
 set_source_files_properties($<$<BOOL:USE_CUDA>:${cuda_source_list}>> PROPERTIES LANGUAGE "CUDA")
 endif(USE_CUDA)
 
 set(source_list
 src/main.cpp
-#"src/main - Create Depth Map.cpp"
 src/MiniMath.h
 src/MiniMath.cpp
 
@@ -90,6 +90,7 @@ include/Neon/CUDA/CUDACommon.h
 
 include/Neon/CUDA/CUDATest.h
 include/Neon/CUDA/CUDATSDF.h
+include/Neon/CUDA/CUDASurfaceExtraction.h
 
 include/Neon/Component/SpatialPartitioning/NeonBSPTree.hpp
 include/Neon/Component/SpatialPartitioning/NeonRegularGrid.h

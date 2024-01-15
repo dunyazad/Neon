@@ -4,6 +4,7 @@
 
 #include <Neon/CUDA/CUDATest.h>
 #include <Neon/CUDA/CUDATSDF.h>
+#include <Neon/CUDA/CUDASurfaceExtraction.h>
 
 int gindex = 0;
 
@@ -343,7 +344,12 @@ int main()
 
 				//mesh->Bake(transforms[i]);
 
-				scene->Debug(buffer)->AddMesh(mesh);
+				// Debug Mesh
+				//scene->Debug(buffer)->AddMesh(mesh);
+
+				//auto transform = scene->CreateComponent<Neon::Transform>("deubg mesh transform");
+				//transform->SetLocalTransform(glm::make_mat4(transforms[currentModelIndex].data()));
+				//scene->Debug(buffer)->AddComponent(transform);
 			}
 
 			for (size_t i = 0; i < meshes.size(); i++)
@@ -360,10 +366,22 @@ int main()
 			}
 #pragma endregion
 
+			{
+				NeonCUDA::SurfaceExtractor se;
+				se.NewFrameWrapper(scene, meshes[0], transforms[currentModelIndex]);
+
+				return;
+			}
+
+			{
+				NeonCUDA::DoSurfaceExtractionWrapper(scene, meshes[0], transforms[currentModelIndex]);
+				return;
+			}
+
 #pragma region Depth map way
 			{
 				//NeonCUDA::BuildDepthMapWrap(scene, meshes[0], 256, 480, 0.1f, 0.1f);
-				NeonCUDA::DoWork(scene, meshes[0]);
+				NeonCUDA::DoWorkNew(scene, meshes[0], transforms[currentModelIndex]);
 				return;
 			}
 #pragma endregion
@@ -414,7 +432,7 @@ int main()
 					{
 						for (size_t x = 0; x < xcount; x++)
 						{
-							tsdfs[z * ycount * xcount + y * xcount + x]->IntegrateMesh(scene, mesh);
+							tsdfs[z * ycount * xcount + y * xcount + x]->IntegrateMeshOld(scene, mesh);
 						}
 					}
 				}

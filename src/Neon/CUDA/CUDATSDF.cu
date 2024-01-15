@@ -431,65 +431,6 @@ namespace NeonCUDA
 		distance = t;
 		return true;
 	}
-
-	__device__
-	bool rayTriangleIntersect(
-		const Eigen::Vector3f& orig, const Eigen::Vector3f& dir,
-		const Eigen::Vector3f& v0, const Eigen::Vector3f& v1, const Eigen::Vector3f& v2, bool enable_backculling,
-		float& t)
-	{
-		const float kEpsilon = 1e-7f;
-
-		// compute the plane's normal
-		Eigen::Vector3f v0v1 = v1 - v0;
-		Eigen::Vector3f v0v2 = v2 - v0;
-		// no need to normalize
-		Eigen::Vector3f N = v0v1.cross(v0v2); // N
-		float area2 = __fsqrt_rn(N.squaredNorm());
-
-		// Step 1: finding P
-
-		// check if the ray and plane are parallel.
-		float NdotRayDirection = N.dot(dir);
-		if (fabs(NdotRayDirection) < kEpsilon) // almost 0
-			return false; // they are parallel, so they don't intersect! 
-
-		// compute d parameter using equation 2
-		float d = -N.dot(v0);
-
-		// compute t (equation 3)
-		t = -(N.dot(orig) + d) / NdotRayDirection;
-
-		// check if the triangle is behind the ray
-		if(enable_backculling)
-			if (t < 0) return false; // the triangle is behind
-
-		// compute the intersection point using equation 1
-		Eigen::Vector3f P = orig + t * dir;
-
-		// Step 2: inside-outside test
-		Eigen::Vector3f C; // vector perpendicular to triangle's plane
-
-		// edge 0
-		Eigen::Vector3f edge0 = v1 - v0;
-		Eigen::Vector3f vp0 = P - v0;
-		C = edge0.cross(vp0);
-		if (N.dot(C) < 0) return false; // P is on the right side
-
-		// edge 1
-		Eigen::Vector3f edge1 = v2 - v1;
-		Eigen::Vector3f vp1 = P - v1;
-		C = edge1.cross(vp1);
-		if (N.dot(C) < 0)  return false; // P is on the right side
-
-		// edge 2
-		Eigen::Vector3f edge2 = v0 - v2;
-		Eigen::Vector3f vp2 = P - v2;
-		C = edge2.cross(vp2);
-		if (N.dot(C) < 0) return false; // P is on the right side;
-
-		return true; // this ray hits the triangle
-	}
 #pragma endregion
 
 	struct FillFunctor
@@ -580,6 +521,8 @@ namespace NeonCUDA
 		float minZ;
 		float voxelSize;
 		float isoValue;
+		Eigen::Matrix4f transform;
+		bool omitOppositeDirectionFaces = true;
 
 		__device__
 			void operator()(size_t index)
@@ -591,10 +534,10 @@ namespace NeonCUDA
 			//printf("[%d, %d, %d]\n", x, y, z);
 			//return;
 
-			Eigen::Vector3f position(
-				minX + x * voxelSize + 0.5f * voxelSize,
-				minY + y * voxelSize + 0.5f * voxelSize,
-				minZ + z * voxelSize + 0.5f * voxelSize);
+			//Eigen::Vector3f position(
+			//	minX + x * voxelSize + 0.5f * voxelSize,
+			//	minY + y * voxelSize + 0.5f * voxelSize,
+			//	minZ + z * voxelSize + 0.5f * voxelSize);
 
 			//printf("Position : %f, %f, %f\n", position.x(), position.y(), position.z());
 
@@ -701,10 +644,20 @@ namespace NeonCUDA
 				auto v1 = vertlist[MarchingCubes::triTable[cubeindex][i + 1]];
 				auto v2 = vertlist[MarchingCubes::triTable[cubeindex][i + 2]];
 
-				auto normal = NORMALIZE(CROSS(NORMALIZE(v1 - v0), NORMALIZE(v2 - v0)));
-				auto zAxis = Eigen::Vector3f(0.0f, 0.0f, 1.0f);
-				auto dot = DOT(normal, zAxis);
-				if (0 < dot)
+				if (omitOppositeDirectionFaces)
+				{
+					auto normal = NORMALIZE(CROSS(NORMALIZE(v1 - v0), NORMALIZE(v2 - v0)));
+					auto zAxis = Eigen::Vector3f(0.0f, 0.0f, 1.0f);
+					auto dot = DOT(normal, zAxis);
+					if (0 < dot)
+					{
+						tris[ntriang].p[0] = v0;
+						tris[ntriang].p[1] = v1;
+						tris[ntriang].p[2] = v2;
+						ntriang++;
+					}
+				}
+				else
 				{
 					tris[ntriang].p[0] = v0;
 					tris[ntriang].p[1] = v1;
@@ -816,12 +769,7 @@ namespace NeonCUDA
 		}
 	};
 
-	void Test()
-	{
-
-	}
-
-	void DoWork(Neon::Scene* scene, Neon::Mesh* mesh)
+	void DoWork(Neon::Scene* scene, Neon::Mesh* mesh, const Eigen::Matrix4f& transform)
 	{
 		size_t hResolution = 256;
 		size_t vResolution = 480;
@@ -844,17 +792,17 @@ namespace NeonCUDA
 		thrust::for_each(thrust::make_counting_iterator<size_t>(0), thrust::make_counting_iterator<size_t>(voxelCount),
 			[voxelSize, voxelCountX, voxelCountY, voxelCountZ, voxelCount, _voxelValues, _depthMap, hResolution, vResolution]__device__(size_t index) {
 
-			auto z = index / (voxelCountX * voxelCountY);
-			auto y = (index % (voxelCountX * voxelCountY)) / voxelCountX;
-			auto x = (index % (voxelCountX * voxelCountY)) % voxelCountX;
+			auto zIndex = index / (voxelCountX * voxelCountY);
+			auto yIndex = (index % (voxelCountX * voxelCountY)) / voxelCountX;
+			auto xIndex = (index % (voxelCountX * voxelCountY)) % voxelCountX;
 
-			float xpos = (float)x * voxelSize - ((float)voxelCountX * voxelSize * 0.5f + voxelSize * 0.5f);
-			float ypos = (float)y * voxelSize - ((float)voxelCountY * voxelSize * 0.5f + voxelSize * 0.5f);
-			float zpos = (float)z * voxelSize - ((float)voxelCountZ * voxelSize * 0.5f + voxelSize * 0.5f);
+			float xpos = (float)xIndex * voxelSize - ((float)voxelCountX * voxelSize * 0.5f + voxelSize * 0.5f);
+			float ypos = (float)yIndex * voxelSize - ((float)voxelCountY * voxelSize * 0.5f + voxelSize * 0.5f);
+			float zpos = (float)zIndex * voxelSize - ((float)voxelCountZ * voxelSize * 0.5f + voxelSize * 0.5f);
 
-			if (FLT_VALID(_depthMap[y * hResolution + x].z()))
+			if (FLT_VALID(_depthMap[yIndex * hResolution + xIndex].z()))
 			{
-				float value = zpos - _depthMap[y * hResolution + x].z();
+				float value = zpos - _depthMap[yIndex * hResolution + xIndex].z();
 				if (-0.5f < value && value < 0.5f)
 				{
 					_voxelValues[index] = value;
@@ -896,6 +844,310 @@ namespace NeonCUDA
 			buildGridFunctor.minZ = -(float)voxelCountZ * voxelSize * 0.5f;
 			buildGridFunctor.voxelSize = voxelSize;
 			buildGridFunctor.isoValue = isoValue;
+
+			printf("Start\n");
+
+			thrust::for_each(thrust::make_counting_iterator<size_t>(0),
+				thrust::make_counting_iterator<size_t>((voxelCountX - 1) * (voxelCountY - 1) * (voxelCountZ - 1)),
+				buildGridFunctor);
+
+			printf("End\n");
+
+			nvtxRangePop();
+
+			thrust::host_vector<MarchingCubes::TRIANGLE> host_triangles(triangles.begin(), triangles.end());
+
+			for (auto& t : host_triangles)
+			{
+				if ((t.p[0].x() != 0.0f && t.p[0].y() != 0.0f && t.p[0].z() != 0.0f) &&
+					(t.p[1].x() != 0.0f && t.p[1].y() != 0.0f && t.p[1].z() != 0.0f) &&
+					(t.p[2].x() != 0.0f && t.p[2].y() != 0.0f && t.p[2].z() != 0.0f))
+				{
+					scene->Debug("triangles")->AddTriangle(
+						{ t.p[0].x(), t.p[0].y(), t.p[0].z() },
+						{ t.p[1].x(), t.p[1].y(), t.p[1].z() },
+						{ t.p[2].x(), t.p[2].y(), t.p[2].z() });
+				}
+			}
+		}
+
+
+
+		//#pragma region Draw result
+		//		{
+		//			thrust::host_vector<Eigen::Vector3f> host_result(upscaledDepthMap.begin(), upscaledDepthMap.end());
+		//
+		//			for (auto& p : host_result)
+		//			{
+		//				if (VECTOR3_VALID(p))
+		//				{
+		//					scene->Debug("Upscaling_Result")->AddPoint({ p.x(), p.y(), 0.0f }, glm::yellow);
+		//					//scene->Debug("Interpolation_Result_Lines")->AddLine({ p.x(), p.y(), 0.0f }, { p.x(), p.y(), p.z() }, glm::yellow, glm::yellow);
+		//				}
+		//
+		//				if (FLT_VALID(p.x()))
+		//				{
+		//					float x = floorf(p.x() / xUnit) * xUnit + xUnit * 0.5f;
+		//					float y = floorf(p.y() / yUnit) * yUnit + yUnit * 0.5f;
+		//					float z = floorf(p.z() / xUnit) * xUnit + xUnit * 0.5f;
+		//					//float z = (floorf(p.z() / xUnit) - 1) * xUnit + xUnit * 0.5f;
+		//
+		//					scene->Debug("Interpolation_Result_Quantized")->AddPoint({ x, y, 0.0f }, glm::red);
+		//					//scene->Debug("Interpolation_Result_Lines_Quantized_Lines")->AddLine({ x, y, 0.0f }, { x, y, z }, glm::red, glm::red);
+		//				}
+		//			}
+		//		}
+		//#pragma endregion
+
+#pragma region Draw Voxel Points
+		{
+			thrust::host_vector<float> host_voxelValues(voxelValues.begin(), voxelValues.end());
+
+			for (size_t z = 0; z < voxelCountZ; z++)
+			{
+				for (size_t y = 0; y < voxelCountY; y++)
+				{
+					for (size_t x = 0; x < voxelCountX; x++)
+					{
+						float xpos = (float)x * voxelSize - ((float)voxelCountX * voxelSize * 0.5f + voxelSize * 0.5f);
+						float ypos = (float)y * voxelSize - ((float)voxelCountY * voxelSize * 0.5f + voxelSize * 0.5f);
+						float zpos = (float)z * voxelSize - ((float)voxelCountZ * voxelSize * 0.5f + voxelSize * 0.5f);
+
+						size_t index = z * voxelCountX * voxelCountY + y * voxelCountX + x;
+						auto voxelValue = host_voxelValues[index];
+
+						if (-0.125f <= voxelValue && voxelValue <= 0.125f)
+						{
+							float ratio = (voxelValue + 0.125f) / 0.25f;
+
+							glm::vec4 c = (1.0f - ratio) * glm::blue + ratio * glm::red;
+
+							scene->Debug("Voxels")->AddPoint({ xpos, ypos, zpos }, c);
+						}
+					}
+				}
+			}
+		}
+#pragma endregion
+
+	}
+
+	void DoWorkNew(Neon::Scene* scene, Neon::Mesh* mesh, const Eigen::Matrix4f& transform)
+	{
+		auto inverseTransform = transform.inverse();
+
+		size_t hResolution = 256;
+		size_t vResolution = 480;
+		float xUnit = 0.1f;
+		float yUnit = 0.1f;
+		float voxelSize = 0.1f;
+
+		thrust::device_vector<Eigen::Vector3f> depthMap((size_t)((float)hResolution / xUnit) * (size_t)((float)vResolution / yUnit));
+
+		BuildDepthMapNew(scene, mesh, hResolution, vResolution, xUnit, yUnit, depthMap);
+
+		size_t voxelCountX = hResolution;
+		size_t voxelCountY = vResolution;
+		size_t voxelCountZ = hResolution;
+		size_t voxelCount = voxelCountX * voxelCountY * voxelCountZ;
+		thrust::device_vector<float> voxelValues(voxelCount);
+		auto _voxelValues = thrust::raw_pointer_cast(voxelValues.data());
+		auto _depthMap = thrust::raw_pointer_cast(depthMap.data());
+
+		thrust::for_each(thrust::make_counting_iterator<size_t>(0), thrust::make_counting_iterator<size_t>(voxelCount),
+			[inverseTransform, xUnit, yUnit, 
+			voxelSize, voxelCountX, voxelCountY, voxelCountZ, voxelCount,
+			_voxelValues, _depthMap, hResolution, vResolution]__device__(size_t index) {
+			Eigen::Vector4f inversedVoxelCenter;
+			{
+				auto zIndex = index / (voxelCountX * voxelCountY);
+				auto yIndex = (index % (voxelCountX * voxelCountY)) / voxelCountX;
+				auto xIndex = (index % (voxelCountX * voxelCountY)) % voxelCountX;
+
+				float xpos = (float)xIndex * voxelSize - ((float)voxelCountX * voxelSize * 0.5f + voxelSize * 0.5f);
+				float ypos = (float)yIndex * voxelSize - ((float)voxelCountY * voxelSize * 0.5f + voxelSize * 0.5f);
+				float zpos = (float)zIndex * voxelSize - ((float)voxelCountZ * voxelSize * 0.5f + voxelSize * 0.5f);
+
+				auto voxelCenter = Eigen::Vector4f(xpos, ypos, zpos, 1.0f);
+				//inversedVoxelCenter = inverseTransform * voxelCenter;
+				inversedVoxelCenter = voxelCenter;
+			}
+
+			auto xIndex = (size_t)floorf((inversedVoxelCenter.x() + (hResolution * xUnit * 0.5f)) / xUnit);
+			auto yIndex = (size_t)floorf((inversedVoxelCenter.y() + (vResolution * yUnit * 0.5f)) / yUnit);
+
+			if (0 > xIndex || xIndex > hResolution - 1) return;
+			if (0 > yIndex || yIndex > vResolution - 1) return;
+
+			auto voxelXPos = xIndex * xUnit - (hResolution * xUnit * 0.5f) + xUnit * 0.5f;
+			auto voxelYPos = yIndex * yUnit - (vResolution * yUnit * 0.5f) + yUnit * 0.5f;
+
+			float zAccordingX = FLT_MAX;
+#pragma region Get Z value according to x axis
+			if (voxelXPos < inversedVoxelCenter.x())
+			{
+				if (xIndex == 0)
+				{
+					auto zValue = _depthMap[yIndex * hResolution + xIndex].z();
+					if (FLT_VALID(zValue))
+					{
+						zAccordingX = zValue;
+					}
+				}
+				else
+				{
+					auto zValueFrom = _depthMap[yIndex * hResolution + xIndex - 1].z();
+					auto zValueTo = _depthMap[yIndex * hResolution + xIndex].z();
+
+					if (FLT_VALID(zValueFrom) && FLT_VALID(zValueTo))
+					{
+						zAccordingX = (zValueFrom + zValueTo) * 0.5f;
+					}
+					else if (FLT_VALID(zValueFrom))
+					{
+						zAccordingX = zValueFrom;
+					}
+					else if (FLT_VALID(zValueTo))
+					{
+						zAccordingX = zValueTo;
+					}
+				}
+			}
+			else if (voxelXPos > inversedVoxelCenter.x())
+			{
+				if (xIndex == hResolution - 1)
+				{
+					auto zValue = _depthMap[yIndex * hResolution + xIndex].z();
+					if (FLT_VALID(zValue))
+					{
+						zAccordingX = zValue;
+					}
+				}
+				else
+				{
+					auto zValueFrom = _depthMap[yIndex * hResolution + xIndex].z();
+					auto zValueTo = _depthMap[yIndex * hResolution + xIndex + 1].z();
+
+					if (FLT_VALID(zValueFrom) && FLT_VALID(zValueTo))
+					{
+						zAccordingX = (zValueFrom + zValueTo) * 0.5f;
+					}
+					else if (FLT_VALID(zValueFrom))
+					{
+						zAccordingX = zValueFrom;
+					}
+					else if (FLT_VALID(zValueTo))
+					{
+						zAccordingX = zValueTo;
+					}
+				}
+			}
+#pragma endregion
+
+			float zAccordingY = FLT_MAX;
+#pragma region Get Z value according to y axis
+			if (voxelYPos < inversedVoxelCenter.y())
+			{
+				if (yIndex == 0)
+				{
+					auto zValue = _depthMap[yIndex * hResolution + xIndex].z();
+					if (FLT_VALID(zValue))
+					{
+						zAccordingY = zValue;
+					}
+				}
+				else
+				{
+					auto zValueFrom = _depthMap[yIndex * hResolution + xIndex - 1].z();
+					auto zValueTo = _depthMap[yIndex * hResolution + xIndex].z();
+
+					if (FLT_VALID(zValueFrom) && FLT_VALID(zValueTo))
+					{
+						zAccordingY = (zValueFrom + zValueTo) * 0.5f;
+					}
+					else if (FLT_VALID(zValueFrom))
+					{
+						zAccordingY = zValueFrom;
+					}
+					else if (FLT_VALID(zValueTo))
+					{
+						zAccordingY = zValueTo;
+					}
+				}
+			}
+			else if (voxelYPos > inversedVoxelCenter.y())
+			{
+				if (yIndex == vResolution - 1)
+				{
+					auto zValue = _depthMap[yIndex * hResolution + xIndex].z();
+					if (FLT_VALID(zValue))
+					{
+						zAccordingY = zValue;
+					}
+				}
+				else
+				{
+					auto zValueFrom = _depthMap[yIndex * hResolution + xIndex].z();
+					auto zValueTo = _depthMap[yIndex * hResolution + xIndex + 1].z();
+
+					if (FLT_VALID(zValueFrom) && FLT_VALID(zValueTo))
+					{
+						zAccordingY = (zValueFrom + zValueTo) * 0.5f;
+					}
+					else if (FLT_VALID(zValueFrom))
+					{
+						zAccordingY = zValueFrom;
+					}
+					else if (FLT_VALID(zValueTo))
+					{
+						zAccordingY = zValueTo;
+					}
+				}
+			}
+#pragma endregion
+
+			if (FLT_VALID(zAccordingX) && FLT_VALID(zAccordingY))
+			{
+				_voxelValues[index] = (zAccordingX + zAccordingY) * 0.5f - inversedVoxelCenter.z();
+			}
+			else if (FLT_VALID(zAccordingX))
+			{
+				_voxelValues[index] = zAccordingX - inversedVoxelCenter.z();
+			}
+			else if (FLT_VALID(zAccordingY))
+			{
+				_voxelValues[index] = zAccordingY - inversedVoxelCenter.z();
+			}
+		});
+
+		{
+			float isoValue = 0.0f;
+
+			nvtxRangePushA("@Arron/BuildGridCells");
+
+			auto gridcells = thrust::device_vector<MarchingCubes::GRIDCELL>((voxelCountZ - 1) * (voxelCountY - 1) * (voxelCountX - 1));
+			auto triangles = thrust::device_vector<MarchingCubes::TRIANGLE>(voxelCountZ * voxelCountY * voxelCountX * 4);
+
+			//auto _positions = thrust::raw_pointer_cast(positions.data());
+			auto _gridcells = thrust::raw_pointer_cast(gridcells.data());
+			auto _triangles = thrust::raw_pointer_cast(triangles.data());
+
+			BuildGridFunctor buildGridFunctor;
+			buildGridFunctor.center = Eigen::Vector3f(0.0f, 0.0f, 0.0f);
+			buildGridFunctor.values = _voxelValues;
+			buildGridFunctor.gridcells = _gridcells;
+			//buildGridFunctor.positions = _positions;
+			buildGridFunctor.triangles = _triangles;
+			buildGridFunctor.countX = voxelCountX;
+			buildGridFunctor.countY = voxelCountY;
+			buildGridFunctor.countZ = voxelCountZ;
+			buildGridFunctor.minX = -(float)voxelCountX * voxelSize * 0.5f;
+			buildGridFunctor.minY = -(float)voxelCountY * voxelSize * 0.5f;
+			buildGridFunctor.minZ = -(float)voxelCountZ * voxelSize * 0.5f;
+			buildGridFunctor.voxelSize = voxelSize;
+			buildGridFunctor.isoValue = isoValue;
+			buildGridFunctor.transform = transform;
+			buildGridFunctor.omitOppositeDirectionFaces = false;
 
 			printf("Start\n");
 
@@ -1679,7 +1931,6 @@ namespace NeonCUDA
 					{
 						float distance = 0.0f;
 						if (ray_triangle_intersect({ x + xUnit * 0.5f, y + yUnit * 0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f }, v0, v1, v2, false, distance))
-							//if (rayTriangleIntersect({ x, y, 0.0f }, { 0.0f, 0.0f, 1.0f }, v0, v1, v2, false, distance))
 						{
 							auto xIndex = (size_t)floorf((x + xUnit * 0.5f - _xMin) / xUnit);
 							auto yIndex = (size_t)floorf((y + yUnit * 0.5f - _yMin) / yUnit);
@@ -1788,10 +2039,53 @@ namespace NeonCUDA
 		//printf("max : %f, %f, %f\n", maxPoint.x(), maxPoint.y(), maxPoint.z());
 	}
 
-	void TSDF::IntegrateMesh(Neon::Scene* scene, Neon::Mesh* mesh)
+	void TSDF::IntegrateMeshOld(Neon::Scene* scene, Neon::Mesh* mesh)
 	{
-		thrust::device_vector<Eigen::Vector3f> meshVertices;
-		thrust::device_vector<GLuint> meshIndices;
+
+	}
+
+	void TSDF::IntegrateMesh(Neon::Scene* scene, thrust::device_vector<Eigen::Vector3f>& inputPoints, const Eigen::Matrix4f& transform)
+	{
+		size_t hResolution = 256;
+		size_t vResolution = 480;
+
+#pragma region Mesh Indices
+		nvtxRangePushA("@Aaron/Build Mesh Indices");
+		thrust::device_vector<GLuint> meshIndices(hResolution * vResolution * 6);
+		auto _meshIndices = thrust::raw_pointer_cast(meshIndices.data());
+
+		thrust::for_each(
+			thrust::make_counting_iterator<GLuint>(0),
+			thrust::make_counting_iterator<GLuint>((hResolution - 1) * (vResolution - 1)),
+			[_meshIndices, hResolution, vResolution]__device__(size_t index) {
+
+			auto y = index / hResolution;
+			auto x = index % hResolution;
+
+			if (0 == x % 2 && 0 == y % 3)
+			{
+				auto i0 = hResolution * y + x;
+				auto i1 = hResolution * y + x + 2;
+				auto i2 = hResolution * (y + 3) + x;
+				auto i3 = hResolution * (y + 3) + x + 2;
+
+				if ((i0 >= hResolution * vResolution) ||
+					(i1 >= hResolution * vResolution) ||
+					(i2 >= hResolution * vResolution) ||
+					(i3 >= hResolution * vResolution))
+					return;
+
+				_meshIndices[index * 6 + 0] = i0;
+				_meshIndices[index * 6 + 1] = i1;
+				_meshIndices[index * 6 + 2] = i2;
+
+				_meshIndices[index * 6 + 3] = i2;
+				_meshIndices[index * 6 + 4] = i1;
+				_meshIndices[index * 6 + 5] = i3;
+			}
+		});
+		nvtxRangePop();
+#pragma endregion
 	}
 
 	void TSDF::IntegrateWrap(

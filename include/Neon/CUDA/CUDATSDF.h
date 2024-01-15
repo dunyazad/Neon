@@ -10,21 +10,8 @@ namespace Neon
 
 namespace NeonCUDA
 {
-	namespace MarchingCubes
-	{
-		typedef struct {
-			Eigen::Vector3f p[8];
-			float val[8];
-		} GRIDCELL;
-
-		typedef struct {
-			Eigen::Vector3f p[3];
-		} TRIANGLE;
-	}
-
-	void Test();
-
-	void DoWork(Neon::Scene* scene, Neon::Mesh* mesh);
+	void DoWork(Neon::Scene* scene, Neon::Mesh* mesh, const Eigen::Matrix4f& transform);
+	void DoWorkNew(Neon::Scene* scene, Neon::Mesh* mesh, const Eigen::Matrix4f& transform);
 
 	std::vector<glm::vec3> FlipXInputArray(const std::vector<glm::vec3>& input, int columns, int rows);
 
@@ -50,7 +37,8 @@ namespace NeonCUDA
 
 		//void Apply(Neon::Mesh* mesh);
 
-		void IntegrateMesh(Neon::Scene* scene, Neon::Mesh* mesh);
+		void IntegrateMeshOld(Neon::Scene* scene, Neon::Mesh* mesh);
+		void IntegrateMesh(Neon::Scene* scene, thrust::device_vector<Eigen::Vector3f>& inputPoints, const Eigen::Matrix4f& transform);
 
 		void IntegrateWrap(const std::vector<glm::vec3>& vertices, const Eigen::Matrix4f& transform, float width, float height, int columns, int rows);
 		void Integrate(const thrust::device_vector<Eigen::Vector3f>& vertices, const Eigen::Matrix4f& transform, float width, float height, int columns, int rows);
