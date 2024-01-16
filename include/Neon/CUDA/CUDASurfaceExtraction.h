@@ -34,6 +34,8 @@ namespace NeonCUDA
 	protected:
 		size_t hResolution = 256;
 		size_t vResolution = 480;
+		float xUnit = 0.1f;
+		float yUnit = 0.1f;
 		float voxelSize = 0.1f;
 
 		thrust::device_vector<float> voxelValues;

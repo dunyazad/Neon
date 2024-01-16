@@ -7,6 +7,7 @@
 
 namespace NeonCUDA
 {
+#if 0
 	namespace MarchingCubes
 	{
 		__device__ int edgeTable[256] = {
@@ -2639,4 +2640,5 @@ namespace NeonCUDA
 
 		return false;
 	}
+#endif
 }
