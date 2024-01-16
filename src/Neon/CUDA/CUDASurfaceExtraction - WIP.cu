@@ -518,7 +518,7 @@ namespace NeonCUDA
 	}
 
 	__device__
-	float pointToTriangleDistance(const Eigen::Vector3f& point, const Eigen::Vector3f& vertex1, const Eigen::Vector3f& vertex2, const Eigen::Vector3f& vertex3) {
+		float pointToTriangleDistance(const Eigen::Vector3f& point, const Eigen::Vector3f& vertex1, const Eigen::Vector3f& vertex2, const Eigen::Vector3f& vertex3) {
 		auto normal = CROSS(vertex2 - vertex1, vertex3 - vertex1);
 		normal = NORMALIZE(normal);
 
@@ -574,17 +574,25 @@ namespace NeonCUDA
 			auto y = (index % (countX * countY)) / countX;
 			auto x = (index % (countX * countY)) % countX;
 
-			//printf("[%d, %d, %d]\n", x, y, z);
-			//return;
-
-			//Eigen::Vector3f position(
-			//	minX + x * voxelSize + 0.5f * voxelSize,
-			//	minY + y * voxelSize + 0.5f * voxelSize,
-			//	minZ + z * voxelSize + 0.5f * voxelSize);
-
-			//printf("Position : %f, %f, %f\n", position.x(), position.y(), position.z());
+			//
+			//           4             5
+			//           _____________
+			//          /|           /|
+			//         / |          / |
+			//        /  |         /  |
+			//       /   |        /   |
+			//     7 ============= 6  |
+			//       |   |_______|____|
+			//       |   / 0     |   / 1
+			//       |  /        |  /
+			//       | /         | /
+			//       |/          |/
+			//     3 ============= 2
+			//
 
 			MarchingCubes::GRIDCELL gridcell;
+
+#pragma region Set Position
 			gridcell.p[0] = Eigen::Vector3f(
 				minX + x * voxelSize + 0.5f * voxelSize,
 				minY + y * voxelSize + 0.5f * voxelSize,
@@ -617,7 +625,9 @@ namespace NeonCUDA
 				minX + x * voxelSize + 0.5f * voxelSize,
 				minY + (y + 1) * voxelSize + 0.5f * voxelSize,
 				minZ + (z + 1) * voxelSize + 0.5f * voxelSize);
+#pragma endregion
 
+#pragma region Pick Voxel Value
 			gridcell.val[0] = values[z * countX * countY + y * countX + x];
 			gridcell.val[1] = values[z * countX * countY + y * countX + (x + 1)];
 			gridcell.val[2] = values[(z + 1) * countX * countY + y * countX + (x + 1)];
@@ -626,19 +636,111 @@ namespace NeonCUDA
 			gridcell.val[5] = values[z * countX * countY + (y + 1) * countX + (x + 1)];
 			gridcell.val[6] = values[(z + 1) * countX * countY + (y + 1) * countX + (x + 1)];
 			gridcell.val[7] = values[(z + 1) * countX * countY + (y + 1) * countX + x];
+#pragma endregion
 
 			int cubeindex = 0;
 			float isolevel = isoValue;
+			float differenceMax = 1.0f;
 			Eigen::Vector3f vertlist[12];
 
-			if (gridcell.val[0] < isolevel) cubeindex |= 1;
-			if (gridcell.val[1] < isolevel) cubeindex |= 2;
-			if (gridcell.val[2] < isolevel) cubeindex |= 4;
-			if (gridcell.val[3] < isolevel) cubeindex |= 8;
-			if (gridcell.val[4] < isolevel) cubeindex |= 16;
-			if (gridcell.val[5] < isolevel) cubeindex |= 32;
-			if (gridcell.val[6] < isolevel) cubeindex |= 64;
-			if (gridcell.val[7] < isolevel) cubeindex |= 128;
+			if (FLT_VALID(gridcell.val[0]) && gridcell.val[0] < isolevel) cubeindex |= 1;
+			if (FLT_VALID(gridcell.val[1]) && gridcell.val[1] < isolevel) cubeindex |= 2;
+			if (FLT_VALID(gridcell.val[2]) && gridcell.val[2] < isolevel) cubeindex |= 4;
+			if (FLT_VALID(gridcell.val[3]) && gridcell.val[3] < isolevel) cubeindex |= 8;
+			if (FLT_VALID(gridcell.val[4]) && gridcell.val[4] < isolevel) cubeindex |= 16;
+			if (FLT_VALID(gridcell.val[5]) && gridcell.val[5] < isolevel) cubeindex |= 32;
+			if (FLT_VALID(gridcell.val[6]) && gridcell.val[6] < isolevel) cubeindex |= 64;
+			if (FLT_VALID(gridcell.val[7]) && gridcell.val[7] < isolevel) cubeindex |= 128;
+
+#pragma region Test
+			//{
+			//	if ((gridcell.val[0] < isolevel) && (gridcell.val[1] > isolevel) && (gridcell.val[3] > isolevel) && (gridcell.val[4] > isolevel)) cubeindex |= 1;
+			//	if ((gridcell.val[1] < isolevel) && (gridcell.val[0] > isolevel) && (gridcell.val[2] > isolevel) && (gridcell.val[5] > isolevel)) cubeindex |= 2;
+			//	if ((gridcell.val[2] < isolevel) && (gridcell.val[1] > isolevel) && (gridcell.val[3] > isolevel) && (gridcell.val[6] > isolevel)) cubeindex |= 4;
+			//	if ((gridcell.val[3] < isolevel) && (gridcell.val[0] > isolevel) && (gridcell.val[2] > isolevel) && (gridcell.val[7] > isolevel)) cubeindex |= 8;
+			//	if ((gridcell.val[4] < isolevel) && (gridcell.val[0] > isolevel) && (gridcell.val[5] > isolevel) && (gridcell.val[7] > isolevel)) cubeindex |= 16;
+			//	if ((gridcell.val[5] < isolevel) && (gridcell.val[1] > isolevel) && (gridcell.val[4] > isolevel) && (gridcell.val[6] > isolevel)) cubeindex |= 32;
+			//	if ((gridcell.val[6] < isolevel) && (gridcell.val[2] > isolevel) && (gridcell.val[5] > isolevel) && (gridcell.val[7] > isolevel)) cubeindex |= 64;
+			//	if ((gridcell.val[7] < isolevel) && (gridcell.val[3] > isolevel) && (gridcell.val[4] > isolevel) && (gridcell.val[6] > isolevel)) cubeindex |= 128;
+			//}
+#pragma endregion
+
+#pragma region Test
+			//{
+			//	if (gridcell.val[0] < isolevel)
+			//	{
+			//		if ((fabsf(gridcell.val[0] - gridcell.val[1]) < differenceMax) &&
+			//			(fabsf(gridcell.val[0] - gridcell.val[3]) < differenceMax) &&
+			//			(fabsf(gridcell.val[0] - gridcell.val[4]) < differenceMax))
+			//		{
+			//			cubeindex |= 1;
+			//		}
+			//	}
+			//	if (gridcell.val[1] < isolevel)
+			//	{
+			//		if ((fabsf(gridcell.val[1] - gridcell.val[0]) < differenceMax) &&
+			//			(fabsf(gridcell.val[1] - gridcell.val[2]) < differenceMax) &&
+			//			(fabsf(gridcell.val[1] - gridcell.val[5]) < differenceMax))
+			//		{
+			//			cubeindex |= 2;
+			//		}
+			//	}
+			//	if (gridcell.val[2] < isolevel)
+			//	{
+			//		if ((fabsf(gridcell.val[2] - gridcell.val[1]) < differenceMax) &&
+			//			(fabsf(gridcell.val[2] - gridcell.val[3]) < differenceMax) &&
+			//			(fabsf(gridcell.val[2] - gridcell.val[6]) < differenceMax))
+			//		{
+			//			cubeindex |= 4;
+			//		}
+			//	}
+			//	if (gridcell.val[3] < isolevel)
+			//	{
+			//		if ((fabsf(gridcell.val[3] - gridcell.val[0]) < differenceMax) &&
+			//			(fabsf(gridcell.val[3] - gridcell.val[2]) < differenceMax) &&
+			//			(fabsf(gridcell.val[3] - gridcell.val[7]) < differenceMax))
+			//		{
+			//			cubeindex |= 8;
+			//		}
+			//	}
+			//	if (gridcell.val[4] < isolevel)
+			//	{
+			//		if ((fabsf(gridcell.val[4] - gridcell.val[0]) < differenceMax) &&
+			//			(fabsf(gridcell.val[4] - gridcell.val[5]) < differenceMax) &&
+			//			(fabsf(gridcell.val[4] - gridcell.val[7]) < differenceMax))
+			//		{
+			//			cubeindex |= 16;
+			//		}
+			//	}
+			//	if (gridcell.val[5] < isolevel)
+			//	{
+			//		if ((fabsf(gridcell.val[5] - gridcell.val[1]) < differenceMax) &&
+			//			(fabsf(gridcell.val[5] - gridcell.val[4]) < differenceMax) &&
+			//			(fabsf(gridcell.val[5] - gridcell.val[6]) < differenceMax))
+			//		{
+			//			cubeindex |= 32;
+			//		}
+			//	}
+			//	if (gridcell.val[6] < isolevel)
+			//	{
+			//		if ((fabsf(gridcell.val[6] - gridcell.val[2]) < differenceMax) &&
+			//			(fabsf(gridcell.val[6] - gridcell.val[5]) < differenceMax) &&
+			//			(fabsf(gridcell.val[6] - gridcell.val[7]) < differenceMax))
+			//		{
+			//			cubeindex |= 64;
+			//		}
+			//	}
+			//	if (gridcell.val[7] < isolevel)
+			//	{
+			//		if ((fabsf(gridcell.val[7] - gridcell.val[3]) < differenceMax) &&
+			//			(fabsf(gridcell.val[7] - gridcell.val[4]) < differenceMax) &&
+			//			(fabsf(gridcell.val[7] - gridcell.val[6]) < differenceMax))
+			//		{
+			//			cubeindex |= 128;
+			//		}
+			//	}
+			//}
+#pragma endregion
 
 			if (MarchingCubes::edgeTable[cubeindex] == 0)
 				return;
@@ -727,6 +829,12 @@ namespace NeonCUDA
 			float mu;
 			Eigen::Vector3f p;
 
+			if (false == FLT_VALID(valp1))
+				return p2;
+
+			if (false == FLT_VALID(valp2))
+				return p1;
+
 			if (fabsf(isolevel - valp1) < 0.00001f)
 				return(p1);
 			if (fabsf(isolevel - valp2) < 0.00001f)
@@ -783,7 +891,7 @@ namespace NeonCUDA
 
 				_tempPositions[index] = iv;
 			}
-			
+
 			{
 				size_t xIndex = (size_t)floorf(iv.x() / xUnit) + hResolution / 2;
 				size_t yIndex = (size_t)floorf(iv.y() / yUnit) + vResolution / 2;
@@ -827,94 +935,6 @@ namespace NeonCUDA
 			}
 		}
 	};
-
-	void DoSurfaceExtractionWrapper(Neon::Scene* scene, Neon::Mesh* mesh, const Eigen::Matrix4f& transform)
-	{
-		size_t hResolution = 256;
-		size_t vResolution = 480;
-		float xUnit = 0.1f;
-		float yUnit = 0.1f;
-		float voxelSize = 0.1f;
-
-		auto inputPositions = mesh->GetVertexBuffer()->GetElements();
-
-		Eigen::AlignedBox3f aabb;
-
-#pragma region Mesh Vertices
-		thrust::host_vector<Eigen::Vector3f> host_meshVertices;
-		for (auto& p : inputPositions)
-		{
-			auto v = Eigen::Vector3f(p.x, p.y, p.z);
-			host_meshVertices.push_back(v);
-			if (VECTOR3_VALID(v))
-			{
-				aabb.extend(v);
-			}
-
-			scene->Debug("Point Input SurfaceExtraction")->AddPoint({ p.x, p.y, 0.0f });
-		}
-		thrust::device_vector<Eigen::Vector3f> inputPoints(host_meshVertices.begin(), host_meshVertices.end());
-#pragma endregion
-
-		//DoSurfaceExtraction(scene, inputPoints, aabb, transform);
-	}
-
-	void DoSurfaceExtraction(Neon::Scene* scene, const thrust::device_vector<Eigen::Vector3f>& inputPoints, const Eigen::AlignedBox3f& aabb, const Eigen::Matrix4f& transform)
-	{
-		size_t hResolution = 256;
-		size_t vResolution = 480;
-		float xUnit = 0.1f;
-		float yUnit = 0.1f;
-		float voxelSize = 0.1f;
-
-#pragma region Get transformed AABB of inputPoints
-		auto transformedAABB = aabb;
-		transformedAABB.transform(Eigen::Transform<float, 3, Eigen::Affine>(transform));
-		Neon::AABB aabbaabb({ transformedAABB.min().x(), transformedAABB.min().y(), transformedAABB.min().z() }, { transformedAABB.max().x(), transformedAABB.max().y(), transformedAABB.max().z() });
-		scene->Debug("aabb")->AddAABB(aabbaabb);
-#pragma endregion
-
-
-#pragma region Mesh Indices
-		nvtxRangePushA("@Aaron/Build Mesh Indices");
-		thrust::device_vector<size_t> meshIndices(hResolution * vResolution * 6);
-		auto _meshIndices = thrust::raw_pointer_cast(meshIndices.data());
-
-		thrust::for_each(
-			thrust::make_counting_iterator<size_t>(0),
-			thrust::make_counting_iterator<size_t>((hResolution - 1) * (vResolution - 1)),
-			[_meshIndices, hResolution, vResolution]__device__(size_t index) {
-
-			auto y = index / hResolution;
-			auto x = index % hResolution;
-
-			if (0 == x % 2 && 0 == y % 3)
-			{
-				auto i0 = hResolution * y + x;
-				auto i1 = hResolution * y + x + 2;
-				auto i2 = hResolution * (y + 3) + x;
-				auto i3 = hResolution * (y + 3) + x + 2;
-
-				if ((i0 >= hResolution * vResolution) ||
-					(i1 >= hResolution * vResolution) ||
-					(i2 >= hResolution * vResolution) ||
-					(i3 >= hResolution * vResolution))
-					return;
-
-				_meshIndices[index * 6 + 0] = i0;
-				_meshIndices[index * 6 + 1] = i1;
-				_meshIndices[index * 6 + 2] = i2;
-
-				_meshIndices[index * 6 + 3] = i2;
-				_meshIndices[index * 6 + 4] = i1;
-				_meshIndices[index * 6 + 5] = i3;
-			}
-		});
-		nvtxRangePop();
-#pragma endregion
-
-
-	}
 
 	SurfaceExtractor::SurfaceExtractor(size_t hResolution, size_t vResolution, float voxelSize)
 		: hResolution(hResolution), vResolution(vResolution), voxelSize(voxelSize)
@@ -972,13 +992,15 @@ namespace NeonCUDA
 			}
 		});
 		nvtxRangePop();
+
+		triangles = thrust::device_vector<MarchingCubes::TRIANGLE>(hResolution * vResolution * hResolution);
 	}
 
 	void SurfaceExtractor::PrepareNewFrame()
 	{
 		nvtxRangePushA("@Aaron/SurfaceExtractor::PrepareNewFrame()");
 
-		thrust::fill(voxelValues.begin(), voxelValues.end(), FLT_MAX);
+		thrust::fill(voxelValues.begin(), voxelValues.end(), 0.0f);
 		thrust::fill(voxelCenterPositions.begin(), voxelCenterPositions.end(), Eigen::Vector3f(FLT_MAX, FLT_MAX, FLT_MAX));
 		lastFrameAABB.setEmpty();
 
@@ -1041,32 +1063,32 @@ namespace NeonCUDA
 #pragma endregion
 
 #pragma region Draw Triangles using meshIndices
-		{
-			auto host_meshIndices = thrust::host_vector<GLuint>(meshIndices);
-			for (GLuint i = 0; i < (GLuint)hResolution * (GLuint)vResolution * 2; i++)
-			{
-				GLuint i0 = host_meshIndices[i * 3 + 0];
-				GLuint i1 = host_meshIndices[i * 3 + 1];
-				GLuint i2 = host_meshIndices[i * 3 + 2];
+		//{
+		//	auto host_meshIndices = thrust::host_vector<GLuint>(meshIndices);
+		//	for (GLuint i = 0; i < (GLuint)hResolution * (GLuint)vResolution * 2; i++)
+		//	{
+		//		GLuint i0 = host_meshIndices[i * 3 + 0];
+		//		GLuint i1 = host_meshIndices[i * 3 + 1];
+		//		GLuint i2 = host_meshIndices[i * 3 + 2];
 
-				auto& p0 = host_meshVertices[i0];
-				auto& p1 = host_meshVertices[i1];
-				auto& p2 = host_meshVertices[i2];
+		//		auto& p0 = host_meshVertices[i0];
+		//		auto& p1 = host_meshVertices[i1];
+		//		auto& p2 = host_meshVertices[i2];
 
-				auto v0 = transform * Eigen::Vector4f(p0.x(), p0.y(), p0.z(), 1.0f);
-				auto v1 = transform * Eigen::Vector4f(p1.x(), p1.y(), p1.z(), 1.0f);
-				auto v2 = transform * Eigen::Vector4f(p2.x(), p2.y(), p2.z(), 1.0f);
+		//		auto v0 = transform * Eigen::Vector4f(p0.x(), p0.y(), p0.z(), 1.0f);
+		//		auto v1 = transform * Eigen::Vector4f(p1.x(), p1.y(), p1.z(), 1.0f);
+		//		auto v2 = transform * Eigen::Vector4f(p2.x(), p2.y(), p2.z(), 1.0f);
 
-				if (false == VECTOR3_VALID(v0) || false == VECTOR3_VALID(v1) || false == VECTOR3_VALID(v2))
-					continue;
+		//		if (false == VECTOR3_VALID(v0) || false == VECTOR3_VALID(v1) || false == VECTOR3_VALID(v2))
+		//			continue;
 
-				scene->Debug("input triangles")->AddTriangle(
-					{ v0.x(), v0.y(), v0.z() },
-					{ v2.x(), v2.y(), v2.z() },
-					{ v1.x(), v1.y(), v1.z() },
-					glm::green, glm::green, glm::green);
-			}
-		}
+		//		scene->Debug("input triangles")->AddTriangle(
+		//			{ v0.x(), v0.y(), v0.z() },
+		//			{ v2.x(), v2.y(), v2.z() },
+		//			{ v1.x(), v1.y(), v1.z() },
+		//			glm::green, glm::green, glm::green);
+		//	}
+		//}
 #pragma endregion
 
 		//float theta = PI / 2.0f;
@@ -1083,10 +1105,12 @@ namespace NeonCUDA
 		{
 			float isoValue = 0.0f;
 
+			printf("Start\n");
+
 			nvtxRangePushA("@Arron/BuildGridCells");
 
 			//auto gridcells = thrust::device_vector<MarchingCubes::GRIDCELL>((voxelCountZ - 1) * (voxelCountY - 1) * (voxelCountX - 1));
-			auto triangles = thrust::device_vector<MarchingCubes::TRIANGLE>(voxelCountZ * voxelCountY * voxelCountX * 4);
+			//auto triangles = thrust::device_vector<MarchingCubes::TRIANGLE>(voxelCountZ * voxelCountY * voxelCountX * 4);
 
 			auto _voxelValues = thrust::raw_pointer_cast(voxelValues.data());
 
@@ -1111,19 +1135,15 @@ namespace NeonCUDA
 			buildGridFunctor.direction = Eigen::Vector3f(transform.col(2).x(), transform.col(2).y(), transform.col(2).z());
 			buildGridFunctor.transform = transform;
 			//buildGridFunctor.direction = Eigen::Vector3f(0.0f, 0.0f, 1.0f);
-			//buildGridFunctor.omitOppositeDirectionFaces = false;
-
-			printf("Start\n");
+			buildGridFunctor.omitOppositeDirectionFaces = false;
 
 			thrust::for_each(thrust::make_counting_iterator<size_t>(0),
 				thrust::make_counting_iterator<size_t>((voxelCountX - 1) * (voxelCountY - 1) * (voxelCountZ - 1)),
 				buildGridFunctor);
 
-			printf("End\n");
-
 			nvtxRangePop();
 
-			//auto mesh = scene->CreateComponent<Neon::Mesh>("toSave");
+			printf("End\n");
 
 			thrust::host_vector<MarchingCubes::TRIANGLE> host_triangles(triangles.begin(), triangles.end());
 
@@ -1137,18 +1157,8 @@ namespace NeonCUDA
 						{ t.p[0].x(), t.p[0].y(), t.p[0].z() },
 						{ t.p[1].x(), t.p[1].y(), t.p[1].z() },
 						{ t.p[2].x(), t.p[2].y(), t.p[2].z() });
-
-					
-					//auto vi0 = mesh->AddVertex({ t.p[0].x(), t.p[0].y(), t.p[0].z() });
-					//auto vi1 = mesh->AddVertex({ t.p[1].x(), t.p[1].y(), t.p[1].z() });
-					//auto vi2 = mesh->AddVertex({ t.p[2].x(), t.p[2].y(), t.p[2].z() });
-
-					//mesh->AddTriangle(vi0, vi1, vi2);
 				}
 			}
-			nvtxRangePop();
-
-			//mesh->ToSTLFile("C:\\saveData\\saved.stl");
 		}
 	}
 
@@ -1159,6 +1169,7 @@ namespace NeonCUDA
 		PrepareNewFrame();
 
 #pragma region Ready Voxels
+		nvtxRangePushA("@Aaron/SurfaceExtractor::NewFrame() - Ready Voxels");
 		{
 			auto transformedAABB = aabb;
 			transformedAABB.transform(Eigen::Transform<float, 3, Eigen::Affine>(transform));
@@ -1213,6 +1224,7 @@ namespace NeonCUDA
 				_voxelCenterPositions[index].z() = zpos;
 			});
 		}
+		nvtxRangePop();
 #pragma endregion
 
 #pragma region Visualize Voxel Center Positions
@@ -1231,6 +1243,7 @@ namespace NeonCUDA
 		//}
 #pragma endregion
 
+		nvtxRangePushA("@Aaron/SurfaceExtractor::NewFrame() - Calculate Depth");
 		{
 			auto _inputPoints = thrust::raw_pointer_cast(inputPoints.data());
 			auto _meshIndices = thrust::raw_pointer_cast(meshIndices.data());
@@ -1313,18 +1326,27 @@ namespace NeonCUDA
 								float distance = FLT_MAX;
 								auto direction = _transform.col(2);
 								//auto direction = Eigen::Vector3f(0.0f, 0.0f, 1.0f);
-								if (RayTriangleIntersect(Eigen::Vector3f(xpos, ypos, zpos), Eigen::Vector3f(direction.x(), direction.y(), direction.z()),
+								if (RayTriangleIntersect(
+									Eigen::Vector3f(xpos, ypos, zpos),
+									Eigen::Vector3f(direction.x(), direction.y(), direction.z()),
 									v0, v1, v2, false, distance))
 								{
-									if (fabsf(distance) < 0.5f)
+									if (fabsf(distance) <= __fsqrt_rn((_voxelSize * 0.5f) * (_voxelSize * 0.5f)) * 3 && distance < 0.0f)
 									{
-										distance *= 10.0f;
-
-										if (-distance < _voxelValues[z * (_voxelCountX * _voxelCountY) + y * _voxelCountX + x])
+										if (distance < _voxelValues[z * (_voxelCountX * _voxelCountY) + y * _voxelCountX + x])
 										{
-											_voxelValues[z * (_voxelCountX * _voxelCountY) + y * _voxelCountX + x] = -distance;
+											_voxelValues[z * (_voxelCountX * _voxelCountY) + y * _voxelCountX + x] = distance;
 										}
 									}
+
+									//if (distance > 0)
+									//{
+									//	_voxelValues[z * (_voxelCountX * _voxelCountY) + y * _voxelCountX + x] = -1;
+									//}
+									//else
+									//{
+									//	_voxelValues[z * (_voxelCountX * _voxelCountY) + y * _voxelCountX + x] = 1;
+									//}
 								}
 							}
 						}
@@ -1332,8 +1354,6 @@ namespace NeonCUDA
 				});
 			}
 #pragma endregion
-
-			thrust::device_vector<Eigen::Vector3f> tempPositions(voxelCountX* voxelCountY* voxelCountZ);
 
 #pragma region Transform voxels into input points local space and ray casting
 			//{
@@ -1373,32 +1393,33 @@ namespace NeonCUDA
 			//	}
 			//}
 
-			auto host_voxelValues = thrust::host_vector<float>(voxelValues);
-			for (size_t i = 0; i < hResolution * vResolution * hResolution; i++)
-			{
-				float distance = host_voxelValues[i];
-				if (FLT_VALID(distance))
-				{
-					auto zIndex = i / (_voxelCountX * _voxelCountY);
-					auto yIndex = (i % (_voxelCountX * _voxelCountY)) / _voxelCountX;
-					auto xIndex = (i % (_voxelCountX * _voxelCountY)) % _voxelCountX;
+			//auto host_voxelValues = thrust::host_vector<float>(voxelValues);
+			//for (size_t i = 0; i < hResolution * vResolution * hResolution; i++)
+			//{
+			//	float distance = host_voxelValues[i];
+			//	if (FLT_VALID(distance))
+			//	{
+			//		auto zIndex = i / (_voxelCountX * _voxelCountY);
+			//		auto yIndex = (i % (_voxelCountX * _voxelCountY)) / _voxelCountX;
+			//		auto xIndex = (i % (_voxelCountX * _voxelCountY)) % _voxelCountX;
 
-					float xpos = lastFrameAABB.min().x() + xIndex * voxelSize + voxelSize * 0.5f;
-					float ypos = lastFrameAABB.min().y() + yIndex * voxelSize + voxelSize * 0.5f;
-					float zpos = lastFrameAABB.min().z() + zIndex * voxelSize + voxelSize * 0.5f;
+			//		float xpos = lastFrameAABB.min().x() + xIndex * voxelSize + voxelSize * 0.5f;
+			//		float ypos = lastFrameAABB.min().y() + yIndex * voxelSize + voxelSize * 0.5f;
+			//		float zpos = lastFrameAABB.min().z() + zIndex * voxelSize + voxelSize * 0.5f;
 
-					if (distance < -0.5f) distance = -0.5f;
-					if (distance > 0.5f) distance = 0.5f;
+			//		if (distance < -0.5f) distance = -0.5f;
+			//		if (distance > 0.5f) distance = 0.5f;
 
-					float ratio = (distance + 1.0f) / 2.0f;
+			//		float ratio = (distance + 1.0f) / 2.0f;
 
-					glm::vec4 c = (1.0f - ratio) * glm::blue + ratio * glm::red;
-					c.a = 1.0f;
+			//		glm::vec4 c = (1.0f - ratio) * glm::blue + ratio * glm::red;
+			//		c.a = 1.0f;
 
-					scene->Debug("Mesh Contained Voxels")->AddPoint({ xpos, ypos, zpos }, c);
-				}
-			}
+			//		scene->Debug("Mesh Contained Voxels")->AddPoint({ xpos, ypos, zpos }, c);
+			//	}
+			//}
 		}
+		nvtxRangePop();
 
 		nvtxRangePop();
 	}

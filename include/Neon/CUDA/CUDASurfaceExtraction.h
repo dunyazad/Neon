@@ -12,9 +12,6 @@ namespace Neon
 
 namespace NeonCUDA
 {
-	void DoSurfaceExtractionWrapper(Neon::Scene* scene, Neon::Mesh* mesh, const Eigen::Matrix4f& transform);
-	void DoSurfaceExtraction(Neon::Scene* scene, const thrust::device_vector<Eigen::Vector3f>& inputPoints, const Eigen::AlignedBox3f& aabb, const Eigen::Matrix4f& transform);
-
 	class SurfaceExtractor
 	{
 	public:
@@ -41,6 +38,7 @@ namespace NeonCUDA
 		thrust::device_vector<float> voxelValues;
 		thrust::device_vector<Eigen::Vector3f> voxelCenterPositions;
 		thrust::device_vector<GLuint> meshIndices;
+		thrust::device_vector<MarchingCubes::TRIANGLE> triangles;
 
 		Eigen::AlignedBox3f lastFrameAABB;
 		size_t voxelCountX = 0;
