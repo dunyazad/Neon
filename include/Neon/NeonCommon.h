@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -18,6 +19,7 @@
 #include <set>
 #include <sstream>
 #include <stack>
+#include <stdio.h>
 #include <string>
 #include <thread>
 #include <typeinfo>
@@ -84,6 +86,40 @@ namespace glm
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
+
+#include <cudaGL.h>
+#include <cuda_gl_interop.h>
+
+#include <cuda_runtime.h>
+#include <cuda_runtime_api.h>
+#include <device_launch_parameters.h>
+
+#include <thrust/iterator/constant_iterator.h>
+#include <thrust/iterator/counting_iterator.h>
+#include <thrust/copy.h>
+#include <thrust/device_vector.h>
+#include <thrust/extrema.h>
+#include <thrust/functional.h>
+#include <thrust/generate.h>
+#include <thrust/host_vector.h>
+#include <thrust/reduce.h>
+#include <thrust/sort.h>
+#include <thrust/tuple.h>
+#include <thrust/iterator/zip_iterator.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_access.hpp>
+#include <glm/gtx/intersect.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/vector_angle.hpp>
+
+#include <Eigen/Core>
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
+#include <Eigen/LU>
 
 #define GLFW_DOUBLE_ACTION 4
 

@@ -23,9 +23,11 @@ add_subdirectory("External/eigen")
 if(USE_CUDA)
 set(cuda_source_list
 src/Neon/CUDA/HelloCUDA.cu
+src/Neon/CUDA/main.cu
 
 src/Neon/CUDA/CUDACommon.cuh
 src/Neon/CUDA/CUDACommon.cu
+src/Neon/CUDA/CUDAMesh.cu
 
 src/Neon/CUDA/CUDATest.cu
 src/Neon/CUDA/CUDATSDF.cu

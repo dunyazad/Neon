@@ -475,6 +475,23 @@ namespace Neon
 		}
 	}
 
+	inline std::vector<uint8_t> read_file_binary(const std::string& pathToFile)
+	{
+		std::ifstream file(pathToFile, std::ios::binary);
+		std::vector<uint8_t> fileBufferBytes;
+
+		if (file.is_open())
+		{
+			file.seekg(0, std::ios::end);
+			size_t sizeBytes = file.tellg();
+			file.seekg(0, std::ios::beg);
+			fileBufferBytes.resize(sizeBytes);
+			if (file.read((char*)fileBufferBytes.data(), sizeBytes)) return fileBufferBytes;
+		}
+		else throw std::runtime_error("could not open binary ifstream to path " + pathToFile);
+		return fileBufferBytes;
+	}
+
 	void Mesh::FromPLYFile(const URL& fileURL, float scaleX, float scaleY, float scaleZ)
 	{
 #pragma region Comment Out
@@ -944,6 +961,89 @@ namespace Neon
 		{
 			std::cerr << "Caught tinyply exception: " << e.what() << std::endl;
 		}
+	}
+
+	void Mesh::FromXYZWFile(const URL& fileURL, float scaleX, float scaleY, float scaleZ)
+	{
+		FILE* fp = nullptr;
+		auto err = fopen_s(&fp, fileURL.path.c_str(), "rb");
+		if (0 != err)
+		{
+			printf("[Deserialize] File \"%s\" open failed.", fileURL.path.c_str());
+		}
+
+		char buffer[1024];
+		memset(buffer, 0, 1024);
+		auto line = fgets(buffer, 1024, fp);
+		if (0 != strcmp(line, "XYZW\n"))
+			return;
+
+		line = fgets(buffer, 1024, fp);
+		while ('#' == line[0])
+		{
+			line = fgets(buffer, 1024, fp);
+		}
+
+		size_t vertexCount = 0;
+		size_t triangleCount = 0;
+		sscanf_s(line, "%d %d", &vertexCount, &triangleCount);
+
+		printf("vertexCount : %d, triangleCount : %d\n", vertexCount, triangleCount);
+
+		for (size_t i = 0; i < vertexCount; i++)
+		{
+			line = fgets(buffer, 1024, fp);
+			if (nullptr != line)
+			{
+				if ('#' == line[0])
+				{
+					i--;
+					continue;
+				}
+				else
+				{
+					float x, y, z, w;
+					sscanf_s(line, "%f %f %f %f\n", &x, &y, &z, &w);
+
+					AddVertex({ x, y, z });
+				}
+			}
+		}
+
+		for (size_t i = 0; i < triangleCount; i++)
+		{
+			line = fgets(buffer, 1024, fp);
+			if ('#' == line[0])
+			{
+				i--;
+				continue;
+			}
+			else
+			{
+				size_t count, i0, i1, i2;
+				int r, g, b;
+				sscanf_s(line, "%d %d %d %d %d %d %d\n", &count, &i0, &i1, &i2, &r, &g, &b);
+
+				AddIndex(i0);
+				AddIndex(i1);
+				AddIndex(i2);
+
+				AddColor(glm::vec4((float)(r) / 255.f, (float)(g) / 255.f, (float)(b) / 255.f, 1.0f));
+				AddColor(glm::vec4((float)(r) / 255.f, (float)(g) / 255.f, (float)(b) / 255.f, 1.0f));
+				AddColor(glm::vec4((float)(r) / 255.f, (float)(g) / 255.f, (float)(b) / 255.f, 1.0f));
+			}
+		}
+
+		//return false;
+
+		//while (nullptr != line)
+		//{
+		//	printf("%s", line);
+
+		//	line = fgets(buffer, 1024, fp);
+		//}
+
+		fclose(fp);
 	}
 
 	void Mesh::RecalculateFaceNormal()

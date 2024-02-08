@@ -23,7 +23,7 @@ namespace Neon
 			CheckGLError();
 		}
 
-		inline unsigned int ID() { return id; }
+		inline GLuint ID() { return id; }
 
 		virtual void Bind()
 		{

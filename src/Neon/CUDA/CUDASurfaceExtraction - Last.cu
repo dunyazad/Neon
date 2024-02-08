@@ -436,6 +436,10 @@ namespace NeonCUDA
 	}
 #pragma endregion
 
+	__device__ float atomicCAS_f32(float* p, float cmp, float val) {
+		return __int_as_float(atomicCAS((int*)p, __float_as_int(cmp), __float_as_int(val)));
+	}
+
 	struct MinMaxFunctor {
 		Eigen::Vector3f min_val;
 		Eigen::Vector3f max_val;
@@ -473,7 +477,7 @@ namespace NeonCUDA
 		}
 	};
 
-	bool __device__ RayTriangleIntersect(const Eigen::Vector3f& ray_origin, const Eigen::Vector3f& ray_direction,
+	bool __device__ __host__ RayTriangleIntersect(const Eigen::Vector3f& ray_origin, const Eigen::Vector3f& ray_direction,
 		const Eigen::Vector3f& v0, const Eigen::Vector3f& v1, const Eigen::Vector3f& v2, bool enable_backculling, float& distance)
 	{
 		using Eigen::Vector3f;
@@ -626,14 +630,6 @@ namespace NeonCUDA
 			gridcell.val[5] = values[z * countX * countY + (y + 1) * countX + (x + 1)];
 			gridcell.val[6] = values[(z + 1) * countX * countY + (y + 1) * countX + (x + 1)];
 			gridcell.val[7] = values[(z + 1) * countX * countY + (y + 1) * countX + x];
-
-			for (size_t i = 0; i < 8; i++)
-			{
-				if (false == FLT_VALID(gridcell.val[i]))
-				{
-					return;
-				}
-			}
 
 			int cubeindex = 0;
 			float isolevel = isoValue;
@@ -836,94 +832,6 @@ namespace NeonCUDA
 		}
 	};
 
-	void DoSurfaceExtractionWrapper(Neon::Scene* scene, Neon::Mesh* mesh, const Eigen::Matrix4f& transform)
-	{
-		size_t hResolution = 256;
-		size_t vResolution = 480;
-		float xUnit = 0.1f;
-		float yUnit = 0.1f;
-		float voxelSize = 0.1f;
-
-		auto inputPositions = mesh->GetVertexBuffer()->GetElements();
-
-		Eigen::AlignedBox3f aabb;
-
-#pragma region Mesh Vertices
-		thrust::host_vector<Eigen::Vector3f> host_meshVertices;
-		for (auto& p : inputPositions)
-		{
-			auto v = Eigen::Vector3f(p.x, p.y, p.z);
-			host_meshVertices.push_back(v);
-			if (VECTOR3_VALID(v))
-			{
-				aabb.extend(v);
-			}
-
-			scene->Debug("Point Input SurfaceExtraction")->AddPoint({ p.x, p.y, 0.0f });
-		}
-		thrust::device_vector<Eigen::Vector3f> inputPoints(host_meshVertices.begin(), host_meshVertices.end());
-#pragma endregion
-
-		//DoSurfaceExtraction(scene, inputPoints, aabb, transform);
-	}
-
-	void DoSurfaceExtraction(Neon::Scene* scene, const thrust::device_vector<Eigen::Vector3f>& inputPoints, const Eigen::AlignedBox3f& aabb, const Eigen::Matrix4f& transform)
-	{
-		size_t hResolution = 256;
-		size_t vResolution = 480;
-		float xUnit = 0.1f;
-		float yUnit = 0.1f;
-		float voxelSize = 0.1f;
-
-#pragma region Get transformed AABB of inputPoints
-		auto transformedAABB = aabb;
-		transformedAABB.transform(Eigen::Transform<float, 3, Eigen::Affine>(transform));
-		Neon::AABB aabbaabb({ transformedAABB.min().x(), transformedAABB.min().y(), transformedAABB.min().z() }, { transformedAABB.max().x(), transformedAABB.max().y(), transformedAABB.max().z() });
-		scene->Debug("aabb")->AddAABB(aabbaabb);
-#pragma endregion
-
-
-#pragma region Mesh Indices
-		nvtxRangePushA("@Aaron/Build Mesh Indices");
-		thrust::device_vector<size_t> meshIndices(hResolution * vResolution * 6);
-		auto _meshIndices = thrust::raw_pointer_cast(meshIndices.data());
-
-		thrust::for_each(
-			thrust::make_counting_iterator<size_t>(0),
-			thrust::make_counting_iterator<size_t>((hResolution - 1) * (vResolution - 1)),
-			[_meshIndices, hResolution, vResolution]__device__(size_t index) {
-
-			auto y = index / hResolution;
-			auto x = index % hResolution;
-
-			if (0 == x % 2 && 0 == y % 3)
-			{
-				auto i0 = hResolution * y + x;
-				auto i1 = hResolution * y + x + 2;
-				auto i2 = hResolution * (y + 3) + x;
-				auto i3 = hResolution * (y + 3) + x + 2;
-
-				if ((i0 >= hResolution * vResolution) ||
-					(i1 >= hResolution * vResolution) ||
-					(i2 >= hResolution * vResolution) ||
-					(i3 >= hResolution * vResolution))
-					return;
-
-				_meshIndices[index * 6 + 0] = i0;
-				_meshIndices[index * 6 + 1] = i1;
-				_meshIndices[index * 6 + 2] = i2;
-
-				_meshIndices[index * 6 + 3] = i2;
-				_meshIndices[index * 6 + 4] = i1;
-				_meshIndices[index * 6 + 5] = i3;
-			}
-		});
-		nvtxRangePop();
-#pragma endregion
-
-
-	}
-
 	SurfaceExtractor::SurfaceExtractor(size_t hResolution, size_t vResolution, float voxelSize)
 		: hResolution(hResolution), vResolution(vResolution), voxelSize(voxelSize)
 	{
@@ -936,11 +844,11 @@ namespace NeonCUDA
 
 	void SurfaceExtractor::Initialize()
 	{
+		depthMap = thrust::device_vector<float>(hResolution * vResolution, FLT_MAX);
+
 		voxelValues = thrust::device_vector<float>(hResolution * vResolution * hResolution, FLT_MAX);
-		//auto _voxelValues = thrust::raw_pointer_cast(voxelValues.data());
 
 		voxelCenterPositions = thrust::device_vector<Eigen::Vector3f>(hResolution * vResolution * hResolution, Eigen::Vector3f(FLT_MAX, FLT_MAX, FLT_MAX));
-		//auto _voxelCenterPositions = thrust::raw_pointer_cast(voxelCenterPositions.data());
 
 		nvtxRangePushA("@Aaron/Build Mesh Indices");
 		meshIndices = thrust::device_vector<GLuint>(hResolution * vResolution * 6);
@@ -969,7 +877,7 @@ namespace NeonCUDA
 					(i2 >= _hResolution * _vResolution) ||
 					(i3 >= _hResolution * _vResolution))
 					return;
-
+				
 				_meshIndices[index * 6 + 0] = i0;
 				_meshIndices[index * 6 + 1] = i1;
 				_meshIndices[index * 6 + 2] = i2;
@@ -986,14 +894,184 @@ namespace NeonCUDA
 	{
 		nvtxRangePushA("@Aaron/SurfaceExtractor::PrepareNewFrame()");
 
-		thrust::fill(voxelValues.begin(), voxelValues.end(), FLT_MAX);
+		thrust::fill(depthMap.begin(), depthMap.end(), FLT_MAX);
+		thrust::fill(voxelValues.begin(), voxelValues.end(), -FLT_MAX);
 		thrust::fill(voxelCenterPositions.begin(), voxelCenterPositions.end(), Eigen::Vector3f(FLT_MAX, FLT_MAX, FLT_MAX));
 		lastFrameAABB.setEmpty();
 
 		nvtxRangePop();
 	}
 
-	void SurfaceExtractor::NewFrameWrapper(Neon::Scene* scene, Neon::Mesh* mesh, const Eigen::Matrix4f& transform)
+	void SurfaceExtractor::BuildDepthMap(const thrust::device_vector<Eigen::Vector3f>& inputPoints)
+	{
+		nvtxRangePushA("@Aaron/SurfaceExtractor::BuildDepthMap()");
+
+		auto _depthMap = thrust::raw_pointer_cast(depthMap.data());
+		auto _inputPoints = thrust::raw_pointer_cast(inputPoints.data());
+		auto _meshIndices = thrust::raw_pointer_cast(meshIndices.data());
+
+		auto _hResolution = hResolution;
+		auto _vResolution = vResolution;
+
+		auto _halfWidth = ((float)hResolution * xUnit) * 0.5f;
+		auto _halfHeight = ((float)vResolution * yUnit) * 0.5f;
+
+		auto _xUnit = xUnit;
+		auto _yUnit = yUnit;
+		auto _zUnit = voxelSize;
+
+		//thrust::for_each(
+		//	thrust::make_counting_iterator<GLuint>(0),
+		//	thrust::make_counting_iterator<GLuint>(hResolution * vResolution * 2),
+		//	[_depthMap, _inputPoints, _meshIndices, _hResolution, _vResolution, _halfWidth, _halfHeight,
+		//	_xUnit, _yUnit, _zUnit]__device__(GLuint index) {
+		//	GLuint i0 = _meshIndices[index * 3 + 0];
+		//	GLuint i1 = _meshIndices[index * 3 + 1];
+		//	GLuint i2 = _meshIndices[index * 3 + 2];
+
+		//	auto& p0 = _inputPoints[i0];
+		//	auto& p1 = _inputPoints[i1];
+		//	auto& p2 = _inputPoints[i2];
+
+		//	if (false == VECTOR3_VALID(p0) || false == VECTOR3_VALID(p1) || false == VECTOR3_VALID(p2))
+		//		return;
+
+		//	auto aabb = Eigen::AlignedBox3f();
+		//	aabb.extend(p0);
+		//	aabb.extend(p1);
+		//	aabb.extend(p2);
+
+		//	float qminx = floorf(aabb.min().x() / _xUnit) * _xUnit;
+		//	float qminy = floorf(aabb.min().y() / _yUnit) * _yUnit;
+		//	float qminz = floorf(aabb.min().z() / _zUnit) * _zUnit;
+
+		//	float qmaxx = ceilf(aabb.max().x() / _xUnit) * _xUnit;
+		//	float qmaxy = ceilf(aabb.max().y() / _yUnit) * _yUnit;
+		//	float qmaxz = ceilf(aabb.max().z() / _zUnit) * _zUnit;
+
+		//	for (float y = qminy; y <= qmaxy; y += _yUnit)
+		//	{
+		//		for (float x = qminx; x <= qmaxx; x += _xUnit)
+		//		{
+		//			//printf("%f %f\n", (x + _halfWidth), (y + _halfHeight));
+
+		//			//{
+		//			//	auto xIndex = (size_t)floorf((x + _halfWidth) / _xUnit);
+		//			//	auto yIndex = (size_t)floorf((y + _halfHeight) / _yUnit);
+		//			//	_depthMap[yIndex * _hResolution + xIndex] = 1.0f;
+		//			//}
+		//			//continue;
+
+		//			float distance = FLT_MAX;
+		//			if (RayTriangleIntersect(Eigen::Vector3f(x, y, 0.0f), Eigen::Vector3f(0.0f, 0.0f, 1.0f), p0, p1, p2, false, distance))
+		//			{
+		//				auto xIndex = (size_t)floorf((x + _halfWidth) / ((float)_hResolution * _xUnit));
+		//				auto yIndex = (size_t)floorf((y + _halfHeight) / ((float)_vResolution * _yUnit));
+
+		//				printf("%d %d\n", xIndex, yIndex);
+
+		//				_depthMap[yIndex * _hResolution + xIndex] = distance;
+		//			}
+		//		}
+		//	}
+		//});
+
+		nvtxRangePop();
+
+		auto host_inputPoints = thrust::host_vector<Eigen::Vector3f>(inputPoints);
+		auto host_meshIndices = thrust::host_vector<GLuint>(meshIndices);
+		auto host_depthMap = thrust::host_vector<float>(depthMap);
+
+		cudaDeviceSynchronize();
+
+		//for (size_t index = 0; index < hResolution * vResolution * 2; index++)
+		//{
+		//	GLuint i0 = host_meshIndices[index * 3 + 0];
+		//	GLuint i1 = host_meshIndices[index * 3 + 1];
+		//	GLuint i2 = host_meshIndices[index * 3 + 2];
+
+		//	auto& p0 = host_inputPoints[i0];
+		//	auto& p1 = host_inputPoints[i1];
+		//	auto& p2 = host_inputPoints[i2];
+
+		//	if (false == VECTOR3_VALID(p0) || false == VECTOR3_VALID(p1) || false == VECTOR3_VALID(p2))
+		//		continue;
+
+		//	auto aabb = Eigen::AlignedBox3f();
+		//	aabb.extend(p0);
+		//	aabb.extend(p1);
+		//	aabb.extend(p2);
+
+		//	float qminx = floorf((aabb.min().x()) / _xUnit) * _xUnit;
+		//	float qminy = floorf((aabb.min().y()) / _yUnit) * _yUnit;
+
+		//	float qmaxx = ceilf((aabb.max().x()) / _xUnit) * _xUnit;
+		//	float qmaxy = ceilf((aabb.max().y()) / _yUnit) * _yUnit;
+
+		//	for (float y = qminy; y <= qmaxy; y += _yUnit)
+		//	{
+		//		for (float x = qminx; x <= qmaxx; x += _xUnit)
+		//		{
+		//			//printf("%f %f\n", (x + _halfWidth), (y + _halfHeight));
+
+		//			//{
+		//			//	auto xIndex = (size_t)floorf((x + _halfWidth) / _xUnit);
+		//			//	auto yIndex = (size_t)floorf((y + _halfHeight) / _yUnit);
+		//			//	_depthMap[yIndex * _hResolution + xIndex] = 1.0f;
+		//			//}
+		//			//continue;
+
+		//			float distance = FLT_MAX;
+		//			if (RayTriangleIntersect(Eigen::Vector3f(x, y, 0.0f), Eigen::Vector3f(0.0f, 0.0f, 1.0f), p0, p1, p2, false, distance))
+		//			{
+		//				auto xIndex = (size_t)((x - _halfWidth) / xUnit);
+		//				auto yIndex = (size_t)((y - _halfHeight) / yUnit);
+		//				
+		//				if ((0 <= xIndex && xIndex <= _hResolution - 1) &&
+		//					(0 <= yIndex && yIndex <= _vResolution - 1))
+		//				{
+		//					host_depthMap[yIndex * _hResolution + xIndex] = distance;
+		//				}
+
+		//				scene->Debug("Intersection")->AddPoint({ x, y, 0.0f }, glm::red);
+
+		//				scene->Debug("DepthMap_")->AddPoint({ (float)xIndex * xUnit - _halfWidth, (float)yIndex * yUnit - _halfHeight,  0 }, glm::blue);
+		//			}
+		//		}
+		//	}
+		//}
+
+		for (size_t y = 0; y < _vResolution; y++)
+		{
+			for (size_t x = 0; x < _hResolution; x++)
+			{
+				//host_depthMap[y * _hResolution + x] = 1.0f;
+
+				auto xpos = (float)x * xUnit - _halfWidth;
+				auto ypos = (float)y * yUnit - _halfHeight;
+
+				auto xIndex = (size_t)((xpos) / xUnit);
+				auto yIndex = (size_t)((ypos) / yUnit);
+
+				scene->Debug("DepthMap")->AddPoint({ xIndex * xUnit - _halfWidth, yIndex * yUnit - _halfHeight,  0 });
+				scene->Debug("DepthMap")->AddPoint({ xIndex * xUnit - _halfWidth, yIndex * yUnit - _halfHeight,  0 });
+			}
+		}
+		
+		for (size_t y = 0; y <= vResolution; y++)
+		{
+			for (size_t x = 0; x <= hResolution; x++)
+			{
+				float z = host_depthMap[y * hResolution + x];
+				if (FLT_VALID(z))
+				{
+					scene->Debug("DepthMap")->AddPoint({ x * xUnit - _halfWidth, y * yUnit - _halfHeight,  0 });
+				}
+			}
+		}
+	}
+
+	void SurfaceExtractor::NewFrameWrapper(Neon::Scene* scene, Neon::Mesh* mesh, const Eigen::Matrix4f& transformMatrix)
 	{
 		this->scene = scene;
 
@@ -1061,13 +1139,28 @@ namespace NeonCUDA
 				auto& p1 = host_meshVertices[i1];
 				auto& p2 = host_meshVertices[i2];
 
-				auto v0 = transform * Eigen::Vector4f(p0.x(), p0.y(), p0.z(), 1.0f);
-				auto v1 = transform * Eigen::Vector4f(p1.x(), p1.y(), p1.z(), 1.0f);
-				auto v2 = transform * Eigen::Vector4f(p2.x(), p2.y(), p2.z(), 1.0f);
-
-				if (false == VECTOR3_VALID(v0) || false == VECTOR3_VALID(v1) || false == VECTOR3_VALID(v2))
+				if (false == VECTOR3_VALID(p0) || false == VECTOR3_VALID(p1) || false == VECTOR3_VALID(p2))
 					continue;
 
+				scene->Debug("input triangles")->AddTriangle(
+					{ p0.x(), p0.y(), 0.0f /*p0.z()*/ },
+					{ p2.x(), p2.y(), 0.0f /*p2.z()*/ },
+					{ p1.x(), p1.y(), 0.0f /*p1.z()*/ },
+					glm::green, glm::green, glm::green);
+				continue;
+
+				auto tp0 = Eigen::Vector4f(p0.x(), p0.y(), p0.z(), 1.0f);
+				auto tp1 = Eigen::Vector4f(p1.x(), p1.y(), p1.z(), 1.0f);
+				auto tp2 = Eigen::Vector4f(p2.x(), p2.y(), p2.z(), 1.0f);
+
+				auto tv0 = transformMatrix * tp0;
+				auto tv1 = transformMatrix * tp1;
+				auto tv2 = transformMatrix * tp2;
+
+				auto v0 = Eigen::Vector3f(tv0.x(), tv0.y(), tv0.z());
+				auto v1 = Eigen::Vector3f(tv1.x(), tv1.y(), tv1.z());
+				auto v2 = Eigen::Vector3f(tv2.x(), tv2.y(), tv2.z());
+								
 				scene->Debug("input triangles")->AddTriangle(
 					{ v0.x(), v0.y(), v0.z() },
 					{ v2.x(), v2.y(), v2.z() },
@@ -1086,7 +1179,7 @@ namespace NeonCUDA
 		//transformation_matrix.translation() << tx, ty, tz;
 		//NewFrame(inputPoints, aabb, transformation_matrix.matrix());
 
-		NewFrame(inputPoints, aabb, transform);
+		NewFrame(inputPoints, aabb, transformMatrix);
 
 		{
 			float isoValue = 0.0f;
@@ -1116,10 +1209,10 @@ namespace NeonCUDA
 			buildGridFunctor.minZ = lastFrameAABB.center().z() - (float)voxelCountZ * voxelSize * 0.5f;
 			buildGridFunctor.voxelSize = voxelSize;
 			buildGridFunctor.isoValue = isoValue;
-			buildGridFunctor.direction = Eigen::Vector3f(transform.col(2).x(), transform.col(2).y(), transform.col(2).z());
-			buildGridFunctor.transform = transform;
+			buildGridFunctor.direction = Eigen::Vector3f(transformMatrix.col(2).x(), transformMatrix.col(2).y(), transformMatrix.col(2).z());
+			buildGridFunctor.transform = transformMatrix;
 			//buildGridFunctor.direction = Eigen::Vector3f(0.0f, 0.0f, 1.0f);
-			buildGridFunctor.omitOppositeDirectionFaces = false;
+			//buildGridFunctor.omitOppositeDirectionFaces = false;
 
 			printf("Start\n");
 
@@ -1160,142 +1253,309 @@ namespace NeonCUDA
 		}
 	}
 
-	void SurfaceExtractor::NewFrame(const thrust::device_vector<Eigen::Vector3f>& inputPoints, const Eigen::AlignedBox3f& aabb, const Eigen::Matrix4f& transform)
+	void SurfaceExtractor::NewFrame(const thrust::device_vector<Eigen::Vector3f>& inputPoints, const Eigen::AlignedBox3f& aabb, const Eigen::Matrix4f& transformMatrix)
 	{
-	}
+		nvtxRangePushA("@Aaron/SurfaceExtractor::NewFrame()");
 
-	void BuildDepthMapTest(Neon::Scene* scene, Neon::Mesh* mesh, Eigen::Matrix4f& transform)
-	{
-		size_t hResolution = 256;
-		size_t vResolution = 480;
-		size_t pointsInTexel = 64;
-		float xUnit = 0.1f;
-		float yUnit = 0.1f;
+		PrepareNewFrame();
 
-		Eigen::AlignedBox3f aabb;
+		BuildDepthMap(inputPoints);
 
-		thrust::host_vector<Eigen::Vector3f> host_inputPoints;
-		for (auto& v : mesh->GetVertexBuffer()->GetElements())
+#pragma region Ready Voxels
 		{
-			auto p = Eigen::Vector3f(v.x, v.y, v.z);
-			if (VECTOR3_VALID(p))
-			{
-				aabb.extend(p);
-			}
-			host_inputPoints.push_back(p);
-		}
-		thrust::device_vector<Eigen::Vector3f> inputPoints(host_inputPoints);
-		auto _inputPoints = thrust::raw_pointer_cast(inputPoints.data());
+			auto transformedAABB = aabb;
+			transformedAABB.transform(Eigen::Transform<float, 3, Eigen::Affine>(transformMatrix));
 
-		auto length = aabb.max() - aabb.min();
-		printf("min : %f, %f, %f\nmax : %f, %f, %f\nlength : %f, %f, %f\n",
-			aabb.min().x(), aabb.min().y(), aabb.min().z(),
-			aabb.max().x(), aabb.max().y(), aabb.max().z(),
-			length.x(), length.y(), length.z());
+			float xmin = floorf(transformedAABB.min().x() / voxelSize) * voxelSize;
+			float ymin = floorf(transformedAABB.min().y() / voxelSize) * voxelSize;
+			float zmin = floorf(transformedAABB.min().z() / voxelSize) * voxelSize;
 
-#pragma region Quantize the points
-		{
-			thrust::device_vector<Eigen::Vector3f> quantizedPoints(hResolution * vResolution * pointsInTexel);
-			auto _quantizedPoints = thrust::raw_pointer_cast(quantizedPoints.data());
-			thrust::device_vector<int> quantizedPointsCount(hResolution * vResolution, 0);
-			auto _quantizedPointsCount = thrust::raw_pointer_cast(quantizedPointsCount.data());
+			float xmax = ceilf(transformedAABB.max().x() / voxelSize) * voxelSize;
+			float ymax = ceilf(transformedAABB.max().y() / voxelSize) * voxelSize;
+			float zmax = ceilf(transformedAABB.max().z() / voxelSize) * voxelSize;
+
+			//scene->Debug("TAABB")->AddAABB(
+			//	Neon::AABB(
+			//		{ transformedAABB.min().x() , transformedAABB.min().y() , transformedAABB.min().z() },
+			//		{ transformedAABB.max().x() , transformedAABB.max().y() , transformedAABB.max().z() }));
+
+			lastFrameAABB = Eigen::AlignedBox3f(Eigen::Vector3f(xmin, ymin, zmin), Eigen::Vector3f(xmax, ymax, zmax));
+			voxelCountX = (size_t)((xmax - xmin) / voxelSize);
+			voxelCountY = (size_t)((ymax - ymin) / voxelSize);
+			voxelCountZ = (size_t)((zmax - zmin) / voxelSize);
+
+			//scene->Debug("TAABB")->AddAABB(
+			//	Neon::AABB(
+			//		{ lastFrameAABB.min().x() , lastFrameAABB.min().y() , lastFrameAABB.min().z() },
+			//		{ lastFrameAABB.max().x() , lastFrameAABB.max().y() , lastFrameAABB.max().z() }));
+
+			auto _lastFrameAABB = lastFrameAABB;
+			auto _voxelCountX = voxelCountX;
+			auto _voxelCountY = voxelCountY;
+			auto _voxelCountZ = voxelCountZ;
+			auto _voxelSize = voxelSize;
+
+			auto _voxelCenterPositions = thrust::raw_pointer_cast(voxelCenterPositions.data());
 
 			thrust::for_each(
 				thrust::make_counting_iterator<size_t>(0),
-				thrust::make_counting_iterator<size_t>(hResolution * vResolution),
-				[hResolution, vResolution, pointsInTexel, xUnit, yUnit, _inputPoints, _quantizedPoints, _quantizedPointsCount]
+				thrust::make_counting_iterator<size_t>(hResolution * vResolution * hResolution),
+				[_lastFrameAABB, _voxelCountX, _voxelCountY, _voxelCountZ, _voxelSize, _voxelCenterPositions]
 				__device__(size_t index) {
-				auto& p = _inputPoints[index];
-				if (VECTOR3_VALID(p))
-				{
-					if (p.x() == 0 && p.y() == 0 && p.z() == 0)
+
+				auto zIndex = index / (_voxelCountX * _voxelCountY);
+				auto yIndex = (index % (_voxelCountX * _voxelCountY)) / _voxelCountX;
+				auto xIndex = (index % (_voxelCountX * _voxelCountY)) % _voxelCountX;
+
+				float xpos = _lastFrameAABB.min().x() + xIndex * _voxelSize + _voxelSize * 0.5f;
+				float ypos = _lastFrameAABB.min().y() + yIndex * _voxelSize + _voxelSize * 0.5f;
+				float zpos = _lastFrameAABB.min().z() + zIndex * _voxelSize + _voxelSize * 0.5f;
+
+				_voxelCenterPositions[index].x() = xpos;
+				_voxelCenterPositions[index].y() = ypos;
+				_voxelCenterPositions[index].z() = zpos;
+			});
+		}
+#pragma endregion
+
+#pragma region Visualize Voxel Center Positions
+		//{
+		//	auto host_voxelCenterPositions = thrust::host_vector<Eigen::Vector3f>(voxelCenterPositions);
+
+		//	for (size_t i = 0; i < host_voxelCenterPositions.size(); i++)
+		//	{
+		//		auto& v = host_voxelCenterPositions[i];
+
+		//		if (lastFrameAABB.contains(v))
+		//		{
+		//			scene->Debug("Voxel Positions")->AddPoint(glm::make_vec3(v.data()), glm::red);
+		//		}
+		//	}
+		//}
+#pragma endregion
+
+		{
+			auto _inputPoints = thrust::raw_pointer_cast(inputPoints.data());
+			auto _meshIndices = thrust::raw_pointer_cast(meshIndices.data());
+			auto _voxelValues = thrust::raw_pointer_cast(voxelValues.data());
+			auto _transform = transformMatrix;
+			auto _inverseTransform = Eigen::Matrix4f(transformMatrix.inverse());
+
+			//scene->Debug("TAABB")->AddAABB(
+			//	Neon::AABB(
+			//		{ lastFrameAABB.min().x() , lastFrameAABB.min().y() , lastFrameAABB.min().z() },
+			//		{ lastFrameAABB.max().x() , lastFrameAABB.max().y() , lastFrameAABB.max().z() }));
+
+
+			auto _lastFrameAABB = lastFrameAABB;
+			auto _voxelCountX = voxelCountX;
+			auto _voxelCountY = voxelCountY;
+			auto _voxelCountZ = voxelCountZ;
+			auto _voxelSize = voxelSize;
+
+			auto _voxelCenterPositions = thrust::raw_pointer_cast(voxelCenterPositions.data());
+
+			{
+				thrust::for_each(
+					thrust::make_counting_iterator<GLuint>(0),
+					thrust::make_counting_iterator<GLuint>(hResolution * vResolution * 2),
+					[_inputPoints, _meshIndices, _transform, _voxelValues, _lastFrameAABB, _voxelCountX, _voxelCountY, _voxelCountZ, _voxelSize]
+					__device__(GLuint index) {
+					GLuint i0 = _meshIndices[index * 3 + 0];
+					GLuint i1 = _meshIndices[index * 3 + 1];
+					GLuint i2 = _meshIndices[index * 3 + 2];
+
+					auto& p0 = _inputPoints[i0];
+					auto& p1 = _inputPoints[i1];
+					auto& p2 = _inputPoints[i2];
+
+					auto tv0 = _transform * Eigen::Vector4f(p0.x(), p0.y(), p0.z(), 1.0f);
+					auto tv1 = _transform * Eigen::Vector4f(p1.x(), p1.y(), p1.z(), 1.0f);
+					auto tv2 = _transform * Eigen::Vector4f(p2.x(), p2.y(), p2.z(), 1.0f);
+
+					auto v0 = Eigen::Vector3f(tv0.x(), tv0.y(), tv0.z());
+					auto v1 = Eigen::Vector3f(tv1.x(), tv1.y(), tv1.z());
+					auto v2 = Eigen::Vector3f(tv2.x(), tv2.y(), tv2.z());
+
+					if (false == VECTOR3_VALID(v0) || false == VECTOR3_VALID(v1) || false == VECTOR3_VALID(v2))
 						return;
 
-					auto xIndex = (size_t)(int)floorf((p.x() / xUnit + (float)hResolution * 0.5f));
-					auto yIndex = (size_t)(int)floorf((p.y() / yUnit + (float)vResolution * 0.5f));
+					auto aabb = Eigen::AlignedBox3f();
+					aabb.extend(v0);
+					aabb.extend(v1);
+					aabb.extend(v2);
 
-					if ((0 <= xIndex && xIndex < hResolution - 1) &&
-						(0 <= yIndex && yIndex < vResolution - 1))
+					size_t xminIndex = (size_t)floorf((aabb.min().x() - _lastFrameAABB.min().x()) / _voxelSize);
+					size_t yminIndex = (size_t)floorf((aabb.min().y() - _lastFrameAABB.min().y()) / _voxelSize);
+					size_t zminIndex = (size_t)floorf((aabb.min().z() - _lastFrameAABB.min().z()) / _voxelSize);
+
+					size_t xmaxIndex = (size_t)ceilf((aabb.max().x() - _lastFrameAABB.min().x()) / _voxelSize);
+					size_t ymaxIndex = (size_t)ceilf((aabb.max().y() - _lastFrameAABB.min().y()) / _voxelSize);
+					size_t zmaxIndex = (size_t)ceilf((aabb.max().z() - _lastFrameAABB.min().z()) / _voxelSize);
+
+
+					xminIndex -= 10; if (xminIndex < 0) xminIndex = 0;
+					yminIndex -= 10; if (yminIndex < 0) yminIndex = 0;
+					zminIndex -= 10; if (zminIndex < 0) zminIndex = 0;
+
+					xmaxIndex += 10; if (xmaxIndex > _voxelCountX - 1) xmaxIndex = _voxelCountX - 1;
+					ymaxIndex += 10; if (ymaxIndex > _voxelCountY - 1) ymaxIndex = _voxelCountY - 1;
+					zmaxIndex += 10; if (zmaxIndex > _voxelCountZ - 1) zmaxIndex = _voxelCountZ - 1;
+
+					for (size_t z = zminIndex; z < zmaxIndex; z++)
 					{
-						auto lastCount = atomicAdd(&_quantizedPointsCount[index], 1);
+						for (size_t y = yminIndex; y < ymaxIndex; y++)
+						{
+							for (size_t x = xminIndex; x < xmaxIndex; x++)
+							{
+								float xpos = _lastFrameAABB.min().x() + x * _voxelSize + _voxelSize * 0.5f;
+								float ypos = _lastFrameAABB.min().y() + y * _voxelSize + _voxelSize * 0.5f;
+								float zpos = _lastFrameAABB.min().z() + z * _voxelSize + _voxelSize * 0.5f;
 
-						_quantizedPoints[yIndex * (hResolution * pointsInTexel) + xIndex * pointsInTexel + lastCount] = p;
+								float distance = FLT_MAX;
+								auto direction = _transform.col(2);
+								//auto direction = Eigen::Vector3f(0.0f, 0.0f, 1.0f);
+								if (RayTriangleIntersect(Eigen::Vector3f(xpos, ypos, zpos), Eigen::Vector3f(direction.x(), direction.y(), direction.z()),
+									v0, v1, v2, false, distance))
+								{
+									if (fabsf(distance) < 0.5f)
+									{
+										if (-distance < _voxelValues[z * (_voxelCountX * _voxelCountY) + y * _voxelCountX + x])
+										{
+											_voxelValues[z * (_voxelCountX * _voxelCountY) + y * _voxelCountX + x] = -distance;
+										}
+									}
+								}
+							}
+						}
 					}
-				}
-			});
-
-			//host_inputPoints = thrust::host_vector<Eigen::Vector3f>(inputPoints);
-			auto host_quantizedPoints = thrust::host_vector<Eigen::Vector3f>(quantizedPoints);
-			auto host_quantizedPointsCount = thrust::host_vector<int>(quantizedPointsCount);
-
-			for (size_t i = 0; i < hResolution * vResolution; i++)
-			{
-				//auto& op = host_inputPoints[i];
-				//scene->Debug("Original Point ???")->AddPoint({ op.x(), op.y(), 0.0f });
-				
-				auto& qp = host_quantizedPoints[i * pointsInTexel + host_quantizedPointsCount[i]];
-				if (VECTOR3_VALID(qp))
-				{
-					if (qp.x() == 0 && qp.y() == 0 && qp.z() == 0)
-						continue;
-
-					scene->Debug("Quantized Point")->AddPoint({ qp.x(), qp.y(), qp.z() }, glm::blue);
-				}
+				});
 			}
+
+#if 0
+			{
+				thrust::for_each(
+					thrust::make_counting_iterator<GLuint>(0),
+					thrust::make_counting_iterator<GLuint>(hResolution * vResolution * 2),
+					[_inputPoints, _meshIndices, _transform, _inverseTransform,
+					_voxelValues, _lastFrameAABB, _voxelCountX, _voxelCountY, _voxelCountZ, _voxelSize]
+					__device__(GLuint index) {
+					GLuint i0 = _meshIndices[index * 3 + 0];
+					GLuint i1 = _meshIndices[index * 3 + 1];
+					GLuint i2 = _meshIndices[index * 3 + 2];
+
+					auto& p0 = _inputPoints[i0];
+					auto& p1 = _inputPoints[i1];
+					auto& p2 = _inputPoints[i2];
+
+					auto tv0 = _transform * Eigen::Vector4f(p0.x(), p0.y(), p0.z(), 1.0f);
+					auto tv1 = _transform * Eigen::Vector4f(p1.x(), p1.y(), p1.z(), 1.0f);
+					auto tv2 = _transform * Eigen::Vector4f(p2.x(), p2.y(), p2.z(), 1.0f);
+
+					auto v0 = Eigen::Vector3f(tv0.x(), tv0.y(), tv0.z());
+					auto v1 = Eigen::Vector3f(tv1.x(), tv1.y(), tv1.z());
+					auto v2 = Eigen::Vector3f(tv2.x(), tv2.y(), tv2.z());
+
+					if (false == VECTOR3_VALID(v0) || false == VECTOR3_VALID(v1) || false == VECTOR3_VALID(v2))
+						return;
+
+					auto aabb = Eigen::AlignedBox3f();
+					aabb.extend(v0);
+					aabb.extend(v1);
+					aabb.extend(v2);
+
+					size_t xminIndex = (size_t)floorf((aabb.min().x() - _lastFrameAABB.min().x()) / _voxelSize);
+					size_t yminIndex = (size_t)floorf((aabb.min().y() - _lastFrameAABB.min().y()) / _voxelSize);
+					size_t zminIndex = (size_t)floorf((aabb.min().z() - _lastFrameAABB.min().z()) / _voxelSize);
+
+					size_t xmaxIndex = (size_t)ceilf((aabb.max().x() - _lastFrameAABB.min().x()) / _voxelSize);
+					size_t ymaxIndex = (size_t)ceilf((aabb.max().y() - _lastFrameAABB.min().y()) / _voxelSize);
+					size_t zmaxIndex = (size_t)ceilf((aabb.max().z() - _lastFrameAABB.min().z()) / _voxelSize);
+
+					xminIndex -= 10; if (xminIndex < 0) xminIndex = 0;
+					yminIndex -= 10; if (yminIndex < 0) yminIndex = 0;
+					zminIndex -= 10; if (zminIndex < 0) zminIndex = 0;
+
+					xmaxIndex += 10; if (xmaxIndex > _voxelCountX - 1) xmaxIndex = _voxelCountX - 1;
+					ymaxIndex += 10; if (ymaxIndex > _voxelCountY - 1) ymaxIndex = _voxelCountY - 1;
+					zmaxIndex += 10; if (zmaxIndex > _voxelCountZ - 1) zmaxIndex = _voxelCountZ - 1;
+
+					for (size_t z = zminIndex; z < zmaxIndex; z++)
+					{
+						for (size_t y = yminIndex; y < ymaxIndex; y++)
+						{
+							for (size_t x = xminIndex; x < xmaxIndex; x++)
+							{
+								float xpos = _lastFrameAABB.min().x() + (float)x * _voxelSize + _voxelSize * 0.5f;
+								float ypos = _lastFrameAABB.min().y() + (float)y * _voxelSize + _voxelSize * 0.5f;
+								float zpos = _lastFrameAABB.min().z() + (float)z * _voxelSize + _voxelSize * 0.5f;
+
+								Eigen::Vector4f vc(xpos, ypos, zpos, 1.0f);
+								auto ivc = _inverseTransform * vc;
+
+								float distance = FLT_MAX;
+								auto direction = Eigen::Vector3f(0.0f, 0.0f, 1.0f);
+								if (RayTriangleIntersect(Eigen::Vector3f(ivc.x(), ivc.y(), ivc.z()), Eigen::Vector3f(direction.x(), direction.y(), direction.z()),
+									p0, p1, p2, false, distance))
+								{
+									//float value = distance - zpos;
+									float value = zpos - distance;
+									//if (fabsf(value) < 1.0f)
+									{
+										//atomicCAS_f32(&_voxelValues[z * (_voxelCountX * _voxelCountY) + y * _voxelCountX + x], _voxelValues[z * (_voxelCountX * _voxelCountY) + y * _voxelCountX + x], value);
+
+										if (fabsf(value) < fabsf(_voxelValues[z * (_voxelCountX * _voxelCountY) + y * _voxelCountX + x]))
+										{
+											_voxelValues[z * (_voxelCountX * _voxelCountY) + y * _voxelCountX + x] = value;
+											//printf("%f\n", _voxelValues[z * (_voxelCountX * _voxelCountY) + y * _voxelCountX + x]);
+										}
+									}
+								}
+							}
+						}
+					}
+				});
+			}
+#endif // 0
+
+
+			//auto host_tempPositions = thrust::host_vector<Eigen::Vector3f>(tempPositions);
+			//for (size_t i = 0; i < voxelCountX * voxelCountY * voxelCountZ; i++)
+			//{
+			//	auto& iv = host_tempPositions[i];
+			//	if (VECTOR3_VALID(iv))
+			//	{
+			//		scene->Debug("iv")->AddPoint({ iv.x(), iv.y(), iv.z() }, glm::red);
+			//	}
+			//}
+
+			//auto host_voxelValues = thrust::host_vector<float>(voxelValues);
+			//for (size_t i = 0; i < hResolution * vResolution * hResolution; i++)
+			//{
+			//	float distance = host_voxelValues[i];
+			//	if (FLT_VALID(distance))
+			//	{
+			//		auto zIndex = i / (_voxelCountX * _voxelCountY);
+			//		auto yIndex = (i % (_voxelCountX * _voxelCountY)) / _voxelCountX;
+			//		auto xIndex = (i % (_voxelCountX * _voxelCountY)) % _voxelCountX;
+
+			//		float xpos = lastFrameAABB.min().x() + xIndex * voxelSize + voxelSize * 0.5f;
+			//		float ypos = lastFrameAABB.min().y() + yIndex * voxelSize + voxelSize * 0.5f;
+			//		float zpos = lastFrameAABB.min().z() + zIndex * voxelSize + voxelSize * 0.5f;
+
+			//		if (distance < -0.5f) distance = -0.5f;
+			//		if (distance > 0.5f) distance = 0.5f;
+
+			//		float ratio = (distance + 1.0f) / 2.0f;
+
+			//		glm::vec4 c = (1.0f - ratio) * glm::blue + ratio * glm::red;
+			//		c.a = 1.0f;
+
+			//		scene->Debug("Mesh Contained Voxels")->AddPoint({ xpos, ypos, zpos }, c);
+			//	}
+			//}
 		}
 
-#pragma endregion
-
-#pragma region Create Indices
-
-#pragma endregion
-
-#pragma region Ray Cast
-
-#pragma endregion
-
-
-
-		
-
-		thrust::host_vector<GLuint> host_indices(mesh->GetIndexBuffer()->Size());
-		for (auto& i : mesh->GetIndexBuffer()->GetElements())
-		{
-			host_indices.push_back(i);
-		}
-		thrust::device_vector<GLuint> indices(host_indices);
-		auto _indices = thrust::raw_pointer_cast(indices.data());
-
-		thrust::device_vector<Eigen::Vector3f> depthMap(256 * 480);
-		auto _depthMap = thrust::raw_pointer_cast(depthMap.data());
-
-		thrust::for_each(
-			thrust::make_counting_iterator<GLuint>(0),
-			thrust::make_counting_iterator<GLuint>(indices.size() / 3),
-			[_inputPoints, _indices, _depthMap]__device__(GLuint index) {
-			auto i0 = index * 3 + 0;
-			auto i1 = index * 3 + 1;
-			auto i2 = index * 3 + 2;
-
-			auto& v0 = _inputPoints[i0];
-			auto& v1 = _inputPoints[i1];
-			auto& v2 = _inputPoints[i2];
-
-			Eigen::AlignedBox3f aabb;
-			if (VECTOR3_VALID(v0))
-			{
-				aabb.extend(v0);
-			}
-			if (VECTOR3_VALID(v1))
-			{
-				aabb.extend(v1);
-			}
-			if (VECTOR3_VALID(v1))
-			{
-				aabb.extend(v2);
-			}
-
-		});
+		nvtxRangePop();
 	}
-
 }
