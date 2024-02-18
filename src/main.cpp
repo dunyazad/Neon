@@ -171,8 +171,8 @@ int main()
 
 #pragma region Draw Grid
 		{
-			size_t hResolution = 256;
-			size_t vResolution = 480;
+			size_t hResolution = 1000;
+			size_t vResolution = 1000;
 			float xUnit = 0.1f;
 			float yUnit = 0.1f;
 
@@ -191,8 +191,8 @@ int main()
 			}
 		}
 		{
-			size_t hResolution = 256;
-			size_t vResolution = 480;
+			size_t hResolution = 1000;
+			size_t vResolution = 1000;
 			float xUnit = 0.1f;
 			float yUnit = 0.1f;
 
@@ -213,46 +213,11 @@ int main()
 #pragma endregion
 
 		{
-			auto entity = scene->CreateEntity("Entity/Points");
-			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/Points");
+			auto entity = scene->CreateEntity("PLY");
+			auto mesh = scene->CreateComponent<Neon::Mesh>("PLY Mesh");
 			entity->AddComponent(mesh);
 
-			mesh->FromXYZWFile("C:\\saveData\\Result\\globalVoxelValues.xyzw");
-			//mesh->SetDrawingMode(GL_POINTS);
-			mesh->SetFillMode(Neon::Mesh::FillMode::Point);
-			scene->Debug("Points")->AddMesh(mesh);
-
-			auto transform = scene->CreateComponent<Neon::Transform>("Points");
-			auto m = glm::identity<glm::mat4>();
-			m = glm::translate(m, { 0.0f, 0.0f, -7.5f });
-			transform->SetLocalTransform(m);
-			scene->Debug("Points")->AddComponent(transform);
-		}
-
-		{
-			auto entity = scene->CreateEntity("Entity/CUDA");
-			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/CUDA");
-			entity->AddComponent(mesh);
-
-			mesh->SetFillMode(Neon::Mesh::FillMode::Point);
-			scene->Debug("Points")->AddMesh(mesh);
-
-			mesh->GetVertexBuffer()->ID();
-
-			GLuint vbo;
-			glGenBuffers(1, &vbo);
-			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, vbo);
-			glBufferData(GL_PIXEL_UNPACK_BUFFER, 1280 * 1024 * sizeof(float4), 0, GL_DYNAMIC_DRAW);
-			
-			// Register the buffer with CUDA
-			cudaGraphicsGLRegisterBuffer(&cuda_vbo_resource_test, vbo, cudaGraphicsMapFlagsWriteDiscard);
-
-			float4* d_buffer;
-			cudaGraphicsMapResources(1, &cuda_vbo_resource_test, 0);
-			size_t num_bytes;
-			cudaGraphicsResourceGetMappedPointer((void**)&d_buffer, &num_bytes, cuda_vbo_resource_test);
-
-			printf("%d %llu\n", d_buffer, num_bytes);
+			mesh->FromPLYFile("D:\\Resources\\3D\\PLY\\Engine.ply");
 		}
 		});
 
