@@ -488,34 +488,366 @@ namespace Neon
 		return fileBufferBytes;
 	}
 
-	class PLYElementProperty
+	class PLYDataType
 	{
-		string name;
-		int dataSize;
+	public:
+		enum Type { CHAR, UCHAR, SHORT, USHORT, INT, UINT, FLOAT, DOUBLE, USER_DEFINED, NONE };
+		Type type;
+		int dataSize = 0;
+		PLYDataType(Type type)
+		{
+			type = type;
+
+		}
+		PLYDataType(const string& typeName) {}
+
+	public:
+		static Type ToType(const string& typeName)
+		{
+			if ("char" == typeName) return CHAR;
+			else if ("uchar" == typeName) return UCHAR;
+			else if ("short" == typeName) return SHORT;
+			else if ("ushort" == typeName) return USHORT;
+			else if ("int" == typeName) return INT;
+			else if ("unsigned int" == typeName) return UINT;
+			else if ("float" == typeName) return FLOAT;
+			else if ("double" == typeName) return DOUBLE;
+			else if ("user_defined" == typeName) return USER_DEFINED;
+			else if ("none" == typeName) return NONE;
+		}
+
+		static string ToTypeName(Type type)
+		{
+			if (CHAR == type) return "char";
+			else if (UCHAR == type) return "unsigned char";
+			else if (SHORT == type) return "short";
+			else if (USHORT == type) return "unsigned short";
+			else if (INT == type) return "int";
+			else if (UINT == type) return "unsigned int";
+			else if (FLOAT == type) return "float";
+			else if (DOUBLE == type) return "double";
+			else if (USER_DEFINED == type) return "user_defined";
+			else if (NONE == type) return "none";
+		}
+
+		static int DataSize(Type type)
+		{
+			if (CHAR == type) return sizeof(char);
+			else if (UCHAR == type) return sizeof(unsigned char);
+			else if (SHORT == type) return sizeof(short);
+			else if (USHORT == type) return sizeof(unsigned short);
+			else if (INT == type) return sizeof(int);
+			else if (UINT == type) return sizeof(unsigned int);
+			else if (FLOAT == type) return sizeof(float);
+			else if (DOUBLE == type) return sizeof(double);
+			else if (USER_DEFINED == type) return 0;
+			else if (NONE == type) return 0;
+		}
+
+		static int DataSize(const string& typeName)
+		{
+			return DataSize(ToType(typeName));
+		}
 	};
 
-	class PLYElementPropertyList
+	class PLYElementProperty
 	{
-		string name;
-		int dataSize;
-		int dataLength;
+	public:
+		enum DataType { CHAR, UCHAR, SHORT, USHORT, INT, UINT, FLOAT, DOUBLE, USER_DEFINED, NONE };
+
+	protected:
+		DataType dataType = NONE;
+		string name = "";
+		int dataSize = 0;
+		void* data = nullptr;
+
+	public:
+		PLYElementProperty(const string& type, const string& name)
+		{
+			if ("char" == type)
+			{
+				dataType = CHAR;
+			}
+			else if ("uchar" == type)
+			{
+				dataType = UCHAR;
+			}
+			else if ("short" == type)
+			{
+				dataType = SHORT;
+			}
+			else if ("ushort" == type)
+			{
+				dataType = USHORT;
+			}
+			else if ("int" == type)
+			{
+				dataType = INT;
+			}
+			else if ("unsigned int" == type)
+			{
+				dataType = UINT;
+			}
+			else if ("float" == type)
+			{
+				dataType = FLOAT;
+			}
+			else if ("double" == type)
+			{
+				dataType = DOUBLE;
+			}
+			else if ("user_defined" == type)
+			{
+				dataType = USER_DEFINED;
+			}
+			else if ("none" == type)
+			{
+				dataType = NONE;
+			}
+		}
+
+		virtual ~PLYElementProperty()
+		{
+			if (nullptr != data)
+			{
+				delete data;
+			}
+		}
+
+		virtual bool Parse(const string& word)
+		{
+			stringstream ss(word);
+
+			if (CHAR == dataType)
+			{
+				data = new char;
+				ss >> data;
+			}
+			else if (UCHAR == dataType)
+			{
+				data = new unsigned char;
+				ss >> data;
+			}
+			else if (SHORT == dataType)
+			{
+				data = new short;
+				ss >> data;
+			}
+			else if (USHORT == dataType)
+			{
+				data = new unsigned short;
+				ss >> data;
+			}
+			else if (INT == dataType)
+			{
+				data = new int;
+				ss >> data;
+			}
+			else if (UINT == dataType)
+			{
+				data = new unsigned int;
+				ss >> data;
+			}
+			else if (FLOAT == dataType)
+			{
+				data = new float;
+				ss >> data;
+			}
+			else if (DOUBLE == dataType)
+			{
+				data = new double;
+				ss >> data;
+			}
+
+			return true;
+		}
+	};
+
+	class PLYElementPropertyList : public PLYElementProperty
+	{
+	protected:
+		int count = 0;
+		DataType countType = NONE;
+		int index = 0;
+
+	public:
+		PLYElementPropertyList(const string& countType, const string& type, const string& name) : PLYElementProperty(type, name) {}
+		virtual ~PLYElementPropertyList()
+		{
+			if (nullptr != data)
+			{
+				delete[] data;
+			}
+		}
+
+		virtual bool Parse(const string& word)
+		{
+			stringstream ss(word);
+
+			if (CHAR == dataType)
+			{
+				if (index == 0)
+				{
+					ss >> count;
+					data = new char[count];
+				}
+				ss >> ((char*)data)[index++];
+			}
+			else if (UCHAR == dataType)
+			{
+				if (index == 0)
+				{
+					ss >> count;
+					data = new unsigned char[count];
+				}
+				ss >> ((unsigned char*)data)[index++];
+			}
+			else if (SHORT == dataType)
+			{
+				if (index == 0)
+				{
+					ss >> count;
+					data = new short[count];
+				}
+				ss >> ((short*)data)[index++];
+			}
+			else if (USHORT == dataType)
+			{
+				if (index == 0)
+				{
+					ss >> count;
+					data = new unsigned short[count];
+				}
+				ss >> ((unsigned short*)data)[index++];
+			}
+			else if (INT == dataType)
+			{
+				if (index == 0)
+				{
+					ss >> count;
+					data = new int[count];
+				}
+
+				ss >> ((int*)data)[index++];
+			}
+			else if (UINT == dataType)
+			{
+				if (index == 0)
+				{
+					ss >> count;
+					data = new unsigned int[count];
+				}
+
+				ss >> ((unsigned int*)data)[index++];
+			}
+			else if (FLOAT == dataType)
+			{
+				if (index == 0)
+				{
+					ss >> count;
+					data = new float[count];
+				}
+
+				ss >> ((float*)data)[index++];
+			}
+			else if (DOUBLE == dataType)
+			{
+				if (index == 0)
+				{
+					ss >> count;
+					data = new double[count];
+				}
+
+				ss >> ((double*)data)[index++];
+			}
+
+			return true;
+		}
 	};
 
 	class PLYElement
 	{
-		map<int, PLYElementProperty> properties;
-		map<int, PLYElementPropertyList> propertyLists;
-		map<string, int> nameIndexMapping;
-		map<int, string> indexNameMapping;
+	protected:
+		string name = "";
+		size_t count = 0;
+		vector<PLYElementProperty*> properties;
+
+	public:
+		PLYElement(const string& name, size_t count) : name(name), count(count) {}
+		virtual ~PLYElement() {}
+
+		inline const string& GetName() const { return name; }
+		inline size_t GetCount() const { return count; }
+
+		void AddProperty(const string& dataType, const string& name)
+		{
+			properties.push_back(new PLYElementProperty(dataType, name));
+		}
+
+		void AddPropertyList(const string& countType, const string& dataType, const string& name)
+		{
+			properties.push_back(new PLYElementPropertyList(countType, dataType, name));
+		}
+
+		void Parse(ifstream& ifs, bool isBinary = false)
+		{
+			if (isBinary)
+			{
+
+			}
+			else
+			{
+				for (size_t i = 0; i < count; i++)
+				{
+					string line;
+					std::getline(ifs, line);
+
+					stringstream ss(line);
+					string word;
+					int propertyIndex = 0;
+					for (size_t index = 0; index < properties.size(); index++)
+					{
+						ss >> word;
+						properties[index]->Parse(word);
+					}
+				}
+			}
+		}
 	};
 	
 	class PLYFormat
 	{
-		map<string, vector<PLYElement>> elementLists;
+		vector<PLYElement> elements;
+		bool isBinary = false;
 
 	public:
 		PLYFormat() {}
-		~PLYFormat() {}
+		virtual ~PLYFormat() {}
+
+		inline const vector<PLYElement>& GetElements() { return elements; };
+
+		PLYElement* AddElement(const string& name, size_t count)
+		{
+			for (auto& element : elements)
+			{
+				if (name == element.GetName())
+					return nullptr;
+			}
+
+			elements.emplace_back(name, count);
+			return &elements.back();
+		}
+
+		void AddProperty(PLYElement* element, const string& dataType, const string& name)
+		{
+			element->AddProperty(dataType, name);
+		}
+
+		void AddPropertyList(PLYElement* element, const string& countType, const string& dataType, const string& name)
+		{
+			element->AddPropertyList(countType, dataType, name);
+		}
+
 		void Read(const URL& fileURL)
 		{
 			ifstream ifs(fileURL.path);
@@ -526,16 +858,75 @@ namespace Neon
 			std::getline(ifs, line);
 			if ("ply" != line) return;
 
+			PLYElement* recentElement = nullptr;
+
+			// Read Header
 			while (std::getline(ifs, line))
 			{
 				stringstream ss(line);
 				string word;
-				while (ss >> word)
+
+				ss >> word;
+
+				if ("format" == word)
 				{
-					printf("%s ", word.c_str());
+					ss >> word;
+					if ("binary_little_endian" == word || "binary_big_endian" == word)
+						isBinary = true;
 				}
 
-				printf("\n");
+				if ("comment" == word)
+					continue;
+
+				if ("element" == word)
+				{
+					string name;
+					ss >> name;
+					size_t count;
+					ss >> count;
+
+					recentElement = AddElement(name, count);
+				}
+
+				if ("property" == word)
+				{
+					string dataType;
+					ss >> dataType;
+
+					if ("list" != dataType)
+					{
+						string name;
+						ss >> name;
+
+						if (nullptr != recentElement)
+						{
+							AddProperty(recentElement, dataType, name);
+						}
+					}
+					else
+					{
+						string countType;
+						ss >> countType;
+						string dataType;
+						ss >> dataType;
+						string name;
+						ss >> name;
+
+						if (nullptr != recentElement)
+						{
+							AddPropertyList(recentElement, countType, dataType, name);
+						}
+					}
+				}
+
+				if ("end_header" == word)
+					break;
+			}
+
+			// Read Data
+			for (auto& element : elements)
+			{
+				element.Parse(ifs);
 			}
 		}
 
@@ -548,6 +939,11 @@ namespace Neon
 	{
 		auto ply = PLYFormat();
 		ply.Read(fileURL);
+
+		for (auto& element : ply.GetElements())
+		{
+			printf("%s : %d\n", element.GetName().c_str(), element.GetCount());
+		}
 	}
 
 	void Mesh::FromXYZWFile(const URL& fileURL, float scaleX, float scaleY, float scaleZ)

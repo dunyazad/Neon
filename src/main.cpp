@@ -217,8 +217,10 @@ int main()
 			auto mesh = scene->CreateComponent<Neon::Mesh>("PLY Mesh");
 			entity->AddComponent(mesh);
 
-			mesh->FromPLYFile("D:\\Resources\\3D\\PLY\\Engine.ply");
+			//mesh->FromPLYFile("D:\\Resources\\3D\\PLY\\Engine.ply");
+			mesh->FromPLYFile("C:\\Resources\\3D\\PLY\\Stanford_Bunny_ASCII.ply");
 		}
+
 		});
 
 
