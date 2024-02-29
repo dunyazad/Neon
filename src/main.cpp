@@ -12,6 +12,168 @@ int gindex = 0;
 
 cudaGraphicsResource_t cuda_vbo_resource_test;
 
+class HKDTreeNode
+{
+public:
+	HKDTreeNode(const glm::vec3& p) : p(p) {}
+
+	inline const glm::vec3& GetPosition() const { return p; }
+	inline HKDTreeNode* GetLeft() const { return left; }
+	inline void SetLeft(HKDTreeNode* node) { left = node; }
+	inline HKDTreeNode* GetRight() const { return right; }
+	inline void SetRight(HKDTreeNode* node) { right = node; }
+
+	void* data = nullptr;
+
+private:
+	glm::vec3 p;
+	HKDTreeNode* left = nullptr;
+	HKDTreeNode* right = nullptr;
+};
+
+template<typename T>
+class HKDTree
+{
+public:
+	HKDTree() {}
+
+	void Clear()
+	{
+		if (nullptr != root)
+		{
+			ClearRecursive(root);
+			root = nullptr;
+		}
+	}
+
+	void Insert(const glm::vec3& position)
+	{
+		root = InsertRecursive(root, position, 0);
+	}
+
+	HKDTreeNode* FindNearestNeighbor(HKDTreeNode* root, const glm::vec3& target, int depth)
+	{
+		nearestNeighbor = root->GetVertex();
+		nearestNeighborDistance = glm::length(query - root->GetVertex()->p);
+		FindNearestNeighborRecursive(root, query, 0);
+		return nearestNeighbor;
+	}
+
+	HKDTreeNode* FindNearestNeighborNode(const glm::vec3& query)
+	{
+		if (nullptr == root)
+			return nullptr;
+
+		root->data = (void*)1;
+
+		auto nearestNeighborNode = root;
+		auto nearestNeighborDistance = distance(query, root->GetPosition());
+		FindNearestNeighborRecursive(root, nearestNeighborNode, nearestNeighborDistance, query, 0);
+		return nearestNeighborNode;
+	}
+
+	vector<T*> RangeSearch(const glm::vec3& query, float squaredRadius) const
+	{
+		vector<T*> result;
+		RangeSearchRecursive(root, query, squaredRadius, result, 0);
+		return result;
+	}
+
+	inline const HKDTreeNode* GetRoot() const { return root; }
+
+	inline bool IsEmpty() const { return nullptr == root; }
+
+private:
+	HKDTreeNode* root = nullptr;
+	HKDTreeNode* nearestNeighborNode = nullptr;
+
+	void ClearRecursive(HKDTreeNode* node)
+	{
+		if (nullptr != node->GetLeft())
+		{
+			ClearRecursive(node->GetLeft());
+		}
+
+		if (nullptr != node->GetRight())
+		{
+			ClearRecursive(node->GetRight());
+		}
+
+		delete node;
+	}
+
+	HKDTreeNode* InsertRecursive(HKDTreeNode* node, const glm::vec3& position, int depth) {
+		if (node == nullptr) {
+			auto newNode = new HKDTreeNode(position);
+			return newNode;
+		}
+
+		int currentDimension = depth % 3;
+		if (((float*)&position)[currentDimension] < ((float*)&node->GetPosition())[currentDimension])
+		{
+			node->SetLeft(InsertRecursive(node->GetLeft(), position, depth + 1));
+		}
+		else {
+			node->SetRight(InsertRecursive(node->GetRight(), position, depth + 1));
+		}
+
+		return node;
+	}
+
+	void FindNearestNeighborRecursive(HKDTreeNode* node, HKDTreeNode* nnNode, float nearestNeighborDistance, const glm::vec3& query, int depth) {
+		if (node == nullptr) {
+			return;
+		}
+
+		int currentDimension = depth % 3;
+		float nnDistance = nearestNeighborDistance;
+
+		auto nodeDistance = distance(query, node->GetPosition());
+		if (nodeDistance < nnDistance) {
+			nnNode = node;
+			nnDistance = nodeDistance;
+		}
+
+		auto queryValue = ((float*)&query)[currentDimension];
+		auto nodeValue = ((float*)&node->GetPosition())[currentDimension];
+
+		HKDTreeNode* closerNode = (queryValue < nodeValue) ? node->GetLeft() : node->GetRight();
+		HKDTreeNode* otherNode = (queryValue < nodeValue) ? node->GetRight() : node->GetLeft();
+
+		FindNearestNeighborRecursive(closerNode, nnNode, nnDistance, query, depth + 1);
+
+		// Check if the other subtree could have a closer point
+		if (std::abs(queryValue - nodeValue) * std::abs(queryValue - nodeValue) < nnDistance) {
+			FindNearestNeighborRecursive(otherNode, nnNode, nnDistance, query, depth + 1);
+		}
+	}
+
+	void RangeSearchRecursive(HKDTreeNode* node, const glm::vec3& query, float squaredRadius, std::vector<T*>& result, int depth) const {
+		if (node == nullptr) {
+			return;
+		}
+
+		float nodeDistance = glm::length(query - node->GetVertex()->p);
+		if (nodeDistance <= squaredRadius) {
+			result.push_back(node->GetVertex());
+		}
+
+		int currentDimension = depth % 3;
+		auto queryValue = ((float*)&query)[currentDimension];
+		auto nodeValue = ((float*)&node->GetVertex()->p)[currentDimension];
+
+		HKDTreeNode* closerNode = (queryValue < nodeValue) ? node->GetLeft() : node->GetRight();
+		HKDTreeNode* otherNode = (queryValue < nodeValue) ? node->GetRight() : node->GetLeft();
+
+		RangeSearchRecursive(closerNode, query, squaredRadius, result, depth + 1);
+
+		// Check if the other subtree could have points within the range
+		if (std::abs(queryValue - nodeValue) * std::abs(queryValue - nodeValue) <= squaredRadius) {
+			RangeSearchRecursive(otherNode, query, squaredRadius, result, depth + 1);
+		}
+	}
+};
+
 
 int main()
 {
@@ -212,13 +374,56 @@ int main()
 		}
 #pragma endregion
 
+		auto kdtree = HKDTree<glm::vec3>();
+
 		{
 			auto entity = scene->CreateEntity("PLY");
 			auto mesh = scene->CreateComponent<Neon::Mesh>("PLY Mesh");
 			entity->AddComponent(mesh);
 
-			//mesh->FromPLYFile("D:\\Resources\\3D\\PLY\\Engine.ply");
-			mesh->FromPLYFile("C:\\Resources\\3D\\PLY\\Stanford_Bunny_ASCII.ply");
+			mesh->FromXYZWFile("C:\\saveData\\Result\\globalVoxelValues.xyzw");
+
+			for (auto& v : mesh->GetVertexBuffer()->GetElements())
+			{
+				//printf("%f, %f, %f\n", v.x, v.y, v.z);
+				kdtree.Insert(v);
+			}
+
+			function<void(const HKDTreeNode*)> visualize;
+
+			visualize = [&](const HKDTreeNode* node) {
+				if (nullptr != node)
+				{
+					scene->Debug("KDTREE")->AddPoint(node->GetPosition());
+
+					if (nullptr != node->GetLeft())
+					{
+						visualize(node->GetLeft());
+					}
+					if (nullptr != node->GetRight())
+					{
+						visualize(node->GetRight());
+					}
+				}
+			};
+
+			visualize(kdtree.GetRoot());
+
+			for (auto& v : mesh->GetVertexBuffer()->GetElements())
+			{
+				auto node = kdtree.FindNearestNeighbor(v);
+				if (nullptr == node)
+				{
+					scene->Debug("Error")->AddPoint(v, glm::red);
+				}
+				else
+				{
+					if (distance(v, node->GetPosition()) > 0.001f)
+					{
+						scene->Debug("Error")->AddPoint(v, glm::red);
+					}
+				}
+			}
 		}
 
 		});
