@@ -38,9 +38,14 @@
 #include <Eigen/Geometry>
 #include <Eigen/LU>
 
-#define FLT_VALID(x) (x < 3.402823466e+36F)
-#define VEC3_VALID(v) (FLT_VALID((v).x) && FLT_VALID((v).y) && FLT_VALID((v).z))
-#define VECTOR3_VALID(v) (FLT_VALID((v).x()) && FLT_VALID((v).y()) && FLT_VALID((v).z()))
+#define FLT_VALID(x) ((x) < FLT_MAX / 2)
+//#define FLT_VALID(x) ((x) < 3.402823466e+36F)
+#define VECTOR3F_VALID(v) (FLT_VALID((v).x) && FLT_VALID((v).y) && FLT_VALID((v).z))
+#define VECTOR3F_VALID_(v) (FLT_VALID((v).x()) && FLT_VALID((v).y()) && FLT_VALID((v).z()))
+#define INT_VALID(x) ((x) != INT_MAX)
+#define UINT_VALID(x) ((x) != UINT_MAX)
+#define VECTOR3U_VALID(v) (UINT_VALID((v).x) && UINT_VALID((v).y) && UINT_VALID((v).z))
+#define VECTOR3U_VALID_(v) (UINT_VALID((v).x()) && UINT_VALID((v).y()) && UINT_VALID((v).z()))
 
 #include <vector>
 

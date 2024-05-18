@@ -21,6 +21,8 @@ namespace Neon
 		inline bool IsUsingVSync() const { return vSync; }
 
 		inline ImGuiIO* GetIO() { return io; }
+
+		inline void SetWindowPosition(int x, int y) { glfwSetWindowPos(glfwWindow, x, y); }
 	private:
 		GLFWwindow* glfwWindow = nullptr;
 		bool vSync = true;

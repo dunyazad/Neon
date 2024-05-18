@@ -129,7 +129,7 @@ private:
 		float nnDistance = nearestNeighborDistance;
 
 		auto nodeDistance = distance(query, node->GetPosition());
-		if (nodeDistance < nnDistance) {
+		if (nodeDistance <= nnDistance) {
 			nnNode = node;
 			nnDistance = nodeDistance;
 		}
@@ -181,6 +181,7 @@ int main()
 	Neon::URL::ChangeDirectory("..");
 
 	//app.GetWindow()->UseVSync(false);
+	//app.GetWindow()->SetWindowPosition(4920, 32);
 
 	int index = 0;
 
@@ -223,7 +224,27 @@ int main()
 						}
 					}
 				}
-				});
+				else if ((GLFW_KEY_GRAVE_ACCENT == event.key) && GLFW_RELEASE == event.action)
+				{
+					auto debugEntities = scene->GetDebugEntities();
+					for (auto& entity : debugEntities)
+					{
+						auto mesh = entity->GetComponent<Neon::Mesh>(0);
+						if (nullptr != mesh)
+						{
+							if (GLFW_MOD_SHIFT & event.mods)
+							{
+								mesh->ToggleFillMode();
+								cout << "Toggle Fill Mode : " << mesh->GetName() << endl;
+							}
+							else
+							{
+								entity->ToggleVisible();
+							}
+						}
+					}
+				}
+			});
 		}
 #pragma endregion
 
@@ -259,7 +280,50 @@ int main()
 						lineWidth = 1.0f;
 					glLineWidth(lineWidth);
 				}
-				});
+				else if ((GLFW_KEY_ENTER == event.key) && (GLFW_RELEASE == event.action || GLFW_REPEAT == event.action)) {
+					static int offset = 0;
+					auto center = glm::i64vec3(10, 90, 90);
+					
+					for (int zOffset = -offset; zOffset <= offset; zOffset++)
+					{
+						auto zIndex = (int)center.z + zOffset;
+						if (0 > zIndex) continue;
+						if (zIndex >= 100) continue;
+
+						for (int yOffset = -offset; yOffset <= offset; yOffset++)
+						{
+							auto yIndex = (int)center.y+ yOffset;
+							if (0 > yIndex) continue;
+							if (yIndex >= 100) continue;
+
+							for (int xOffset = -offset; xOffset <= offset; xOffset++)
+							{
+								auto xIndex = (int)center.x + xOffset;
+								if (0 > xIndex) continue;
+								if (xIndex >= 15) continue;
+
+								if ((xIndex == center.x - offset || xIndex == center.x + offset) ||
+									(yIndex == center.y - offset || yIndex == center.y + offset) ||
+									(zIndex == center.z - offset || zIndex == center.z + offset))
+								{
+									stringstream ss;
+									ss << "cube_" << offset;
+									auto name = ss.str();
+									//printf("%s\n", name.c_str());
+									scene->Debug(name)->AddBox({ xIndex, yIndex, zIndex }, 1, 1, 1);
+								}
+								//else
+								//{
+								//	printf("index %d, %d, %d, center %d, %d, %d, offset %d\n",
+								//		xIndex, yIndex, zIndex, center.x, center.y, center.y, offset);
+								//}
+							}
+						}
+					}
+
+					offset++;
+				}
+			});
 		}
 #pragma endregion
 
@@ -292,7 +356,7 @@ int main()
 				auto camera = scene->GetMainCamera();
 				light->position = camera->position;
 				light->direction = glm::normalize(camera->centerPosition - camera->position);
-				});
+			});
 
 			scene->SetMainLight(light);
 		}
@@ -332,101 +396,156 @@ int main()
 #pragma endregion
 
 #pragma region Draw Grid
-		{
-			size_t hResolution = 1000;
-			size_t vResolution = 1000;
-			float xUnit = 0.1f;
-			float yUnit = 0.1f;
+		//{
+		//	size_t hResolution = 1000;
+		//	size_t vResolution = 1000;
+		//	float xUnit = 0.1f;
+		//	float yUnit = 0.1f;
 
-			float minX = -((float)hResolution * xUnit * 0.5f);
-			float maxX = ((float)hResolution * xUnit * 0.5f);
-			float minY = -((float)vResolution * yUnit * 0.5f);
-			float maxY = ((float)vResolution * yUnit * 0.5f);
+		//	float minX = -((float)hResolution * xUnit * 0.5f);
+		//	float maxX = ((float)hResolution * xUnit * 0.5f);
+		//	float minY = -((float)vResolution * yUnit * 0.5f);
+		//	float maxY = ((float)vResolution * yUnit * 0.5f);
 
-			for (float y = minY; y <= maxY; y += yUnit)
-			{
-				scene->Debug("grid lines")->AddLine({ minX, y, 0.0f }, { maxX, y, 0.0f }, glm::white, glm::white);
-			}
-			for (float x = minX; x <= maxX; x += xUnit)
-			{
-				scene->Debug("grid lines")->AddLine({ x, minY, 0.0f }, { x, maxY, 0.0f }, glm::white, glm::white);
-			}
-		}
-		{
-			size_t hResolution = 1000;
-			size_t vResolution = 1000;
-			float xUnit = 0.1f;
-			float yUnit = 0.1f;
+		//	for (float y = minY; y <= maxY; y += yUnit)
+		//	{
+		//		scene->Debug("grid lines")->AddLine({ minX, y, 0.0f }, { maxX, y, 0.0f }, glm::white, glm::white);
+		//	}
+		//	for (float x = minX; x <= maxX; x += xUnit)
+		//	{
+		//		scene->Debug("grid lines")->AddLine({ x, minY, 0.0f }, { x, maxY, 0.0f }, glm::white, glm::white);
+		//	}
+		//}
+		//{
+		//	size_t hResolution = 1000;
+		//	size_t vResolution = 1000;
+		//	float xUnit = 0.1f;
+		//	float yUnit = 0.1f;
 
-			float minX = -((float)hResolution * xUnit * 0.5f) + xUnit * 0.5f;
-			float maxX = ((float)hResolution * xUnit * 0.5f) - xUnit * 0.5f;
-			float minY = -((float)vResolution * yUnit * 0.5f) + yUnit * 0.5f;
-			float maxY = ((float)vResolution * yUnit * 0.5f) - yUnit * 0.5f;
+		//	float minX = -((float)hResolution * xUnit * 0.5f) + xUnit * 0.5f;
+		//	float maxX = ((float)hResolution * xUnit * 0.5f) - xUnit * 0.5f;
+		//	float minY = -((float)vResolution * yUnit * 0.5f) + yUnit * 0.5f;
+		//	float maxY = ((float)vResolution * yUnit * 0.5f) - yUnit * 0.5f;
 
-			for (float y = minY; y <= maxY; y += yUnit)
-			{
-				scene->Debug("grid lines")->AddLine({ minX, y, 0.0f }, { maxX, y, 0.0f }, glm::gray, glm::gray);
-			}
-			for (float x = minX; x <= maxX; x += xUnit)
-			{
-				scene->Debug("grid lines")->AddLine({ x, minY, 0.0f }, { x, maxY, 0.0f }, glm::gray, glm::gray);
-			}
-		}
+		//	for (float y = minY; y <= maxY; y += yUnit)
+		//	{
+		//		scene->Debug("grid lines")->AddLine({ minX, y, 0.0f }, { maxX, y, 0.0f }, glm::gray, glm::gray);
+		//	}
+		//	for (float x = minX; x <= maxX; x += xUnit)
+		//	{
+		//		scene->Debug("grid lines")->AddLine({ x, minY, 0.0f }, { x, maxY, 0.0f }, glm::gray, glm::gray);
+		//	}
+		//}
 #pragma endregion
 
-		auto kdtree = HKDTree<glm::vec3>();
-
 		{
-			auto entity = scene->CreateEntity("PLY");
-			auto mesh = scene->CreateComponent<Neon::Mesh>("PLY Mesh");
-			entity->AddComponent(mesh);
+		//	auto entity = scene->CreateEntity("Entity/spot");
+		//	auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/spot");
+		//	entity->AddComponent(mesh);
 
-			mesh->FromXYZWFile("C:\\saveData\\Result\\globalVoxelValues.xyzw");
+		//	mesh->FromSTLFile(Neon::URL::Resource("/stl/mesh.stl"));
+		//	mesh->FillColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+		//	mesh->RecalculateFaceNormal();
 
-			for (auto& v : mesh->GetVertexBuffer()->GetElements())
-			{
-				//printf("%f, %f, %f\n", v.x, v.y, v.z);
-				kdtree.Insert(v);
-			}
+		//	scene->GetMainCamera()->centerPosition = mesh->GetAABB().GetCenter();
+		//	scene->GetMainCamera()->distance = mesh->GetAABB().GetDiagonalLength();
 
-			function<void(const HKDTreeNode*)> visualize;
+		//	auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", Neon::URL::Resource("/shader/lighting.vs"), Neon::URL::Resource("/shader/lighting.fs"));
+		//	entity->AddComponent(shader);
 
-			visualize = [&](const HKDTreeNode* node) {
-				if (nullptr != node)
-				{
-					scene->Debug("KDTREE")->AddPoint(node->GetPosition());
+		//	auto transform = scene->CreateComponent<Neon::Transform>("Transform/spot");
+		//	entity->AddComponent(transform);
+		//	entity->AddKeyEventHandler([mesh](const Neon::KeyEvent& event) {
+		//		if (GLFW_KEY_ESCAPE == event.key && GLFW_RELEASE == event.action)
+		//		{
+		//			mesh->ToggleFillMode();
+		//		}
+		//		else if (GLFW_KEY_KP_ADD == event.key && (GLFW_PRESS == event.action || GLFW_REPEAT == event.action))
+		//		{
+		//			GLfloat currentPointSize;
+		//			glGetFloatv(GL_POINT_SIZE, &currentPointSize);
+		//			glPointSize(currentPointSize + 1.0f);
+		//		}
+		//		else if (GLFW_KEY_KP_SUBTRACT == event.key && (GLFW_PRESS == event.action || GLFW_REPEAT == event.action))
+		//		{
+		//			GLfloat currentPointSize;
+		//			glGetFloatv(GL_POINT_SIZE, &currentPointSize);
+		//			glPointSize(currentPointSize - 1.0f);
+		//		}
+		//		else if (GLFW_KEY_S == event.key && GLFW_RELEASE == event.action)
+		//		{
+		//			mesh->ToSTLFile("C:\\Users\\USER\\Desktop\\result.stl");
+		//		}
+		//		});
 
-					if (nullptr != node->GetLeft())
-					{
-						visualize(node->GetLeft());
-					}
-					if (nullptr != node->GetRight())
-					{
-						visualize(node->GetRight());
-					}
-				}
-			};
+		//	entity->AddMouseButtonEventHandler([entity, scene, mesh](const Neon::MouseButtonEvent& event) {
+		//		if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_DOUBLE_ACTION)
+		//		{
+		//			auto camera = scene->GetMainCamera();
 
-			visualize(kdtree.GetRoot());
+		//			auto ray = camera->GetPickingRay(event.xpos, event.ypos);
 
-			for (auto& v : mesh->GetVertexBuffer()->GetElements())
-			{
-				auto node = kdtree.FindNearestNeighbor(v);
-				if (nullptr == node)
-				{
-					scene->Debug("Error")->AddPoint(v, glm::red);
-				}
-				else
-				{
-					if (distance(v, node->GetPosition()) > 0.001f)
-					{
-						scene->Debug("Error")->AddPoint(v, glm::red);
-					}
-				}
-			}
+		//			glm::vec3 intersection;
+		//			size_t faceIndex = 0;
+		//			if (mesh->Pick(ray, intersection, faceIndex))
+		//			{
+		//				camera->centerPosition = intersection;
+		//			}
+		//		}
+		//		else if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_RELEASE)
+		//		{
+		//			auto camera = scene->GetMainCamera();
+
+		//			auto ray = camera->GetPickingRay(event.xpos, event.ypos);
+
+		//			glm::vec3 intersection;
+		//			size_t faceIndex = 0;
+		//			if (mesh->Pick(ray, intersection, faceIndex))
+		//			{
+		//				//debugPoints->Clear();
+
+		//				//debugPoints->AddPoint(intersection, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+		//				auto vetm = entity->GetComponent<Neon::VETM>();
+		//				auto vertex = vetm->GetNearestVertex(intersection);
+
+		//				scene->Debug("Points")->Clear();
+		//				scene->Debug("Points")->AddPoint(vertex->p, glm::red);
+		//				scene->Debug("Points")->AddPoint(intersection, glm::white);
+
+		//				scene->Debug("Lines")->Clear();
+		//				cout << "---------------------------------------" << endl;
+		//				for (auto& e : vertex->edges)
+		//				{
+		//					if (2 > e->triangles.size())
+		//					{
+		//						scene->Debug("Lines")->AddLine(e->v0->p, e->v1->p, glm::green, glm::green);
+		//						cout << e->id << " : " << e->triangles.size() << endl;
+		//					}
+		//				}
+		//			}
+		//		}
+		//		});
 		}
 
-		});
+		{
+			auto entity = scene->CreateEntity("Entity/spot");
+			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/spot");
+			entity->AddComponent(mesh);
+
+			mesh->FromPLYFile(Neon::URL::Resource("/ply/targetPoint_1.ply"));
+			//mesh->SetDrawingMode(GL_POINTS);
+			mesh->SetFillMode(Neon::Mesh::Point);
+			//mesh->FillColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+			//mesh->RecalculateFaceNormal();
+
+			scene->GetMainCamera()->centerPosition = mesh->GetAABB().GetCenter();
+			scene->GetMainCamera()->distance = mesh->GetAABB().GetDiagonalLength();
+
+			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", Neon::URL::Resource("/shader/lighting.vs"), Neon::URL::Resource("/shader/lighting.fs"));
+			entity->AddComponent(shader);
+		}
+	});
 
 
 
@@ -444,13 +563,13 @@ int main()
 
 		glClearColor(0.3f, 0.5f, 0.7f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		});
+	});
 
 
 
 	app.OnTerminate([&]() {
 		auto t = Neon::Time("Terminate");
-		});
+	});
 
 	app.Run();
 

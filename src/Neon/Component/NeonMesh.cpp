@@ -471,6 +471,95 @@ namespace Neon
 		}
 	}
 
+	void Mesh::FromOFFFile(const URL& fileURL, float scaleX, float scaleY, float scaleZ)
+	{
+		FILE* fp = nullptr;
+		auto err = fopen_s(&fp, fileURL.path.c_str(), "rb");
+		if (0 != err)
+		{
+			printf("File \"%s\" open failed.", fileURL.path.c_str());
+			return;
+		}
+
+		char buffer[1024];
+		memset(buffer, 0, 1024);
+		auto line = fgets(buffer, 1024, fp);
+		line[0] = tolower(line[0]);
+		line[1] = tolower(line[1]);
+		line[2] = tolower(line[2]);
+		if (0 != strcmp(line, "off\n"))
+			return;
+
+		line = fgets(buffer, 1024, fp);
+		while ('#' == line[0])
+		{
+			line = fgets(buffer, 1024, fp);
+		}
+
+		size_t vertexCount = 0;
+		size_t triangleCount = 0;
+		sscanf_s(line, "%d %d", &vertexCount, &triangleCount);
+
+		printf("vertexCount : %d, triangleCount : %d\n", vertexCount, triangleCount);
+
+		for (size_t i = 0; i <= vertexCount; i++)
+		{
+			line = fgets(buffer, 64, fp);
+			if (nullptr != line)
+			{
+				if ('#' == line[0])
+				{
+					i--;
+					continue;
+				}
+				else
+				{
+					float x, y, z;
+					sscanf_s(line, "%f %f %f\n", &x, &y, &z);
+
+					AddVertex({ x,y,z });
+					AddColor(glm::white);
+				}
+			}
+		}
+
+		for (size_t i = 0; i < triangleCount; i++)
+		{
+			line = fgets(buffer, 1024, fp);
+			if (nullptr == line)
+			{
+				line = buffer;
+			}
+			if ('#' == line[0])
+			{
+				i--;
+				continue;
+			}
+			else
+			{
+				size_t count, i0, i1, i2;
+				sscanf_s(line, "%d %d %d %d\n", &count, &i0, &i1, &i2);
+
+				AddIndex(i0);
+				AddIndex(i1);
+				AddIndex(i2);
+			}
+		}
+
+		//return false;
+
+		//while (nullptr != line)
+		//{
+		//	printf("%s", line);
+
+		//	line = fgets(buffer, 1024, fp);
+		//}
+
+		fclose(fp);
+
+		this->RecalculateFaceNormal();
+	}
+
 	inline std::vector<uint8_t> read_file_binary(const std::string& pathToFile)
 	{
 		std::ifstream file(pathToFile, std::ios::binary);
@@ -729,13 +818,131 @@ namespace Neon
 
 	void Mesh::FromPLYFile(const URL& fileURL, float scaleX, float scaleY, float scaleZ)
 	{
-		/*auto ply = PLYFormat();
-		ply.Read(fileURL);
-
-		for (auto& element : ply.GetElements())
+		ifstream ifs(fileURL.path.c_str());
+		if (false == ifs.is_open())
 		{
-			printf("%s : %d\n", element.GetName().c_str(), element.GetCount());
-		}*/
+			printf("filename : %s is not open\n", fileURL.path.c_str());
+			return;
+		}
+
+		stringstream buffer;
+		buffer << ifs.rdbuf();
+
+		string line;
+		vector<string> elementNames;
+		vector<size_t> elementCounts;
+		vector<vector<string>> elementPropertyTypes;
+		vector<vector<string>> elementPropertyNames;
+
+		if (buffer.good())
+		{
+			getline(buffer, line);
+			if (false == ("ply" == line || "PLY" == line))
+			{
+				printf("Not a ply file");
+				return;
+			}
+		}
+		while (buffer.good())
+		{
+			getline(buffer, line);
+			stringstream ss(line);
+			auto words = split(line, " \t");
+			if (words[0] == "format")
+			{
+
+			}
+			else if (words[0] == "element")
+			{
+				elementNames.push_back(words[1]);
+				elementCounts.push_back(atoi(words[2].c_str()));
+			}
+			else if (words[0] == "property")
+			{
+				auto index = elementNames.size() - 1;
+				if (elementPropertyTypes.size() <= index)
+				{
+					elementPropertyTypes.push_back(vector<string>());
+					elementPropertyNames.push_back(vector<string>());
+				}
+				if ("list" != words[1])
+				{
+					elementPropertyTypes[index].push_back(words[1]);
+					elementPropertyNames[index].push_back(words[2]);
+				}
+				else
+				{
+
+				}
+			}
+			else if (words[0] == "end_header")
+			{
+				break;
+			}
+		}
+
+		for (size_t i = 0; i < elementNames.size(); i++)
+		{
+			float x, y, z, nx, ny, nz;
+			unsigned char red, green, blue, alpha;
+			for (size_t j = 0; j < elementCounts[i]; j++)
+			{
+				getline(buffer, line);
+				auto words = split(line, " \t");
+
+				for (size_t k = 0; k < words.size(); k++)
+				{
+					if (elementPropertyNames[i][k] == "x")
+					{
+						x = atof(words[k].c_str());
+					}
+					else if (elementPropertyNames[i][k] == "y")
+					{
+						y = atof(words[k].c_str());
+					}
+					else if (elementPropertyNames[i][k] == "z")
+					{
+						z = atof(words[k].c_str());
+
+						AddVertex(glm::vec3(x, y, z));
+					}
+
+					else if (elementPropertyNames[i][k] == "nx")
+					{
+						nx = atof(words[k].c_str());
+					}
+					else if (elementPropertyNames[i][k] == "ny")
+					{
+						ny = atof(words[k].c_str());
+					}
+					else if (elementPropertyNames[i][k] == "nz")
+					{
+						nz = atof(words[k].c_str());
+
+						AddNormal(glm::vec3(nx, ny, nz));
+					}
+
+					else if (elementPropertyNames[i][k] == "red")
+					{
+						red = (unsigned char)atoi(words[k].c_str());
+					}
+					else if (elementPropertyNames[i][k] == "green")
+					{
+						green = (unsigned char)atoi(words[k].c_str());
+					}
+					else if (elementPropertyNames[i][k] == "blue")
+					{
+						blue = (unsigned char)atoi(words[k].c_str());
+					}
+					else if (elementPropertyNames[i][k] == "alpha")
+					{
+						alpha = (unsigned char)atoi(words[k].c_str());
+
+						AddColor(glm::vec4((float)red / 255.0f, (float)green / 255.0f, (float)blue / 255.0f, (float)alpha / 255.0f));
+					}
+				}
+			}
+		}
 	}
 
 	void Mesh::FromXYZWFile(const URL& fileURL, float scaleX, float scaleY, float scaleZ)

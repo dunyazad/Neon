@@ -31,7 +31,6 @@ src/Neon/CUDA/CUDAMesh.cu
 
 src/Neon/CUDA/CUDATest.cu
 src/Neon/CUDA/CUDATSDF.cu
-src/Neon/CUDA/CUDASurfaceExtraction.cu
 )
 set_source_files_properties($<$<BOOL:USE_CUDA>:${cuda_source_list}>> PROPERTIES LANGUAGE "CUDA")
 endif(USE_CUDA)
