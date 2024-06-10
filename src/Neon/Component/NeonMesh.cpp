@@ -933,6 +933,8 @@ namespace Neon
 					else if (elementPropertyNames[i][k] == "blue")
 					{
 						blue = (unsigned char)atoi(words[k].c_str());
+
+						AddColor(glm::vec4((float)red / 255.0f, (float)green / 255.0f, (float)blue / 255.0f, 1.0f));
 					}
 					else if (elementPropertyNames[i][k] == "alpha")
 					{

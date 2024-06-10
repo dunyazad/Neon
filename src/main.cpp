@@ -8,171 +8,108 @@
 #include <Neon/CUDA/CUDATSDF.h>
 #include <Neon/CUDA/CUDASurfaceExtraction.h>
 
-int gindex = 0;
 
-cudaGraphicsResource_t cuda_vbo_resource_test;
-
-class HKDTreeNode
-{
-public:
-	HKDTreeNode(const glm::vec3& p) : p(p) {}
-
-	inline const glm::vec3& GetPosition() const { return p; }
-	inline HKDTreeNode* GetLeft() const { return left; }
-	inline void SetLeft(HKDTreeNode* node) { left = node; }
-	inline HKDTreeNode* GetRight() const { return right; }
-	inline void SetRight(HKDTreeNode* node) { right = node; }
-
-	void* data = nullptr;
-
-private:
-	glm::vec3 p;
-	HKDTreeNode* left = nullptr;
-	HKDTreeNode* right = nullptr;
+struct Point {
+	double x, y, z;
+	int clusterId = 0;  // 0 means unclassified, -1 means noise
 };
 
-template<typename T>
-class HKDTree
-{
-public:
-	HKDTree() {}
+double distance(const Point& p1, const Point& p2) {
+	return std::sqrt(std::pow(p1.x - p2.x, 2) + std::pow(p1.y - p2.y, 2) + std::pow(p1.z - p2.z, 2));
+}
 
-	void Clear()
-	{
-		if (nullptr != root)
-		{
-			ClearRecursive(root);
-			root = nullptr;
+std::vector<Point> generate_3d_points(int num_points, int clusters) {
+	std::vector<Point> points;
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_real_distribution<> dis(-10, 10);
+	std::normal_distribution<> d(0, 1);
+
+	for (int i = 0; i < clusters; ++i) {
+		Point center = { dis(gen), dis(gen), dis(gen) };
+		for (int j = 0; j < num_points / clusters; ++j) {
+			points.push_back({ center.x + d(gen), center.y + d(gen), center.z + d(gen) });
 		}
 	}
+	return points;
+}
 
-	void Insert(const glm::vec3& position)
-	{
-		root = InsertRecursive(root, position, 0);
-	}
-
-	HKDTreeNode* FindNearestNeighbor(HKDTreeNode* root, const glm::vec3& target, int depth)
-	{
-		nearestNeighbor = root->GetVertex();
-		nearestNeighborDistance = glm::length(query - root->GetVertex()->p);
-		FindNearestNeighborRecursive(root, query, 0);
-		return nearestNeighbor;
-	}
-
-	HKDTreeNode* FindNearestNeighborNode(const glm::vec3& query)
-	{
-		if (nullptr == root)
-			return nullptr;
-
-		root->data = (void*)1;
-
-		auto nearestNeighborNode = root;
-		auto nearestNeighborDistance = distance(query, root->GetPosition());
-		FindNearestNeighborRecursive(root, nearestNeighborNode, nearestNeighborDistance, query, 0);
-		return nearestNeighborNode;
-	}
-
-	vector<T*> RangeSearch(const glm::vec3& query, float squaredRadius) const
-	{
-		vector<T*> result;
-		RangeSearchRecursive(root, query, squaredRadius, result, 0);
-		return result;
-	}
-
-	inline const HKDTreeNode* GetRoot() const { return root; }
-
-	inline bool IsEmpty() const { return nullptr == root; }
-
-private:
-	HKDTreeNode* root = nullptr;
-	HKDTreeNode* nearestNeighborNode = nullptr;
-
-	void ClearRecursive(HKDTreeNode* node)
-	{
-		if (nullptr != node->GetLeft())
-		{
-			ClearRecursive(node->GetLeft());
+std::vector<int> region_query(const std::vector<Point>& points, int idx, double eps) {
+	std::vector<int> neighbors;
+	for (int i = 0; i < points.size(); ++i) {
+		if (distance(points[idx], points[i]) < eps) {
+			neighbors.push_back(i);
 		}
-
-		if (nullptr != node->GetRight())
-		{
-			ClearRecursive(node->GetRight());
-		}
-
-		delete node;
 	}
+	return neighbors;
+}
 
-	HKDTreeNode* InsertRecursive(HKDTreeNode* node, const glm::vec3& position, int depth) {
-		if (node == nullptr) {
-			auto newNode = new HKDTreeNode(position);
-			return newNode;
+void expand_cluster(std::vector<Point>& points, int idx, std::vector<int>& neighbors,
+	std::set<int>& visited, double eps, int min_pts, int cluster_id) {
+	points[idx].clusterId = cluster_id;
+	while (!neighbors.empty()) {
+		int neighbor_idx = neighbors.back();
+		neighbors.pop_back();
+		if (visited.find(neighbor_idx) == visited.end()) {
+			visited.insert(neighbor_idx);
+			std::vector<int> new_neighbors = region_query(points, neighbor_idx, eps);
+			if (new_neighbors.size() >= min_pts) {
+				neighbors.insert(neighbors.end(), new_neighbors.begin(), new_neighbors.end());
+			}
 		}
+		if (points[neighbor_idx].clusterId == 0) {
+			points[neighbor_idx].clusterId = cluster_id;
+		}
+	}
+}
 
-		int currentDimension = depth % 3;
-		if (((float*)&position)[currentDimension] < ((float*)&node->GetPosition())[currentDimension])
-		{
-			node->SetLeft(InsertRecursive(node->GetLeft(), position, depth + 1));
+void dbscan(std::vector<Point>& points, double eps, int min_pts) {
+	std::set<int> visited;
+	int cluster_id = 0;
+
+	for (int i = 0; i < points.size(); ++i) {
+		if (visited.find(i) != visited.end()) {
+			continue;
+		}
+		visited.insert(i);
+
+		std::vector<int> neighbors = region_query(points, i, eps);
+		if (neighbors.size() < min_pts) {
+			points[i].clusterId = -1;  // Mark as noise
 		}
 		else {
-			node->SetRight(InsertRecursive(node->GetRight(), position, depth + 1));
+			cluster_id++;
+			expand_cluster(points, i, neighbors, visited, eps, min_pts, cluster_id);
 		}
-
-		return node;
 	}
+}
 
-	void FindNearestNeighborRecursive(HKDTreeNode* node, HKDTreeNode* nnNode, float nearestNeighborDistance, const glm::vec3& query, int depth) {
-		if (node == nullptr) {
-			return;
-		}
-
-		int currentDimension = depth % 3;
-		float nnDistance = nearestNeighborDistance;
-
-		auto nodeDistance = distance(query, node->GetPosition());
-		if (nodeDistance <= nnDistance) {
-			nnNode = node;
-			nnDistance = nodeDistance;
-		}
-
-		auto queryValue = ((float*)&query)[currentDimension];
-		auto nodeValue = ((float*)&node->GetPosition())[currentDimension];
-
-		HKDTreeNode* closerNode = (queryValue < nodeValue) ? node->GetLeft() : node->GetRight();
-		HKDTreeNode* otherNode = (queryValue < nodeValue) ? node->GetRight() : node->GetLeft();
-
-		FindNearestNeighborRecursive(closerNode, nnNode, nnDistance, query, depth + 1);
-
-		// Check if the other subtree could have a closer point
-		if (std::abs(queryValue - nodeValue) * std::abs(queryValue - nodeValue) < nnDistance) {
-			FindNearestNeighborRecursive(otherNode, nnNode, nnDistance, query, depth + 1);
+void print_clusters(const std::vector<Point>& points) {
+	int max_cluster_id = 0;
+	for (const auto& point : points) {
+		if (point.clusterId > max_cluster_id) {
+			max_cluster_id = point.clusterId;
 		}
 	}
 
-	void RangeSearchRecursive(HKDTreeNode* node, const glm::vec3& query, float squaredRadius, std::vector<T*>& result, int depth) const {
-		if (node == nullptr) {
-			return;
+	for (int cluster_id = 1; cluster_id <= max_cluster_id; ++cluster_id) {
+		std::cout << "Cluster " << cluster_id << ":\n";
+		for (int i = 0; i < points.size(); ++i) {
+			if (points[i].clusterId == cluster_id) {
+				std::cout << "(" << points[i].x << ", " << points[i].y << ", " << points[i].z << ") [Index: " << i << "]\n";
+			}
 		}
+		std::cout << std::endl;
+	}
 
-		float nodeDistance = glm::length(query - node->GetVertex()->p);
-		if (nodeDistance <= squaredRadius) {
-			result.push_back(node->GetVertex());
-		}
-
-		int currentDimension = depth % 3;
-		auto queryValue = ((float*)&query)[currentDimension];
-		auto nodeValue = ((float*)&node->GetVertex()->p)[currentDimension];
-
-		HKDTreeNode* closerNode = (queryValue < nodeValue) ? node->GetLeft() : node->GetRight();
-		HKDTreeNode* otherNode = (queryValue < nodeValue) ? node->GetRight() : node->GetLeft();
-
-		RangeSearchRecursive(closerNode, query, squaredRadius, result, depth + 1);
-
-		// Check if the other subtree could have points within the range
-		if (std::abs(queryValue - nodeValue) * std::abs(queryValue - nodeValue) <= squaredRadius) {
-			RangeSearchRecursive(otherNode, query, squaredRadius, result, depth + 1);
+	std::cout << "Noise:\n";
+	for (int i = 0; i < points.size(); ++i) {
+		if (points[i].clusterId == -1) {
+			std::cout << "(" << points[i].x << ", " << points[i].y << ", " << points[i].z << ") [Index: " << i << "]\n";
 		}
 	}
-};
+	std::cout << std::endl;
+}
 
 
 int main()
@@ -244,7 +181,7 @@ int main()
 						}
 					}
 				}
-			});
+				});
 		}
 #pragma endregion
 
@@ -283,7 +220,7 @@ int main()
 				else if ((GLFW_KEY_ENTER == event.key) && (GLFW_RELEASE == event.action || GLFW_REPEAT == event.action)) {
 					static int offset = 0;
 					auto center = glm::i64vec3(10, 90, 90);
-					
+
 					for (int zOffset = -offset; zOffset <= offset; zOffset++)
 					{
 						auto zIndex = (int)center.z + zOffset;
@@ -292,7 +229,7 @@ int main()
 
 						for (int yOffset = -offset; yOffset <= offset; yOffset++)
 						{
-							auto yIndex = (int)center.y+ yOffset;
+							auto yIndex = (int)center.y + yOffset;
 							if (0 > yIndex) continue;
 							if (yIndex >= 100) continue;
 
@@ -323,7 +260,7 @@ int main()
 
 					offset++;
 				}
-			});
+				});
 		}
 #pragma endregion
 
@@ -356,7 +293,7 @@ int main()
 				auto camera = scene->GetMainCamera();
 				light->position = camera->position;
 				light->direction = glm::normalize(camera->centerPosition - camera->position);
-			});
+				});
 
 			scene->SetMainLight(light);
 		}
@@ -439,93 +376,93 @@ int main()
 #pragma endregion
 
 		{
-		//	auto entity = scene->CreateEntity("Entity/spot");
-		//	auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/spot");
-		//	entity->AddComponent(mesh);
+			//	auto entity = scene->CreateEntity("Entity/spot");
+			//	auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/spot");
+			//	entity->AddComponent(mesh);
 
-		//	mesh->FromSTLFile(Neon::URL::Resource("/stl/mesh.stl"));
-		//	mesh->FillColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-		//	mesh->RecalculateFaceNormal();
+			//	mesh->FromSTLFile(Neon::URL::Resource("/stl/mesh.stl"));
+			//	mesh->FillColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+			//	mesh->RecalculateFaceNormal();
 
-		//	scene->GetMainCamera()->centerPosition = mesh->GetAABB().GetCenter();
-		//	scene->GetMainCamera()->distance = mesh->GetAABB().GetDiagonalLength();
+			//	scene->GetMainCamera()->centerPosition = mesh->GetAABB().GetCenter();
+			//	scene->GetMainCamera()->distance = mesh->GetAABB().GetDiagonalLength();
 
-		//	auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", Neon::URL::Resource("/shader/lighting.vs"), Neon::URL::Resource("/shader/lighting.fs"));
-		//	entity->AddComponent(shader);
+			//	auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", Neon::URL::Resource("/shader/lighting.vs"), Neon::URL::Resource("/shader/lighting.fs"));
+			//	entity->AddComponent(shader);
 
-		//	auto transform = scene->CreateComponent<Neon::Transform>("Transform/spot");
-		//	entity->AddComponent(transform);
-		//	entity->AddKeyEventHandler([mesh](const Neon::KeyEvent& event) {
-		//		if (GLFW_KEY_ESCAPE == event.key && GLFW_RELEASE == event.action)
-		//		{
-		//			mesh->ToggleFillMode();
-		//		}
-		//		else if (GLFW_KEY_KP_ADD == event.key && (GLFW_PRESS == event.action || GLFW_REPEAT == event.action))
-		//		{
-		//			GLfloat currentPointSize;
-		//			glGetFloatv(GL_POINT_SIZE, &currentPointSize);
-		//			glPointSize(currentPointSize + 1.0f);
-		//		}
-		//		else if (GLFW_KEY_KP_SUBTRACT == event.key && (GLFW_PRESS == event.action || GLFW_REPEAT == event.action))
-		//		{
-		//			GLfloat currentPointSize;
-		//			glGetFloatv(GL_POINT_SIZE, &currentPointSize);
-		//			glPointSize(currentPointSize - 1.0f);
-		//		}
-		//		else if (GLFW_KEY_S == event.key && GLFW_RELEASE == event.action)
-		//		{
-		//			mesh->ToSTLFile("C:\\Users\\USER\\Desktop\\result.stl");
-		//		}
-		//		});
+			//	auto transform = scene->CreateComponent<Neon::Transform>("Transform/spot");
+			//	entity->AddComponent(transform);
+			//	entity->AddKeyEventHandler([mesh](const Neon::KeyEvent& event) {
+			//		if (GLFW_KEY_ESCAPE == event.key && GLFW_RELEASE == event.action)
+			//		{
+			//			mesh->ToggleFillMode();
+			//		}
+			//		else if (GLFW_KEY_KP_ADD == event.key && (GLFW_PRESS == event.action || GLFW_REPEAT == event.action))
+			//		{
+			//			GLfloat currentPointSize;
+			//			glGetFloatv(GL_POINT_SIZE, &currentPointSize);
+			//			glPointSize(currentPointSize + 1.0f);
+			//		}
+			//		else if (GLFW_KEY_KP_SUBTRACT == event.key && (GLFW_PRESS == event.action || GLFW_REPEAT == event.action))
+			//		{
+			//			GLfloat currentPointSize;
+			//			glGetFloatv(GL_POINT_SIZE, &currentPointSize);
+			//			glPointSize(currentPointSize - 1.0f);
+			//		}
+			//		else if (GLFW_KEY_S == event.key && GLFW_RELEASE == event.action)
+			//		{
+			//			mesh->ToSTLFile("C:\\Users\\USER\\Desktop\\result.stl");
+			//		}
+			//		});
 
-		//	entity->AddMouseButtonEventHandler([entity, scene, mesh](const Neon::MouseButtonEvent& event) {
-		//		if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_DOUBLE_ACTION)
-		//		{
-		//			auto camera = scene->GetMainCamera();
+			//	entity->AddMouseButtonEventHandler([entity, scene, mesh](const Neon::MouseButtonEvent& event) {
+			//		if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_DOUBLE_ACTION)
+			//		{
+			//			auto camera = scene->GetMainCamera();
 
-		//			auto ray = camera->GetPickingRay(event.xpos, event.ypos);
+			//			auto ray = camera->GetPickingRay(event.xpos, event.ypos);
 
-		//			glm::vec3 intersection;
-		//			size_t faceIndex = 0;
-		//			if (mesh->Pick(ray, intersection, faceIndex))
-		//			{
-		//				camera->centerPosition = intersection;
-		//			}
-		//		}
-		//		else if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_RELEASE)
-		//		{
-		//			auto camera = scene->GetMainCamera();
+			//			glm::vec3 intersection;
+			//			size_t faceIndex = 0;
+			//			if (mesh->Pick(ray, intersection, faceIndex))
+			//			{
+			//				camera->centerPosition = intersection;
+			//			}
+			//		}
+			//		else if (event.button == GLFW_MOUSE_BUTTON_1 && event.action == GLFW_RELEASE)
+			//		{
+			//			auto camera = scene->GetMainCamera();
 
-		//			auto ray = camera->GetPickingRay(event.xpos, event.ypos);
+			//			auto ray = camera->GetPickingRay(event.xpos, event.ypos);
 
-		//			glm::vec3 intersection;
-		//			size_t faceIndex = 0;
-		//			if (mesh->Pick(ray, intersection, faceIndex))
-		//			{
-		//				//debugPoints->Clear();
+			//			glm::vec3 intersection;
+			//			size_t faceIndex = 0;
+			//			if (mesh->Pick(ray, intersection, faceIndex))
+			//			{
+			//				//debugPoints->Clear();
 
-		//				//debugPoints->AddPoint(intersection, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+			//				//debugPoints->AddPoint(intersection, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 
-		//				auto vetm = entity->GetComponent<Neon::VETM>();
-		//				auto vertex = vetm->GetNearestVertex(intersection);
+			//				auto vetm = entity->GetComponent<Neon::VETM>();
+			//				auto vertex = vetm->GetNearestVertex(intersection);
 
-		//				scene->Debug("Points")->Clear();
-		//				scene->Debug("Points")->AddPoint(vertex->p, glm::red);
-		//				scene->Debug("Points")->AddPoint(intersection, glm::white);
+			//				scene->Debug("Points")->Clear();
+			//				scene->Debug("Points")->AddPoint(vertex->p, glm::red);
+			//				scene->Debug("Points")->AddPoint(intersection, glm::white);
 
-		//				scene->Debug("Lines")->Clear();
-		//				cout << "---------------------------------------" << endl;
-		//				for (auto& e : vertex->edges)
-		//				{
-		//					if (2 > e->triangles.size())
-		//					{
-		//						scene->Debug("Lines")->AddLine(e->v0->p, e->v1->p, glm::green, glm::green);
-		//						cout << e->id << " : " << e->triangles.size() << endl;
-		//					}
-		//				}
-		//			}
-		//		}
-		//		});
+			//				scene->Debug("Lines")->Clear();
+			//				cout << "---------------------------------------" << endl;
+			//				for (auto& e : vertex->edges)
+			//				{
+			//					if (2 > e->triangles.size())
+			//					{
+			//						scene->Debug("Lines")->AddLine(e->v0->p, e->v1->p, glm::green, glm::green);
+			//						cout << e->id << " : " << e->triangles.size() << endl;
+			//					}
+			//				}
+			//			}
+			//		}
+			//		});
 		}
 
 		{
@@ -533,7 +470,7 @@ int main()
 			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/spot");
 			entity->AddComponent(mesh);
 
-			mesh->FromPLYFile(Neon::URL::Resource("/ply/targetPoint_1.ply"));
+			mesh->FromPLYFile(Neon::URL::Resource("/ply/RD.ply"));
 			//mesh->SetDrawingMode(GL_POINTS);
 			mesh->SetFillMode(Neon::Mesh::Point);
 			//mesh->FillColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
@@ -544,34 +481,56 @@ int main()
 
 			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", Neon::URL::Resource("/shader/lighting.vs"), Neon::URL::Resource("/shader/lighting.fs"));
 			entity->AddComponent(shader);
+
+
+
+
+
+
+			//std::vector<Point> points = generate_3d_points(num_points, clusters_count);
+
+			//dbscan(points, eps, min_pts);
+			//print_clusters(points);
+
+			std::vector<Point> points;
+			for (size_t i = 0; i < mesh->GetVertexBuffer()->Size(); i++)
+			{
+				auto& v = mesh->GetVertex(i);
+				points.push_back(Point{ v.x, v.y, v.z, 0 });
+			}
+
+			int clusters_count = 5;
+			double eps = 1.5;
+			int min_pts = 5;
+			//dbscan(points, eps, min_pts);
 		}
-	});
+													});
 
 
 
-	app.OnUpdate([&](double now, double timeDelta) {
-		//glPointSize(cosf(now * 0.005f) * 10.0f + 10.0f);
+			app.OnUpdate([&](double now, double timeDelta) {
+				//glPointSize(cosf(now * 0.005f) * 10.0f + 10.0f);
 
-		//auto t = Neon::Time("Update");
+				//auto t = Neon::Time("Update");
 
-		//fbo->Bind();
+				//fbo->Bind();
 
-		//glClearColor(0.9f, 0.7f, 0.5f, 1.0f);
-		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				//glClearColor(0.9f, 0.7f, 0.5f, 1.0f);
+				//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		//fbo->Unbind();
+				//fbo->Unbind();
 
-		glClearColor(0.3f, 0.5f, 0.7f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	});
+				glClearColor(0.3f, 0.5f, 0.7f, 1.0f);
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				});
 
 
 
-	app.OnTerminate([&]() {
-		auto t = Neon::Time("Terminate");
-	});
+			app.OnTerminate([&]() {
+				auto t = Neon::Time("Terminate");
+				});
 
-	app.Run();
+			app.Run();
 
-	return 0;
+			return 0;
 }
