@@ -8,6 +8,8 @@
 #include <Neon/CUDA/CUDATSDF.h>
 #include <Neon/CUDA/CUDASurfaceExtraction.h>
 
+#include <Neon/CUDA/cuOctree.h>
+
 
 struct Point {
 	double x, y, z;
@@ -218,47 +220,45 @@ int main()
 					glLineWidth(lineWidth);
 				}
 				else if ((GLFW_KEY_ENTER == event.key) && (GLFW_RELEASE == event.action || GLFW_REPEAT == event.action)) {
-					static int offset = 0;
-					auto center = glm::i64vec3(10, 90, 90);
+					static int pressCount = -1;
+					pressCount++;
 
-					for (int zOffset = -offset; zOffset <= offset; zOffset++)
+					int cnt = 0;
+					int cx = 0;
+					int cy = 0;
+					int cz = 0;
+					int offset = 3;
+
+					int currentOffset = 0;
+
+					while (currentOffset <= offset)
 					{
-						auto zIndex = (int)center.z + zOffset;
-						if (0 > zIndex) continue;
-						if (zIndex >= 100) continue;
-
-						for (int yOffset = -offset; yOffset <= offset; yOffset++)
+						for (int z = -currentOffset; z <= currentOffset; z++)
 						{
-							auto yIndex = (int)center.y + yOffset;
-							if (0 > yIndex) continue;
-							if (yIndex >= 100) continue;
-
-							for (int xOffset = -offset; xOffset <= offset; xOffset++)
+							for (int y = -currentOffset; y <= currentOffset; y++)
 							{
-								auto xIndex = (int)center.x + xOffset;
-								if (0 > xIndex) continue;
-								if (xIndex >= 15) continue;
-
-								if ((xIndex == center.x - offset || xIndex == center.x + offset) ||
-									(yIndex == center.y - offset || yIndex == center.y + offset) ||
-									(zIndex == center.z - offset || zIndex == center.z + offset))
+								for (int x = -currentOffset; x <= currentOffset; x++)
 								{
-									stringstream ss;
-									ss << "cube_" << offset;
-									auto name = ss.str();
-									//printf("%s\n", name.c_str());
-									scene->Debug(name)->AddBox({ xIndex, yIndex, zIndex }, 1, 1, 1);
+									if ((x == -currentOffset || x == currentOffset) ||
+										(y == -currentOffset || y == currentOffset) ||
+										(z == -currentOffset || z == currentOffset))
+									{
+										if (cnt == pressCount)
+										{
+											printf("[%2d] %d, %d, %d\n", cnt++, x, y, z);
+
+											scene->Debug("cubes")->AddBox({ x, y, z }, 0.5f, 0.5f, 0.5f);
+											return;
+										}
+
+										cnt++;
+									}
 								}
-								//else
-								//{
-								//	printf("index %d, %d, %d, center %d, %d, %d, offset %d\n",
-								//		xIndex, yIndex, zIndex, center.x, center.y, center.y, offset);
-								//}
 							}
 						}
-					}
 
-					offset++;
+						currentOffset++;
+					}
 				}
 				});
 		}
@@ -466,71 +466,67 @@ int main()
 		}
 
 		{
-			auto entity = scene->CreateEntity("Entity/spot");
-			auto mesh = scene->CreateComponent<Neon::Mesh>("Mesh/spot");
-			entity->AddComponent(mesh);
+			int cx = 0;
+			int cy = 0;
+			int cz = 0;
+			int offset = 3;
 
-			mesh->FromPLYFile(Neon::URL::Resource("/ply/RD.ply"));
-			//mesh->SetDrawingMode(GL_POINTS);
-			mesh->SetFillMode(Neon::Mesh::Point);
-			//mesh->FillColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-			//mesh->RecalculateFaceNormal();
+			int currentOffset = 0;
 
-			scene->GetMainCamera()->centerPosition = mesh->GetAABB().GetCenter();
-			scene->GetMainCamera()->distance = mesh->GetAABB().GetDiagonalLength();
-
-			auto shader = scene->CreateComponent<Neon::Shader>("Shader/Lighting", Neon::URL::Resource("/shader/lighting.vs"), Neon::URL::Resource("/shader/lighting.fs"));
-			entity->AddComponent(shader);
-
-
-
-
-
-
-			//std::vector<Point> points = generate_3d_points(num_points, clusters_count);
-
-			//dbscan(points, eps, min_pts);
-			//print_clusters(points);
-
-			std::vector<Point> points;
-			for (size_t i = 0; i < mesh->GetVertexBuffer()->Size(); i++)
+			int cnt = 0;
+			while (currentOffset <= offset)
 			{
-				auto& v = mesh->GetVertex(i);
-				points.push_back(Point{ v.x, v.y, v.z, 0 });
+				for (int z = -currentOffset; z <= currentOffset; z++)
+				{
+					for (int y = -currentOffset; y <= currentOffset; y++)
+					{
+						for (int x = -currentOffset; x <= currentOffset; x++)
+						{
+							if ((x == -currentOffset || x == currentOffset) ||
+								(y == -currentOffset || y == currentOffset) ||
+								(z == -currentOffset || z == currentOffset))
+							{
+								//printf("%d, %d, %d,\n", cx + x, cy + y, cz + z);
+
+								scene->Debug("cubes")->AddBox({ cx + x, cy + y, cz + z }, 0.5f, 0.5f, 0.5f);
+							}
+						}
+					}
+				}
+
+				currentOffset++;
 			}
-
-			int clusters_count = 5;
-			double eps = 1.5;
-			int min_pts = 5;
-			//dbscan(points, eps, min_pts);
 		}
-													});
+
+		RunOctreeExample();
+
+		});
 
 
 
-			app.OnUpdate([&](double now, double timeDelta) {
-				//glPointSize(cosf(now * 0.005f) * 10.0f + 10.0f);
+	app.OnUpdate([&](double now, double timeDelta) {
+		//glPointSize(cosf(now * 0.005f) * 10.0f + 10.0f);
 
-				//auto t = Neon::Time("Update");
+		//auto t = Neon::Time("Update");
 
-				//fbo->Bind();
+		//fbo->Bind();
 
-				//glClearColor(0.9f, 0.7f, 0.5f, 1.0f);
-				//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		//glClearColor(0.9f, 0.7f, 0.5f, 1.0f);
+		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-				//fbo->Unbind();
+		//fbo->Unbind();
 
-				glClearColor(0.3f, 0.5f, 0.7f, 1.0f);
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				});
+		glClearColor(0.3f, 0.5f, 0.7f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		});
 
 
 
-			app.OnTerminate([&]() {
-				auto t = Neon::Time("Terminate");
-				});
+	app.OnTerminate([&]() {
+		auto t = Neon::Time("Terminate");
+		});
 
-			app.Run();
+	app.Run();
 
-			return 0;
+	return 0;
 }

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.11)
 
-OPTION (USE_CUDA "use CUDA" ON)
+OPTION (USE_CUDA "use CUDA" on)
 
 project(Neon LANGUAGES CXX CUDA)
 if(USE_CUDA)
@@ -22,6 +22,9 @@ add_subdirectory("External/eigen")
 
 if(USE_CUDA)
 set(cuda_source_list
+src/Neon/CUDA/cuOctree.h
+src/Neon/CUDA/cuOctree.cu
+
 src/Neon/CUDA/HelloCUDA.cu
 src/Neon/CUDA/main.cu
 
