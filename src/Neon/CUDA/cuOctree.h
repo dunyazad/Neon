@@ -4,4 +4,6 @@
 #include <cuda_device_runtime_api.h>
 #include <nvtx3/nvToolsExt.h>
 
-void RunOctreeExample();
+#include <Neon/Neon.h>
+
+void RunOctreeExample(Neon::Scene* scene);

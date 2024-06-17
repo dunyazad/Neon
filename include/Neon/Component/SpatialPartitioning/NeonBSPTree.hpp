@@ -443,10 +443,9 @@ namespace Neon
 			auto noi = mesh->GetIndexBuffer()->Size();
 			for (size_t i = 0; i < noi / 3; i++)
 			{
-				GLuint i0, i1, i2;
-				mesh->GetIndex(i * 3 + 0, i0);
-				mesh->GetIndex(i * 3 + 1, i1);
-				mesh->GetIndex(i * 3 + 2, i2);
+				GLuint i0 = mesh->GetIndex(i * 3 + 0);
+				GLuint i1 = mesh->GetIndex(i * 3 + 1);
+				GLuint i2 = mesh->GetIndex(i * 3 + 2);
 
 				auto v0 = mesh->GetVertex(i0);
 				auto v1 = mesh->GetVertex(i1);

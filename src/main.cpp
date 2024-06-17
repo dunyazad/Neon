@@ -498,7 +498,7 @@ int main()
 			}
 		}
 
-		RunOctreeExample();
+		RunOctreeExample(scene);
 
 		});
 

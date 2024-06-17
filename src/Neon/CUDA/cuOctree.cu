@@ -149,15 +149,17 @@ __global__ void insertPoints(OctreeNode* nodes, f3* points, int* point_indices, 
     }
 }
 
-void RunOctreeExample()
+void RunOctreeExample(Neon::Scene* scene)
 {
-    const int num_points = 8000000;
+    const int num_points = 800000;
     f3* d_points;
     f3* h_points = new f3[num_points];
 
     // Initialize points
     for (int i = 0; i < num_points; ++i) {
-        h_points[i] = f3((float)rand() / RAND_MAX, (float)rand() / RAND_MAX, (float)rand() / RAND_MAX);
+        h_points[i] = f3(2000.0f * (float)rand() / RAND_MAX, 2000.0f * (float)rand() / RAND_MAX, 2000.0f * (float)rand() / RAND_MAX);
+
+        scene->Debug("Points")->AddPoint({ h_points[i].x, h_points[i].y, h_points[i].z });
     }
 
     cudaMalloc(&d_points, num_points * sizeof(f3));
