@@ -22,3 +22,6 @@
 [submodule "External/eigen"]
 	path = External/eigen
 	url = https://gitlab.com/libeigen/eigen.git
+[submodule "External/freetype"]
+	path = External/freetype
+	url = https://github.com/freetype/freetype.git

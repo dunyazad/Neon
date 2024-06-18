@@ -19,6 +19,7 @@ add_subdirectory("External/glm")
 #add_subdirectory("External/OpenMesh")
 add_subdirectory("External/tinyply")
 add_subdirectory("External/eigen")
+add_subdirectory("External/freetype")
 
 if(USE_CUDA)
 set(cuda_source_list
@@ -136,6 +137,7 @@ target_include_directories(Neon PUBLIC
 "External/glm"
 "External/imgui"
 "External/json/include"
+"External/freetype/include"
 "include"
 "src"
 )
@@ -148,6 +150,7 @@ endif(USE_CUDA)
 target_link_libraries(Neon
 glfw
 tinyply
+freetype
 $<$<BOOL:USE_CUDA>:CUDA::cudart>
 )
 #target_link_libraries(Neon $<$<CONFIG:Debug>:OpenMeshCored>)

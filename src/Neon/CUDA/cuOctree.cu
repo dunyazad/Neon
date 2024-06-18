@@ -151,7 +151,7 @@ __global__ void insertPoints(OctreeNode* nodes, f3* points, int* point_indices, 
 
 void RunOctreeExample(Neon::Scene* scene)
 {
-    const int num_points = 800000;
+    const int num_points = 8000000;
     f3* d_points;
     f3* h_points = new f3[num_points];
 
