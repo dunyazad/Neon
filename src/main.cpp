@@ -498,8 +498,6 @@ int main()
 			}
 		}
 
-		RunOctreeExample(scene);
-
 		});
 
 

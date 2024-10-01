@@ -4,6 +4,8 @@ OPTION (USE_CUDA "use CUDA" on)
 
 project(Neon LANGUAGES CXX CUDA)
 if(USE_CUDA)
+set(CUDA_TOOLKIT_ROOT_DIR "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.4")
+find_package(CUDA REQUIRED)
 find_package(CUDAToolkit REQUIRED)
 set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
@@ -23,8 +25,6 @@ add_subdirectory("External/freetype")
 
 if(USE_CUDA)
 set(cuda_source_list
-src/Neon/CUDA/cuOctree.h
-src/Neon/CUDA/cuOctree.cu
 
 src/Neon/CUDA/HelloCUDA.cu
 src/Neon/CUDA/main.cu
@@ -33,8 +33,6 @@ src/Neon/CUDA/CUDACommon.cuh
 src/Neon/CUDA/CUDACommon.cu
 src/Neon/CUDA/CUDAMesh.cu
 
-src/Neon/CUDA/CUDATest.cu
-src/Neon/CUDA/CUDATSDF.cu
 )
 set_source_files_properties($<$<BOOL:USE_CUDA>:${cuda_source_list}>> PROPERTIES LANGUAGE "CUDA")
 endif(USE_CUDA)
@@ -173,3 +171,8 @@ assign_source_group(${source_list})
 if(USE_CUDA)
 assign_source_group(${cuda_source_list})
 endif(USE_CUDA)
+
+if(MSVC)
+    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Neon)
+    target_compile_options(Neon PRIVATE /bigobj)
+endif()
